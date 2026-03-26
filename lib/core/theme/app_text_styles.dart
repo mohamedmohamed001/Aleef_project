@@ -37,4 +37,9 @@ class AppTextStyles {
     fontWeight: FontWeight.w400,
     color: AppColors.hint,
   );
+  static const TextStyle titleLarge= TextStyle(
+    fontSize: 24,
+    fontWeight: FontWeight.bold,
+    color: Colors.black,
+  );
 }
