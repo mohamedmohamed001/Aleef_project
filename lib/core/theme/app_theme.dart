@@ -83,6 +83,8 @@ class AppTheme {
 
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
+        disabledBackgroundColor: AppColors.border,
+        disabledForegroundColor: AppColors.hint,
         backgroundColor: AppColors.primary,
         foregroundColor: AppColors.white,
         elevation: 0,

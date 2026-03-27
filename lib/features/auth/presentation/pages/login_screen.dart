@@ -1,15 +1,27 @@
+import 'package:aleef/core/routing/app_routes.dart';
 import 'package:aleef/core/utils/app_assets.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../data/services/auth_api_service.dart';
+import '../widgets/custom_text_form.dart';
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
   @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  bool isLoading = false;
+
+  @override
   Widget build(BuildContext context) {
+    final emailController = TextEditingController();
+    final passwordController = TextEditingController();
     final theme = Theme.of(context);
     return Scaffold(
       body: SingleChildScrollView(
@@ -35,7 +47,10 @@ class LoginScreen extends StatelessWidget {
                     ),
                     Text(
                       "Sign in to your ALEEF account",
-                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w400),
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w400,
+                      ),
                     ),
                     SizedBox(height: 10),
                     Text(
@@ -48,14 +63,12 @@ class LoginScreen extends StatelessWidget {
                     ),
 
                     // SizedBox(height: 8),
-                    TextFormField(
-                      decoration: InputDecoration(
-                        prefixIcon: Icon(Icons.email_outlined),
-
-                        hintText: "Enter your email",
-                      ),
+                    CustomTextFormField(
+                      controller: emailController,
+                      hintText: "Enter your email",
+                      iconPrefix: Icons.email_outlined,
+                      keyboardType: TextInputType.emailAddress,
                     ),
-
 
                     Text(
                       "password",
@@ -67,23 +80,65 @@ class LoginScreen extends StatelessWidget {
                     ),
 
                     // SizedBox(height: 20),
-                    TextFormField(
-                      decoration: InputDecoration(
-                        prefixIcon: Icon(Icons.lock_outlined),
-                        suffixIcon: Icon(Icons.remove_red_eye_outlined),
-                        hintText: "Enter your password",
-                      ),
+                    CustomTextFormField(
+                      controller: passwordController,
+                      hintText: "Enter your password",
+                      iconPrefix: Icons.lock_outline,
+                      iconSuffix: Icons.remove_red_eye_outlined,
+                      obSecureText: true,
+                      keyboardType: TextInputType.visiblePassword ,
+
                     ),
                     Align(
-                      alignment: Alignment.centerRight,
-                      child: Text(
-                        "Forget Password?",
-                        style: TextStyle(color: theme.colorScheme.primary),
+                      alignment: AlignmentDirectional.centerEnd,
+                      child: TextButton(
+                        onPressed: () {},
+                        child: Text(
+                          "Forget Password?",
+                          style: TextStyle(color: theme.colorScheme.primary),
+                        ),
                       ),
                     ),
-                    SizedBox(height: 5,),
-                    ElevatedButton(onPressed: () {}, child: Text("Login")),
-                    SizedBox(height: 5,),
+                    SizedBox(height: 5),
+                    ElevatedButton(
+                      onPressed: isLoading
+                          ? null
+                          : () async {
+                              setState(() {
+                                isLoading = true;
+                              });
+                              final success = await AuthApiService().login(
+                                emailController.text,
+                                passwordController.text,
+                              );
+                              setState(() {
+                                isLoading = false;
+                              });
+
+                              if (success == true) {
+                                Navigator.pushNamedAndRemoveUntil(
+                                  context,
+                                  AppRoutes.register,
+                                  (route) => false,
+                                );
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text("Login failed"),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
+                            },
+                      child: isLoading
+                          ? SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : Text("Login"),
+                    ),
+                    SizedBox(height: 5),
                     Align(
                       alignment: Alignment.center,
                       child: RichText(
@@ -98,7 +153,13 @@ class LoginScreen extends StatelessWidget {
                                 decoration: TextDecoration.underline,
                                 decorationColor: theme.colorScheme.primary,
                               ),
-                              recognizer: TapGestureRecognizer()..onTap = () {},
+                              recognizer: TapGestureRecognizer()
+                                ..onTap = () {
+                                  Navigator.pushNamed(
+                                    context,
+                                    AppRoutes.register,
+                                  );
+                                },
                             ),
                           ],
                         ),
