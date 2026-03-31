@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -20,6 +21,7 @@ class _VerificationOtpScreenState extends State<VerificationOtpScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final verificationController = TextEditingController();
     return Scaffold(
       body: Padding(
@@ -37,7 +39,7 @@ class _VerificationOtpScreenState extends State<VerificationOtpScreen> {
                     width: 34,
                     decoration: BoxDecoration(
                       color: AppColors.primary,
-                      borderRadius: BorderRadiusGeometry.circular(16),
+                      borderRadius: BorderRadiusGeometry.circular(14),
                     ),
                     child: Center(
                       child: Text(
@@ -64,6 +66,7 @@ class _VerificationOtpScreenState extends State<VerificationOtpScreen> {
               Text("Enter your verification code"),
               SizedBox(height: 10),
               CustomTextFormField(
+                keyboardType: TextInputType.number,
                 controller: verificationController,
                 hintText: "Enter your verification code",
                 iconPrefix: Icons.security_outlined,
@@ -90,7 +93,7 @@ class _VerificationOtpScreenState extends State<VerificationOtpScreen> {
                         if (success == true) {
                           Navigator.pushNamedAndRemoveUntil(
                             context,
-                            AppRoutes.home,
+                            AppRoutes.mainLayout,
                             (route) => false,
                           );
                         } else {
@@ -106,11 +109,36 @@ class _VerificationOtpScreenState extends State<VerificationOtpScreen> {
                     ? SizedBox(
                         height: 20,
                         width: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                        ),
+                        child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : Text("verify"),
+              ),
+              Align(
+                alignment: Alignment.center,
+                child: RichText(
+                  text: TextSpan(
+                    style: Theme.of(context).textTheme.bodyMedium,
+                    children: [
+                      TextSpan(text: "Didn’t receive the code? "),
+                      TextSpan(
+                        text: "Resend",
+                        style: theme.textTheme.labelMedium!.copyWith(
+                          color: theme.colorScheme.primary,
+                          decorationColor: theme.colorScheme.primary,
+                        ),
+                        recognizer: TapGestureRecognizer()
+                          ..onTap = () {
+                          AuthApiService().reSendOtp(
+                            Provider.of<VerifyProvider>(
+                              context,
+                              listen: false,
+                            ).email!,
+                          );
+                          },
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ],
           ),

@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../data/services/auth_api_service.dart';
 import '../providers/verify_provider.dart';
+import '../widgets/auth_footer_text.dart';
 import '../widgets/custom_text_form.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -18,13 +19,25 @@ class RegisterScreen extends StatefulWidget {
 class _RegisterScreenState extends State<RegisterScreen> {
   bool isLoading = false;
 
+  final emailController = TextEditingController();
+  final passwordController = TextEditingController();
+  final confirmPasswordController = TextEditingController();
+  final nameController = TextEditingController();
+  final phoneController = TextEditingController();
+
+
+  @override
+  void dispose() {
+    emailController.dispose();
+    passwordController.dispose();
+    confirmPasswordController.dispose();
+    nameController.dispose();
+    phoneController.dispose();
+    super.dispose();
+  }
   @override
   Widget build(BuildContext context) {
-    final emailController = TextEditingController();
-    final passwordController = TextEditingController();
-    final confirmPasswordController = TextEditingController();
-    final nameController = TextEditingController();
-    final phoneController = TextEditingController();
+
 
     final theme = Theme.of(context);
     return Scaffold(
@@ -43,16 +56,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     width: 34,
                     decoration: BoxDecoration(
                       color: AppColors.primary,
-                      borderRadius: BorderRadiusGeometry.circular(16),
+                      borderRadius: BorderRadiusGeometry.circular(12),
                     ),
-                    child: Center(
-                      child: Text(
-                        "A",
-                        style: TextStyle(
-                          color: AppColors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(6.0),
+                      child: Image.asset("assets/images/logo.png"),
                     ),
                   ),
                   SizedBox(width: 5),
@@ -165,30 +173,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
               SizedBox(height: 1),
               Align(
                 alignment: Alignment.center,
-                child: RichText(
-                  text: TextSpan(
-                    style: Theme.of(context).textTheme.bodyMedium,
-                    children: [
-                      TextSpan(text: "Already have an account? ? "),
-                      TextSpan(
-                        text: "Login",
-                        style: theme.textTheme.labelMedium!.copyWith(
-                          color: theme.colorScheme.primary,
-                          decoration: TextDecoration.underline,
-                          decorationColor: theme.colorScheme.primary,
-                        ),
-                        recognizer: TapGestureRecognizer()
-                          ..onTap = () {
-                            Navigator.pushNamedAndRemoveUntil(
-                              context,
-                              AppRoutes.login,
-                              (route) => false,
-                            );
-                            // Navigator.pushNamed(context, AppRoutes.login, predicate)
-                          },
-                      ),
-                    ],
-                  ),
+                child: AuthFooterText(
+                  normalText: 'Already have an account? ',
+                  actionText: 'Login',
+                  onTap: () {
+                    Navigator.pushNamed(context, AppRoutes.login);
+                  },
                 ),
               ),
             ],

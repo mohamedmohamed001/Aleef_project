@@ -42,4 +42,24 @@ class AppTextStyles {
     fontWeight: FontWeight.bold,
     color: Colors.black,
   );
+  static const TextStyle hintAppbar= TextStyle(
+    fontSize: 14,
+    fontWeight: FontWeight.w300,
+    color: Colors.white,
+  );
+  static const TextStyle userNameAppbar= TextStyle(
+    fontSize: 24,
+    fontWeight: FontWeight.bold,
+    color: Colors.white,
+  );
+  static const TextStyle black16Bold = TextStyle(
+    fontSize: 16,
+    fontWeight: FontWeight.bold,
+    color: Colors.black,
+  );
+  static const TextStyle primary12Regular = TextStyle(
+    fontSize: 16,
+    fontWeight: FontWeight.w500,
+    color: AppColors.primary,
+  );
 }
