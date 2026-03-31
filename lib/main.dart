@@ -1,15 +1,21 @@
 import 'package:aleef/core/routing/app_routes.dart';
 import 'package:aleef/features/auth/presentation/pages/register_screen.dart';
 import 'package:aleef/features/auth/presentation/pages/verfication_otp_screen.dart';
+import 'package:aleef/features/store/presentation/pages/store_tab.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'app_startup_screen.dart';
+import 'core/services/service_locator.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/presentation/pages/login_screen.dart';
 import 'features/auth/presentation/providers/verify_provider.dart';
-import 'features/home/presentation/pages/home_screen.dart';
+import 'features/home/presentation/pages/home_tab.dart';
+import 'features/main_layout/presentation/pages/main_layout.dart';
+import 'features/profile/presentation/pages/edit_profile.dart';
 
 void main() {
+  setupServiceLocator();
   runApp(
     MultiProvider(
       providers: [
@@ -28,12 +34,14 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      home: LoginScreen(),
+      home: AppStartupScreen(),
       routes: {
         AppRoutes.register: (context) => RegisterScreen(),
         AppRoutes.login: (context) => LoginScreen(),
         AppRoutes.verificationOtp: (context) => VerificationOtpScreen(),
-        AppRoutes.home: (context) => HomeScreen(),
+        AppRoutes.home: (context) => HomeTab(),
+        AppRoutes.mainLayout: (context) => MainLayout(),
+        AppRoutes.editProfile: (context) => EditProfile(),
       },
     );
   }

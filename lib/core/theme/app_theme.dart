@@ -39,8 +39,8 @@ class AppTheme {
       fillColor: AppColors.inputFill,
       hintStyle: AppTextStyles.hint14Regular,
       contentPadding: const EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: 8,
+        horizontal: 10,
+        vertical: 10,
       ),
       prefixIconColor: AppColors.hint,
       suffixIconColor: AppColors.hint,
