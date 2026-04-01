@@ -18,4 +18,7 @@ class AppColors {
   static const Color error = Color(0xFFDC2626);
 
   static const Color shadow = Color(0x1A000000);
+  static const Color shopCard = Color(0xff8B5CF6);
 }
+
+

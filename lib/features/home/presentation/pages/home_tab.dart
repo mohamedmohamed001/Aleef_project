@@ -76,7 +76,10 @@ class _HomeTabState extends State<HomeTab> {
                   children: const [
                     DiscountCard(),
                     SizedBox(height: 24),
-                    QuickActionsSection(),
+                    Padding(
+                      padding: EdgeInsets.all(8.0),
+                      child: QuickActionsSection(),
+                    ),
                     SizedBox(height: 24),
                     UpcomingAppointmentCard(
                       doctorName: "Ahmed",

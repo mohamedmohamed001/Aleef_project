@@ -1,27 +1,21 @@
 import 'package:flutter/material.dart';
-import '../../../../core/theme/app_colors.dart';
 
 class QuickActionButton extends StatefulWidget {
   final String title;
   final IconData icon;
   final VoidCallback? onPressed;
-  final Color iconColor;
-
-  final Color? backgroundColor;
+  final List<Color> gradientColors;
   final double borderRadius;
-  final double height;
-  final EdgeInsetsGeometry padding;
+  // final EdgeInsetsGeometry padding;
 
   const QuickActionButton({
     super.key,
     required this.title,
     required this.icon,
+    required this.gradientColors,
     this.onPressed,
-    required this.iconColor,
-    this.backgroundColor,
-    this.borderRadius = 24,
-    this.height = 110,
-    this.padding = const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+    this.borderRadius = 28,
+    // this.padding = const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
   });
 
   @override
@@ -34,8 +28,8 @@ class _QuickActionButtonState extends State<QuickActionButton> {
   @override
   Widget build(BuildContext context) {
     return AnimatedScale(
-      scale: isPressed ? 0.96 : 1,
-      duration: const Duration(milliseconds: 150),
+      scale: isPressed ? 0.97 : 1,
+      duration: const Duration(milliseconds: 140),
       curve: Curves.easeInOut,
       child: Material(
         color: Colors.transparent,
@@ -47,53 +41,85 @@ class _QuickActionButtonState extends State<QuickActionButton> {
             setState(() => isPressed = value);
           },
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 150),
+            duration: const Duration(milliseconds: 180),
             curve: Curves.easeInOut,
-            height: widget.height,
-            padding: widget.padding,
+            // padding: widget.padding,
             decoration: BoxDecoration(
-              color: widget.backgroundColor ?? Colors.white,
               borderRadius: BorderRadius.circular(widget.borderRadius),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: widget.gradientColors,
+              ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(isPressed ? 0.03 : 0.07),
-                  blurRadius: isPressed ? 6 : 12,
-                  offset: Offset(0, isPressed ? 2 : 6),
+                  color: Colors.black.withOpacity(isPressed ? 0.10 : 0.14),
+                  blurRadius: isPressed ? 10 : 18,
+                  offset: Offset(0, isPressed ? 4 : 8),
                 ),
               ],
             ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 150),
-                  width: isPressed ? 50 : 52,
-                  height: isPressed ? 50 : 52,
-                  decoration: BoxDecoration(
-                    color: widget.iconColor.withOpacity(
-                      isPressed ? 0.18 : 0.10,
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final iconBoxSize = constraints.maxHeight * 0.32;
+
+                return Stack(
+                  children: [
+                    Positioned(
+                      top: -constraints.maxHeight * 0.12,
+                      right: -constraints.maxWidth * 0.10,
+                      child: Container(
+                        width: constraints.maxWidth * 0.38,
+                        height: constraints.maxWidth * 0.38,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white.withOpacity(0.10),
+                        ),
+                      ),
                     ),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    widget.icon,
-                    color: widget.iconColor,
-                    size: 28,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  widget.title,
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-              ],
+                    Padding(
+                      padding: const EdgeInsets.all(18.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            width: 52,
+                            height: 52,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.14),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Icon(
+                              widget.icon,
+                              color: Colors.white,
+                              size: 24,
+                            ),
+                          ),
+
+                          const SizedBox(height: 10),
+
+                          Expanded(
+                            child: Align(
+                              alignment: Alignment.bottomLeft,
+                              child: Text(
+                                widget.title,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                  height: 1.2,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
           ),
         ),
