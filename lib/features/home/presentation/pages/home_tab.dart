@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/services/secure_storage_service.dart';
 import '../../../../core/services/service_locator.dart';
 import '../../../../core/services/session_service.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../widgets/home_header.dart';
 import '../widgets/quick)action_section.dart';
 import '../widgets/recommended_doctors.dart';
@@ -73,15 +74,25 @@ class _HomeTabState extends State<HomeTab> {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
-                    DiscountCard(),
-                    SizedBox(height: 24),
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    const DiscountCard(),
+                    const SizedBox(height: 24),
                     Padding(
+                      padding: const EdgeInsets.only(left: 10),
+                      child: Text(
+                        "Quick Actions",
+                        style: AppTextStyles.black16Bold.copyWith(fontSize: 20),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    const Padding(
                       padding: EdgeInsets.all(8.0),
                       child: QuickActionsSection(),
                     ),
-                    SizedBox(height: 24),
-                    UpcomingAppointmentCard(
+
+                    const SizedBox(height: 24),
+                    const UpcomingAppointmentCard(
                       doctorName: "Ahmed",
                       specialty: "Cat Specialist",
                       date: "12/1",
@@ -89,10 +100,10 @@ class _HomeTabState extends State<HomeTab> {
                       petName: "Milo",
                       onViewDetails: _emptyCallback,
                     ),
-                    SizedBox(height: 24),
-                    SectionHeader(title: "Recommended Vets"),
-                    SizedBox(height: 12),
-                    RecommendedDoctors(),
+                    const SizedBox(height: 24),
+                    const SectionHeader(title: "Recommended Vets"),
+                    const SizedBox(height: 12),
+                    const RecommendedDoctors(),
                   ],
                 ),
               ),

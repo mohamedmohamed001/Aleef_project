@@ -6,7 +6,15 @@ import 'package:flutter_svg/flutter_svg.dart';
 class Assets {
   Assets._();
 
-  static const $AssetsImagesGen images = $AssetsImagesGen();
+  static const AssetGenImage cat = AssetGenImage('assets/images/cat.png');
+  static const AssetGenImage cat3d = AssetGenImage('assets/images/cat_3d.png');
+  static const $AssetsAssetsGen assets = $AssetsAssetsGen();
+}
+
+class $AssetsAssetsGen {
+  const $AssetsAssetsGen();
+
+  final $AssetsImagesGen images = const $AssetsImagesGen();
 }
 
 class $AssetsImagesGen {
@@ -21,10 +29,17 @@ class $AssetsImagesGen {
   final AssetGenImage backGroundLogin = const AssetGenImage(
     'assets/images/backGroundLogin.png',
   );
+  final AssetGenImage cat = const AssetGenImage('assets/images/cat.png');
+  final AssetGenImage cat3d = const AssetGenImage('assets/images/cat_3d.png');
   final AssetGenImage discountCard = const AssetGenImage(
     'assets/images/discountCard.png',
   );
   final AssetGenImage logo = const AssetGenImage('assets/images/logo.png');
+  final AssetGenImage logoNative = const AssetGenImage(
+    'assets/images/logo_native.png',
+  );
+  final AssetGenImage paw = const AssetGenImage('assets/images/paw.png');
+  final AssetGenImage paw2 = const AssetGenImage('assets/images/paw2.png');
   final AssetGenImage petHeader = const AssetGenImage(
     'assets/images/pet_header.png',
   );

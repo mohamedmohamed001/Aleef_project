@@ -4,45 +4,37 @@ import 'package:aleef/features/home/presentation/pages/home_tab.dart';
 import 'package:aleef/features/main_layout/presentation/widgets/bottom_nav_bar.dart';
 import 'package:aleef/features/profile/presentation/pages/profile_screen.dart';
 import 'package:aleef/features/store/presentation/pages/store_tab.dart';
+import 'package:aleef/providers/bottom_nav_provider.dart';
 import 'package:flutter/material.dart';
-final GlobalKey<ProfileTabState> _profileTabKey = GlobalKey<ProfileTabState>();
-class MainLayout extends StatefulWidget {
+import 'package:provider/provider.dart';
+
+final GlobalKey<ProfileTabState> profileTabKey = GlobalKey<ProfileTabState>();
+
+class MainLayout extends StatelessWidget {
   const MainLayout({super.key});
 
   @override
-  State<MainLayout> createState() => _MainLayoutState();
-}
+  Widget build(BuildContext context) {
+    final bottomNavProvider = context.watch<BottomNavProvider>();
 
-class _MainLayoutState extends State<MainLayout> {
-  int selectedIndex = 0;
-
-  late final List<Widget> tabs;
-
-  @override
-  void initState() {
-    super.initState();
-    tabs = [
-      HomeTab(),
-      const AppointmentsTab(),
+    final List<Widget> tabs = [
+      const HomeTab(),
+      const AppointmentTab(),
       const ChatTab(),
       const StoreTab(),
-      const ProfileTab(),
+      ProfileTab(key: profileTabKey),
     ];
-  }
 
-  void onNavItemTapped(int index) {
-    setState(() {
-      selectedIndex = index;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
-      body: tabs[selectedIndex],
+      body: IndexedStack(
+        index: bottomNavProvider.selectedIndex,
+        children: tabs,
+      ),
       bottomNavigationBar: BottomNavBar(
-        selectedIndex: selectedIndex,
-        onItemSelected: onNavItemTapped,
+        selectedIndex: bottomNavProvider.selectedIndex,
+        onItemSelected: (index) {
+          context.read<BottomNavProvider>().changeTab(index);
+        },
       ),
     );
   }

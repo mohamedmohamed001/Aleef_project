@@ -1,0 +1,121 @@
+import 'package:aleef/core/theme/app_colors.dart';
+import 'package:aleef/core/theme/app_text_styles.dart';
+import 'package:aleef/core/utils/app_assets.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+
+import 'appointment_header_section.dart';
+import 'appointment_info_item.dart';
+
+class AppointmentCard extends StatelessWidget {
+  final String doctorName;
+  final String specialty;
+  final String date;
+  final String time;
+  final String petName;
+  final String petType;
+  final String status;
+  final String imagePath;
+  final VoidCallback? onViewDetails;
+
+  const AppointmentCard({
+    super.key,
+    required this.doctorName,
+    required this.specialty,
+    required this.date,
+    required this.time,
+    required this.petName,
+    required this.petType,
+    this.status = "Confirmed",
+    this.imagePath = AppAssets.profilePhoto,
+    this.onViewDetails,
+  });
+
+  bool get _isConfirmed => status.toLowerCase() == "confirmed";
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          AppointmentHeaderSection(
+            doctorName: doctorName,
+            specialty: specialty,
+            status: status,
+            imagePath: imagePath,
+          ),
+
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: AppointmentInfoItem(
+                        icon: Icons.access_time_outlined,
+                        title: "Date & Time",
+                        mainText: date,
+                        subText: time,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: AppointmentInfoItem(
+                        icon: CupertinoIcons.paw,
+                        title: "Pet",
+                        mainText: petName,
+                        subText: petType,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 18),
+                SizedBox(
+                  width: double.infinity,
+                  height: 54,
+                  child: ElevatedButton(
+                    onPressed: onViewDetails,
+                    style: ElevatedButton.styleFrom(
+                      elevation: 0,
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          "View Details",
+                          style: AppTextStyles.title16SemiBold.copyWith(
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        const Icon(Icons.arrow_forward_rounded, size: 20),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

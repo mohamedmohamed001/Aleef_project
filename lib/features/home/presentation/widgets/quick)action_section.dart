@@ -1,5 +1,8 @@
 import 'package:aleef/features/home/presentation/widgets/quick_action_button.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../../../../providers/bottom_nav_provider.dart';
 
 class QuickActionsSection extends StatelessWidget {
   const QuickActionsSection({super.key});
@@ -15,6 +18,9 @@ class QuickActionsSection extends StatelessWidget {
       childAspectRatio: 1.05,
       children: [
         QuickActionButton(
+          onPressed: () {
+            context.read<BottomNavProvider>().changeTab(1);
+          } ,
           title: 'Book Appointment',
           icon: Icons.calendar_month_outlined,
           gradientColors: const [
@@ -23,6 +29,9 @@ class QuickActionsSection extends StatelessWidget {
           ],
         ),
         QuickActionButton(
+          onPressed: () {
+            context.read<BottomNavProvider>().changeTab(2);
+          } ,
           title: 'Chat with Doctor',
           icon: Icons.chat_bubble_outline,
           gradientColors: const [
@@ -31,6 +40,9 @@ class QuickActionsSection extends StatelessWidget {
           ],
         ),
         QuickActionButton(
+          onPressed: () {
+            context.read<BottomNavProvider>().changeTab(3);
+          } ,
           title: 'Shop Products',
           icon: Icons.shopping_bag_outlined,
           gradientColors: const [
