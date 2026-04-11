@@ -99,11 +99,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
               SizedBox(height: 1),
               CustomTextFormField(
-                obSecureText: true,
+                isPassword: true,
                 controller: passwordController,
                 hintText: "Enter your password",
                 iconPrefix: Icons.lock_outline,
-                iconSuffix: Icons.remove_red_eye_outlined,
+
                 keyboardType: TextInputType.visiblePassword,
               ),
               SizedBox(height: 1),
@@ -118,11 +118,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   }
                   return null;
                 },
-                obSecureText: true,
+                isPassword: true,
                 controller: confirmPasswordController,
                 hintText: "Confirm your password",
                 iconPrefix: Icons.lock_outline,
-                iconSuffix: Icons.remove_red_eye_outlined,
               ),
               SizedBox(height: 1),
               ElevatedButton(

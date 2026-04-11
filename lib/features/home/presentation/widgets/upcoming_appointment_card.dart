@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../../core/theme/app_colors.dart';
 
 class UpcomingAppointmentCard extends StatelessWidget {
@@ -23,15 +24,15 @@ class UpcomingAppointmentCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16.r),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(24.r),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
+            blurRadius: 12.r,
+            offset: Offset(0, 6.h),
           ),
         ],
       ),
@@ -40,34 +41,35 @@ class UpcomingAppointmentCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.calendar_month_rounded,
                 color: AppColors.primary,
-                size: 22,
+                size: 22.sp,
               ),
-              const SizedBox(width: 8),
-              const Text(
-                'Upcoming Appointment',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
+              SizedBox(width: 8.w),
+              Expanded(
+                child: Text(
+                  'Upcoming Appointment',
+                  style: TextStyle(
+                    fontSize: 15.sp,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
               ),
-              const Spacer(),
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 5,
+                padding: EdgeInsets.symmetric(
+                  horizontal: 10.w,
+                  vertical: 5.h,
                 ),
                 decoration: BoxDecoration(
                   color: AppColors.primary.withOpacity(0.10),
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(20.r),
                 ),
-                child: const Text(
+                child: Text(
                   'Confirmed',
                   style: TextStyle(
-                    fontSize: 11,
+                    fontSize: 10.sp,
                     fontWeight: FontWeight.w600,
                     color: AppColors.primary,
                   ),
@@ -75,24 +77,30 @@ class UpcomingAppointmentCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 14),
+
+          SizedBox(height: 14.h),
+
           Text(
             doctorName,
-            style: const TextStyle(
-              fontSize: 18,
+            style: TextStyle(
+              fontSize: 17.sp,
               fontWeight: FontWeight.w700,
               color: AppColors.textPrimary,
             ),
           ),
-          const SizedBox(height: 4),
+
+          SizedBox(height: 4.h),
+
           Text(
             specialty,
-            style: const TextStyle(
-              fontSize: 13,
+            style: TextStyle(
+              fontSize: 12.5.sp,
               color: AppColors.textSecondary,
             ),
           ),
-          const SizedBox(height: 14),
+
+          SizedBox(height: 14.h),
+
           Row(
             children: [
               Expanded(
@@ -102,7 +110,7 @@ class UpcomingAppointmentCard extends StatelessWidget {
                   value: petName,
                 ),
               ),
-              const SizedBox(width: 10),
+              SizedBox(width: 10.w),
               Expanded(
                 child: _InfoItem(
                   icon: Icons.calendar_today_outlined,
@@ -110,7 +118,7 @@ class UpcomingAppointmentCard extends StatelessWidget {
                   value: date,
                 ),
               ),
-              const SizedBox(width: 10),
+              SizedBox(width: 10.w),
               Expanded(
                 child: _InfoItem(
                   icon: Icons.access_time_rounded,
@@ -120,7 +128,9 @@ class UpcomingAppointmentCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+
+          SizedBox(height: 16.h),
+
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
@@ -128,15 +138,15 @@ class UpcomingAppointmentCard extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 elevation: 0,
-                padding: const EdgeInsets.symmetric(vertical: 14),
+                padding: EdgeInsets.symmetric(vertical: 14.h),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(18),
+                  borderRadius: BorderRadius.circular(18.r),
                 ),
               ),
-              child: const Text(
+              child: Text(
                 'View Details',
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: 13.sp,
                   fontWeight: FontWeight.w600,
                   color: Colors.white,
                 ),
@@ -163,28 +173,28 @@ class _InfoItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+      padding: EdgeInsets.symmetric(vertical: 10.h, horizontal: 10.w),
       decoration: BoxDecoration(
         color: const Color(0xFFF8F8F8),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(18.r),
       ),
       child: Column(
         children: [
-          Icon(icon, size: 18, color: AppColors.primary),
-          const SizedBox(height: 6),
+          Icon(icon, size: 18.sp, color: AppColors.primary),
+          SizedBox(height: 6.h),
           Text(
             title,
-            style: const TextStyle(
-              fontSize: 11,
+            style: TextStyle(
+              fontSize: 10.sp,
               color: AppColors.textSecondary,
             ),
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: 4.h),
           Text(
             value,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 12,
+            style: TextStyle(
+              fontSize: 11.5.sp,
               fontWeight: FontWeight.w600,
               color: AppColors.textPrimary,
             ),

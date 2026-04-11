@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'doctor_card.dart';
 
@@ -9,15 +10,14 @@ class RecommendedDoctors extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListView.separated(
       shrinkWrap: true,
-      physics: NeverScrollableScrollPhysics(),
+      physics: const NeverScrollableScrollPhysics(),
       itemCount: 3,
       separatorBuilder: (context, index) {
-        return SizedBox(height: 12);
+        return SizedBox(height: 12.h);
       },
       itemBuilder: (context, index) {
-        return DoctorCard();
+        return const DoctorCard();
       },
-    )
-      ;
+    );
   }
 }

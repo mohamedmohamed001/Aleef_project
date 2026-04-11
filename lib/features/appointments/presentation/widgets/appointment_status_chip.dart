@@ -1,5 +1,6 @@
 import 'package:aleef/core/theme/app_text_styles.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class AppointmentStatusChip extends StatelessWidget {
   final String status;
@@ -29,14 +30,24 @@ class AppointmentStatusChip extends StatelessWidget {
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      padding: EdgeInsets.symmetric(
+        horizontal: 12.w,
+        vertical: 6.h,
+      ),
+      constraints: BoxConstraints(
+        maxWidth: 110.w, // مهم جدًا عشان ميكسرش اللي حواليه
+      ),
       decoration: BoxDecoration(
         color: backgroundColor,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(20.r),
       ),
       child: Text(
         status,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        textAlign: TextAlign.center,
         style: AppTextStyles.primary12Regular.copyWith(
+          fontSize: 11.sp,
           color: textColor,
           fontWeight: FontWeight.w600,
         ),

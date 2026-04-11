@@ -1,64 +1,70 @@
 import 'package:flutter/material.dart';
+
 import 'app_colors.dart';
 
 class AppTextStyles {
-  static const TextStyle heading24Bold = TextStyle(
+  static TextStyle heading24Bold = const TextStyle(
     fontSize: 24,
     fontWeight: FontWeight.w700,
     color: AppColors.textPrimary,
   );
 
-  static const TextStyle title16SemiBold = TextStyle(
+  static TextStyle title16SemiBold = const TextStyle(
     fontSize: 16,
     fontWeight: FontWeight.w600,
     color: AppColors.textPrimary,
   );
 
-  static const TextStyle body14Regular = TextStyle(
+  static TextStyle body14Regular = const TextStyle(
     fontSize: 14,
     fontWeight: FontWeight.w400,
     color: AppColors.textSecondary,
   );
 
-  static const TextStyle label14Medium = TextStyle(
+  static TextStyle label14Medium = const TextStyle(
     fontSize: 14,
     fontWeight: FontWeight.w500,
     color: AppColors.textPrimary,
   );
 
-  static const TextStyle button16SemiBold = TextStyle(
+  static TextStyle button16SemiBold = const TextStyle(
     fontSize: 16,
     fontWeight: FontWeight.w600,
     color: AppColors.white,
   );
 
-  static final TextStyle hint14Regular = TextStyle(
+  static TextStyle hint14Regular = const TextStyle(
     fontSize: 14,
     fontWeight: FontWeight.w400,
     color: AppColors.hint,
   );
-  static const TextStyle titleLarge= TextStyle(
+
+  static TextStyle titleLarge = const TextStyle(
     fontSize: 24,
     fontWeight: FontWeight.bold,
     color: Colors.black,
   );
-  static const TextStyle hintAppbar= TextStyle(
+
+  static TextStyle hintAppbar = const TextStyle(
     fontSize: 14,
     fontWeight: FontWeight.w300,
     color: Colors.white,
   );
-  static const TextStyle userNameAppbar= TextStyle(
+
+  static TextStyle userNameAppbar = const TextStyle(
     fontSize: 24,
     fontWeight: FontWeight.bold,
     color: Colors.white,
   );
-  static const TextStyle black16Bold = TextStyle(
+
+  static TextStyle black16Bold = const TextStyle(
     fontSize: 16,
     fontWeight: FontWeight.bold,
     color: Colors.black,
   );
-  static const TextStyle primary12Regular = TextStyle(
-    fontSize: 16,
+
+  static TextStyle primary12Regular = const TextStyle(
+    fontSize: 12,
     fontWeight: FontWeight.w500,
     color: AppColors.primary,
   );

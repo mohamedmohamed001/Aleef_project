@@ -20,6 +20,15 @@ class $AssetsAssetsGen {
 class $AssetsImagesGen {
   const $AssetsImagesGen();
 
+  final AssetGenImage adjustablePetCollar = const AssetGenImage(
+    'assets/images/Adjustable Pet Collar.png',
+  );
+  final AssetGenImage interactivePetToy = const AssetGenImage(
+    'assets/images/Interactive Pet Toy.png',
+  );
+  final AssetGenImage premiumDogFood = const AssetGenImage(
+    'assets/images/Premium Dog Food.png',
+  );
   final AssetGenImage aleefLogo = const AssetGenImage(
     'assets/images/aleef_logo.png',
   );

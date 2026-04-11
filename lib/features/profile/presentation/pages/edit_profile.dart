@@ -1,5 +1,7 @@
 import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../../../core/services/image_picker_service.dart';
 import '../../../../core/services/secure_storage_service.dart';
@@ -7,6 +9,9 @@ import '../../../../core/services/service_locator.dart';
 import '../../../../core/services/session_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../services/profile_api.dart';
+import '../widgets/edit_profile/edit_profile_avatar_section.dart';
+import '../widgets/edit_profile/edit_profile_form_section.dart';
+import '../widgets/edit_profile/edit_profile_save_button.dart';
 
 class EditProfile extends StatefulWidget {
   const EditProfile({super.key});
@@ -19,8 +24,7 @@ class _EditProfileState extends State<EditProfile> {
   final TextEditingController _editName = TextEditingController();
   final TextEditingController _editPhone = TextEditingController();
 
-  final session = getIt<SessionService>();
-  late final user = session.currentUser;
+  final SessionService session = getIt<SessionService>();
 
   bool _isLoading = false;
   File? _selectedImage;
@@ -29,16 +33,19 @@ class _EditProfileState extends State<EditProfile> {
   void initState() {
     super.initState();
     _init();
+    _fillFromSession();
+  }
 
+  void _fillFromSession() {
+    final user = session.currentUser;
     if (user != null) {
-      _editName.text = user!.name;
-      _editPhone.text = user!.phone;
+      _editName.text = user.name;
+      _editPhone.text = user.phone;
     }
   }
 
   Future<void> _init() async {
     final storage = getIt<SecureStorageService>();
-    final session = getIt<SessionService>();
 
     final user = await storage.getUser();
     final token = await storage.getToken();
@@ -53,9 +60,10 @@ class _EditProfileState extends State<EditProfile> {
     if (!mounted) return;
 
     setState(() {
-      if (session.currentUser != null) {
-        _editName.text = session.currentUser!.name;
-        _editPhone.text = session.currentUser!.phone;
+      final currentUser = session.currentUser;
+      if (currentUser != null) {
+        _editName.text = currentUser.name;
+        _editPhone.text = currentUser.phone;
       }
     });
   }
@@ -78,17 +86,15 @@ class _EditProfileState extends State<EditProfile> {
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Error picking image: $e"),
-          backgroundColor: Colors.red,
-        ),
+      _showSnackBar(
+        message: "Error picking image: $e",
+        backgroundColor: Colors.red,
       );
     }
   }
 
-  void _showImageSourceSheet() {
-    showModalBottomSheet(
+  Future<void> _showImageSourceSheet() async {
+    await showModalBottomSheet<void>(
       context: context,
       builder: (bottomSheetContext) {
         return SafeArea(
@@ -125,7 +131,7 @@ class _EditProfileState extends State<EditProfile> {
       builder: (dialogContext) {
         return AlertDialog(
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(16.r),
           ),
           title: const Text("Remove Photo"),
           content: const Text(
@@ -159,11 +165,8 @@ class _EditProfileState extends State<EditProfile> {
         _selectedImage = null;
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Selected image removed"),
-          behavior: SnackBarBehavior.floating,
-        ),
+      _showSnackBar(
+        message: "Selected image removed",
       );
       return;
     }
@@ -177,20 +180,14 @@ class _EditProfileState extends State<EditProfile> {
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Profile picture removed"),
-          backgroundColor: Colors.green,
-          behavior: SnackBarBehavior.floating,
-        ),
+      _showSnackBar(
+        message: "Profile picture removed",
+        backgroundColor: Colors.green,
       );
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Failed to remove profile picture"),
-          backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-        ),
+      _showSnackBar(
+        message: "Failed to remove profile picture",
+        backgroundColor: Colors.red,
       );
     }
   }
@@ -217,29 +214,39 @@ class _EditProfileState extends State<EditProfile> {
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Profile updated successfully'),
-          backgroundColor: Colors.green,
-          duration: Duration(seconds: 2),
-          behavior: SnackBarBehavior.floating,
-          margin: EdgeInsets.all(10),
-        ),
+      _showSnackBar(
+        message: 'Profile updated successfully',
+        backgroundColor: Colors.green,
       );
 
       Navigator.pop(context, true);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Failed to update profile'),
-          backgroundColor: Colors.red,
-          duration: Duration(seconds: 2),
-          behavior: SnackBarBehavior.floating,
-          margin: EdgeInsets.all(10),
-        ),
+      _showSnackBar(
+        message: 'Failed to update profile',
+        backgroundColor: Colors.red,
       );
     }
-  }  @override
+  }
+
+  void _showSnackBar({
+    required String message,
+    Color? backgroundColor,
+  }) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: backgroundColor,
+        duration: const Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
+        margin: EdgeInsets.all(10.r),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12.r),
+        ),
+      ),
+    );
+  }
+
+  @override
   void dispose() {
     _editName.dispose();
     _editPhone.dispose();
@@ -248,7 +255,6 @@ class _EditProfileState extends State<EditProfile> {
 
   @override
   Widget build(BuildContext context) {
-    final session = getIt<SessionService>();
     final user = session.currentUser;
 
     return Scaffold(
@@ -265,165 +271,40 @@ class _EditProfileState extends State<EditProfile> {
             fontWeight: FontWeight.w700,
           ),
         ),
-        iconTheme: const IconThemeData(color: Color(0xFF1F2937)),
+        iconTheme: const IconThemeData(
+          color: Color(0xFF1F2937),
+        ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 8),
-              Center(
-                child: Column(
-                  children: [
-                    Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        Container(
-                          width: 122,
-                          height: 122,
-                          decoration: const BoxDecoration(
-                            shape: BoxShape.circle,
-                          ),
-                          child: CircleAvatar(
-                            radius: 56,
-                            backgroundImage: _selectedImage != null
-                                ? FileImage(_selectedImage!)
-                                : (user != null && user.profilePic.isNotEmpty
-                                ? NetworkImage(user.profilePic)
-                                : null),
-                            child: _selectedImage == null &&
-                                (user == null || user.profilePic.isEmpty)
-                                ? const Icon(Icons.person, size: 40)
-                                : null,
-                          ),
-                        ),
-                        Positioned(
-                          right: -2,
-                          bottom: 6,
-                          child: Material(
-                            color: Colors.transparent,
-                            child: InkWell(
-                              borderRadius: BorderRadius.circular(50),
-                              onTap: _showImageSourceSheet,
-                              child: Container(
-                                width: 38,
-                                height: 38,
-                                decoration: const BoxDecoration(
-                                  color: Color(0xFF2B8C84),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(
-                                  Icons.file_upload_outlined,
-                                  color: Colors.white,
-                                  size: 20,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 18),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        TextButton.icon(
-                          onPressed: _removeProfilePhoto,
-                          icon: const Icon(
-                            Icons.delete_outline,
-                            color: Color(0xFFFF5A5F),
-                            size: 20,
-                          ),
-                          label: const Text(
-                            'Remove',
-                            style: TextStyle(
-                              color: Color(0xFFFF5A5F),
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+              SizedBox(height: 8.h),
+
+              EditProfileAvatarSection(
+                selectedImage: _selectedImage,
+                profileImageUrl: user?.profilePic,
+                onPickImage: _showImageSourceSheet,
+                onRemoveImage: _removeProfilePhoto,
               ),
-              const SizedBox(height: 28),
-              const Text(
-                'Basic Information',
-                style: TextStyle(
-                  color: Color(0xFF111827),
-                  fontSize: 24,
-                  fontWeight: FontWeight.w700,
-                ),
+
+              SizedBox(height: 28.h),
+
+              EditProfileFormSection(
+                nameController: _editName,
+                phoneController: _editPhone,
               ),
-              const SizedBox(height: 22),
-              const Text(
-                'Full Name',
-                style: TextStyle(
-                  color: Color(0xFF111827),
-                  fontSize: 15,
-                  fontWeight: FontWeight.w500,
-                ),
+
+              SizedBox(height: 36.h),
+
+              EditProfileSaveButton(
+                isLoading: _isLoading,
+                onPressed: _isLoading ? null : _saveChanges,
               ),
-              const SizedBox(height: 10),
-              TextField(
-                controller: _editName,
-                decoration: const InputDecoration(
-                  hintText: 'Enter your full name',
-                ),
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                'Phone Number',
-                style: TextStyle(
-                  color: Color(0xFF111827),
-                  fontSize: 15,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              const SizedBox(height: 10),
-              TextField(
-                controller: _editPhone,
-                decoration: const InputDecoration(
-                  hintText: 'Enter your phone number',
-                ),
-              ),
-              const SizedBox(height: 36),
-              SizedBox(
-                width: double.infinity,
-                height: 58,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _saveChanges,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF2B8C84),
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                  ),
-                  child: _isLoading
-                      ? const SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2.5,
-                      color: Colors.white,
-                    ),
-                  )
-                      : const Text(
-                    'Save Changes',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 19,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
+
+              SizedBox(height: 20.h),
             ],
           ),
         ),

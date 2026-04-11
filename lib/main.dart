@@ -3,6 +3,7 @@ import 'package:aleef/features/auth/presentation/pages/register_screen.dart';
 import 'package:aleef/features/auth/presentation/pages/verfication_otp_screen.dart';
 import 'package:aleef/features/store/presentation/pages/store_tab.dart';
 import 'package:aleef/providers/bottom_nav_provider.dart';
+import 'package:aleef/providers/user_provider.dart';
 import 'package:aleef/test.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -17,6 +18,8 @@ import 'features/auth/presentation/providers/verify_provider.dart';
 import 'features/home/presentation/pages/home_tab.dart';
 import 'features/main_layout/presentation/pages/main_layout.dart';
 import 'features/profile/presentation/pages/edit_profile.dart';
+import 'features/store/presentation/pages/details_screen.dart';
+import 'features/store/services/store_provider.dart';
 
 void main() {
   setupServiceLocator();
@@ -25,6 +28,8 @@ void main() {
       providers: [
         ChangeNotifierProvider(create: (_) => VerifyProvider()),
         ChangeNotifierProvider(create: (_) => BottomNavProvider()),
+        ChangeNotifierProvider(create: (_) => StoreProvider()),
+        ChangeNotifierProvider(create: (_) => UserProvider()),
       ],
       child: MyApp(),
     ),
@@ -37,7 +42,8 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ScreenUtilInit(
-      designSize: Size(392, 853),
+      designSize: const Size(392, 853),
+        minTextAdapt: false,
       builder: (context, child) => MaterialApp(
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,

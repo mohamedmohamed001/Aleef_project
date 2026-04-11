@@ -110,11 +110,11 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 8),
                 CustomTextFormField(
+                  isPassword: true,
                   controller: passwordController,
                   hintText: "Enter your password",
                   iconPrefix: Icons.lock_outline,
-                  iconSuffix: Icons.remove_red_eye_outlined,
-                  obSecureText: true,
+
                   keyboardType: TextInputType.visiblePassword,
                 ),
 

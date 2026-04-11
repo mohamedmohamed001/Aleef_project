@@ -1,5 +1,6 @@
 import 'package:aleef/core/theme/app_text_styles.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/app_assets.dart';
@@ -11,23 +12,33 @@ class DiscountCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       width: double.infinity,
-      height: 160,
+      height: 160.h,
       child: Stack(
         alignment: Alignment.center,
         children: [
           Container(
             width: double.infinity,
-            height: 150,
+            height: 150.h,
             decoration: BoxDecoration(
               color: AppColors.primary,
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: BorderRadius.circular(24.r),
             ),
           ),
-          Positioned(right:-20,
-              left: 30,
-              child: Image.asset(AppAssets.discountCard,width: 200,height: 250,)),
+          Positioned(
+            right: -20.w,
+            left: 30.w,
+            child: Image.asset(
+              AppAssets.discountCard,
+              width: 200.w,
+              height: 250.h,
+              fit: BoxFit.contain,
+            ),
+          ),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            padding: EdgeInsets.symmetric(
+              horizontal: 12.w,
+              vertical: 10.h,
+            ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -42,7 +53,7 @@ class DiscountCard extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  "20% off ",
+                  "20% off",
                   style: AppTextStyles.titleLarge.copyWith(
                     color: AppColors.white,
                   ),
@@ -57,14 +68,22 @@ class DiscountCard extends StatelessWidget {
                   style: ElevatedButton.styleFrom(
                     foregroundColor: AppColors.primary,
                     elevation: 0,
-                    minimumSize: Size(100, 38),
+                    minimumSize: Size(100.w, 38.h),
                     backgroundColor: AppColors.white,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(24),
+                      borderRadius: BorderRadius.circular(24.r),
                     ),
-                  )
-                ,onPressed: () {
-                }, child: Text("Shop Now")),
+                    padding: EdgeInsets.symmetric(horizontal: 14.w),
+                  ),
+                  onPressed: () {},
+                  child: Text(
+                    "Shop Now",
+                    style: TextStyle(
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
               ],
             ),
           ),

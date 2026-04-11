@@ -1,5 +1,6 @@
 import 'package:aleef/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class BottomNavBar extends StatelessWidget {
@@ -15,18 +16,18 @@ class BottomNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      minimum: const EdgeInsets.symmetric(horizontal: 16),
+      minimum: EdgeInsets.symmetric(horizontal: 16.w),
       child: Container(
-        height: 72,
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        height: 74.h,
+        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(38),
-          boxShadow: const [
+          borderRadius: BorderRadius.circular(38.r),
+          boxShadow: [
             BoxShadow(
               color: Colors.black12,
-              blurRadius: 18,
-              offset: Offset(0, 6),
+              blurRadius: 18.r,
+              offset: Offset(0, 6.h),
             ),
           ],
         ),
@@ -39,7 +40,7 @@ class BottomNavBar extends StatelessWidget {
               onTap: onItemSelected,
               iconBuilder: (isSelected) => FaIcon(
                 FontAwesomeIcons.house,
-                size: 18,
+                size: 18.sp,
                 color: isSelected ? Colors.white : const Color(0xFF8D8D8D),
               ),
             ),
@@ -50,7 +51,7 @@ class BottomNavBar extends StatelessWidget {
               onTap: onItemSelected,
               iconBuilder: (isSelected) => FaIcon(
                 FontAwesomeIcons.calendarDays,
-                size: 18,
+                size: 18.sp,
                 color: isSelected ? Colors.white : const Color(0xFF8D8D8D),
               ),
             ),
@@ -61,7 +62,7 @@ class BottomNavBar extends StatelessWidget {
               onTap: onItemSelected,
               iconBuilder: (isSelected) => FaIcon(
                 FontAwesomeIcons.comment,
-                size: 18,
+                size: 18.sp,
                 color: isSelected ? Colors.white : const Color(0xFF8D8D8D),
               ),
             ),
@@ -72,7 +73,7 @@ class BottomNavBar extends StatelessWidget {
               onTap: onItemSelected,
               iconBuilder: (isSelected) => FaIcon(
                 FontAwesomeIcons.bagShopping,
-                size: 18,
+                size: 18.sp,
                 color: isSelected ? Colors.white : const Color(0xFF8D8D8D),
               ),
             ),
@@ -83,7 +84,7 @@ class BottomNavBar extends StatelessWidget {
               onTap: onItemSelected,
               iconBuilder: (isSelected) => FaIcon(
                 FontAwesomeIcons.paw,
-                size: 18,
+                size: 18.sp,
                 color: isSelected ? Colors.white : const Color(0xFF8D8D8D),
               ),
             ),
@@ -124,8 +125,8 @@ class _NavBarItem extends StatelessWidget {
             AnimatedContainer(
               duration: const Duration(milliseconds: 220),
               curve: Curves.easeInOut,
-              width: isSelected ? 44 : 40,
-              height: isSelected ? 44 : 40,
+              width: isSelected ? 42.r : 38.r,
+              height: isSelected ? 42.r : 38.r,
               decoration: BoxDecoration(
                 color: isSelected ? AppColors.primary : Colors.transparent,
                 shape: BoxShape.circle,
@@ -134,19 +135,25 @@ class _NavBarItem extends StatelessWidget {
                 child: iconBuilder(isSelected),
               ),
             ),
-            const SizedBox(height: 3),
-            Text(
-              title,
-              maxLines: 1,
-              softWrap: false,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 9,
-                height: 1,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                color: isSelected
-                    ? AppColors.primary
-                    : const Color(0xFF8D8D8D),
+            SizedBox(height: 2.h),
+            Flexible(
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 2.w),
+                child: Text(
+                  title,
+                  maxLines: 1,
+                  softWrap: false,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 8.5.sp,
+                    height: 1,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                    color: isSelected
+                        ? AppColors.primary
+                        : const Color(0xFF8D8D8D),
+                  ),
+                ),
               ),
             ),
           ],

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/utils/app_assets.dart';
 import '../../../auth/presentation/widgets/custom_text_form.dart';
 import 'notification_button.dart';
 
-class HomeHeader extends StatelessWidget {
+class HomeHeader extends StatefulWidget {
   final String? userName;
   final String? profilePic;
   final TextEditingController searchController;
@@ -18,35 +18,46 @@ class HomeHeader extends StatelessWidget {
   });
 
   @override
+  State<HomeHeader> createState() => _HomeHeaderState();
+}
+
+class _HomeHeaderState extends State<HomeHeader> {
+  @override
   Widget build(BuildContext context) {
-    final firstName = (userName != null && userName!.trim().isNotEmpty)
-        ? userName!.trim().split(' ').first
+    final firstName =
+    (widget.userName != null && widget.userName!.trim().isNotEmpty)
+        ? widget.userName!.trim().split(' ').first[0].toUpperCase() +
+        widget.userName!.trim().split(' ').first.substring(1)
         : 'Guest';
 
-    final ImageProvider profileImage =
-    (profilePic != null && profilePic!.trim().isNotEmpty)
-        ? NetworkImage(profilePic!)
-        : const AssetImage(AppAssets.profilePhoto);
+    final ImageProvider? profileImage =
+    (widget.profilePic != null && widget.profilePic!.trim().isNotEmpty)
+        ? NetworkImage(widget.profilePic!)
+        : null;
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 22),
-      decoration: const BoxDecoration(
+      padding: EdgeInsets.fromLTRB(
+        16.w,
+        14.h,
+        16.w,
+        22.h,
+      ),
+      decoration: BoxDecoration(
         color: AppColors.primary,
         borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(30),
-          bottomRight: Radius.circular(30),
+          bottomLeft: Radius.circular(30.r),
+          bottomRight: Radius.circular(30.r),
         ),
       ),
       child: Stack(
         children: [
-          /// decorative circles
           Positioned(
-            top: -35,
-            right: -25,
+            top: -35.h,
+            right: -25.w,
             child: Container(
-              width: 120,
-              height: 120,
+              width: 120.w,
+              height: 120.w,
               decoration: BoxDecoration(
                 color: Colors.white.withOpacity(0.08),
                 shape: BoxShape.circle,
@@ -54,47 +65,52 @@ class HomeHeader extends StatelessWidget {
             ),
           ),
           Positioned(
-            bottom: 20,
-            left: -30,
+            bottom: 20.h,
+            left: -30.w,
             child: Container(
-              width: 90,
-              height: 90,
+              width: 90.w,
+              height: 90.w,
               decoration: BoxDecoration(
                 color: Colors.white.withOpacity(0.05),
                 shape: BoxShape.circle,
               ),
             ),
           ),
-
           Column(
             children: [
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(2),
+                    padding: EdgeInsets.all(2.r),
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       border: Border.all(
                         color: Colors.white.withOpacity(0.25),
-                        width: 1.2,
+                        width: 1.2.w,
                       ),
                     ),
                     child: CircleAvatar(
-                      radius: 24,
+                      radius: 24.r,
                       backgroundColor: Colors.white.withOpacity(0.18),
                       backgroundImage: profileImage,
+                      child: profileImage == null
+                          ? Icon(
+                        Icons.person,
+                        color: Colors.white,
+                        size: 26.sp,
+                      )
+                          : null,
                     ),
                   ),
-                  const SizedBox(width: 12),
-
+                  SizedBox(width: 12.w),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           "Hi, $firstName 👋",
-                          style: const TextStyle(
-                            fontSize: 20,
+                          style: TextStyle(
+                            fontSize: 20.sp,
                             fontWeight: FontWeight.w700,
                             color: Colors.white,
                             height: 1.2,
@@ -102,11 +118,11 @@ class HomeHeader extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 4),
+                        SizedBox(height: 4.h),
                         Text(
                           "How is your pet today?",
                           style: TextStyle(
-                            fontSize: 13,
+                            fontSize: 13.sp,
                             fontWeight: FontWeight.w400,
                             color: Colors.white.withOpacity(0.82),
                           ),
@@ -116,23 +132,20 @@ class HomeHeader extends StatelessWidget {
                       ],
                     ),
                   ),
-
-                  const SizedBox(width: 12),
+                  SizedBox(width: 12.w),
                   const NotificationButton(),
                 ],
               ),
-
-              const SizedBox(height: 18),
-
+              SizedBox(height: 18.h),
               Container(
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(26),
+                  borderRadius: BorderRadius.circular(26.r),
                 ),
                 child: CustomTextFormField(
-                  borderRadius: BorderRadius.circular(24),
+                  borderRadius: BorderRadius.circular(24.r),
                   iconPrefix: Icons.search,
-                  controller: searchController,
+                  controller: widget.searchController,
                   hintText: 'Search services, doctors, products...',
                 ),
               ),

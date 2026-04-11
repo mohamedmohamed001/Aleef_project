@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'app_colors.dart';
 import 'app_text_styles.dart';
 
@@ -15,19 +17,19 @@ class AppTheme {
       error: AppColors.error,
     ),
 
-    appBarTheme: const AppBarTheme(
+    appBarTheme: AppBarTheme(
       backgroundColor: AppColors.scaffoldBackground,
       elevation: 0,
       centerTitle: true,
-      iconTheme: IconThemeData(color: AppColors.textPrimary),
+      iconTheme: const IconThemeData(color: AppColors.textPrimary),
       titleTextStyle: TextStyle(
-        fontSize: 20,
+        fontSize: 20.sp,
         fontWeight: FontWeight.w600,
         color: AppColors.textPrimary,
       ),
     ),
 
-    textTheme: const TextTheme(
+    textTheme: TextTheme(
       headlineLarge: AppTextStyles.heading24Bold,
       titleMedium: AppTextStyles.title16SemiBold,
       bodyMedium: AppTextStyles.body14Regular,
@@ -38,42 +40,43 @@ class AppTheme {
       filled: true,
       fillColor: AppColors.inputFill,
       hintStyle: AppTextStyles.hint14Regular,
-      contentPadding: const EdgeInsets.symmetric(
-        horizontal: 10,
-        vertical: 10,
+      contentPadding: EdgeInsets.symmetric(
+        horizontal: 10.w,
+        vertical: 10.h,
       ),
       prefixIconColor: AppColors.hint,
       suffixIconColor: AppColors.hint,
+
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(14.r),
         borderSide: const BorderSide(
           color: AppColors.border,
           width: 1,
         ),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(14.r),
         borderSide: const BorderSide(
           color: AppColors.border,
           width: 1,
         ),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(14.r),
         borderSide: const BorderSide(
           color: AppColors.primary,
           width: 1.3,
         ),
       ),
       errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(14.r),
         borderSide: const BorderSide(
           color: AppColors.error,
           width: 1,
         ),
       ),
       focusedErrorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(14.r),
         borderSide: const BorderSide(
           color: AppColors.error,
           width: 1.3,
@@ -88,9 +91,9 @@ class AppTheme {
         backgroundColor: AppColors.primary,
         foregroundColor: AppColors.white,
         elevation: 0,
-        minimumSize: const Size(double.infinity, 56),
+        minimumSize: Size(double.infinity, 56.h),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(16.r),
         ),
         textStyle: AppTextStyles.button16SemiBold,
       ),
@@ -99,8 +102,8 @@ class AppTheme {
     textButtonTheme: TextButtonThemeData(
       style: TextButton.styleFrom(
         foregroundColor: AppColors.primary,
-        textStyle: const TextStyle(
-          fontSize: 14,
+        textStyle: TextStyle(
+          fontSize: 14.sp,
           fontWeight: FontWeight.w500,
         ),
       ),
@@ -110,7 +113,7 @@ class AppTheme {
       color: AppColors.white,
       elevation: 0,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(20.r),
       ),
     ),
 

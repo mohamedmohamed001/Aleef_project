@@ -4,25 +4,24 @@ import '../../../../core/theme/app_colors.dart';
 
 typedef Validator = String? Function(String?);
 
-class CustomTextFormField extends StatelessWidget {
+class CustomTextFormField extends StatefulWidget {
   final Validator? validator;
   final TextEditingController controller;
-  final bool? obSecureText;
   final IconData? iconPrefix;
   final String? labelText;
-  final IconData? iconSuffix;
+  final Widget? iconSuffix;
   final int? maxLines;
   final TextAlign? textAlign;
   final String? hintText;
   final TextInputType? keyboardType;
   final Color? color;
   final BorderRadius? borderRadius;
+  final bool isPassword;
 
   const CustomTextFormField({
     super.key,
     required this.controller,
 
-    this.obSecureText,
     this.iconPrefix,
     this.labelText,
     this.iconSuffix,
@@ -34,40 +33,66 @@ class CustomTextFormField extends StatelessWidget {
     this.keyboardType,
     this.color,
     this.borderRadius,
+    this.isPassword = false,
   });
+
+  @override
+  State<CustomTextFormField> createState() => _CustomTextFormFieldState();
+}
+
+class _CustomTextFormFieldState extends State<CustomTextFormField> {
+  late bool _obSecureText;
+
+  @override
+  void initState() {
+    super.initState();
+    _obSecureText = widget.isPassword;
+  }
 
   @override
   Widget build(BuildContext context) {
     return TextFormField(
-      validator: validator,
+      validator: widget.validator,
       // textAlignVertical: TextAlignVertical.top,
-      maxLines: maxLines,
-      controller: controller,
+      maxLines: widget.maxLines,
+      controller: widget.controller,
       // textAlign: TextAlign.start,
       autovalidateMode: AutovalidateMode.onUserInteraction,
-      obscureText: obSecureText ?? false,
-      textAlign: textAlign ?? TextAlign.start,
-      keyboardType: keyboardType,
+      obscureText: _obSecureText ?? false,
+      textAlign: widget.textAlign ?? TextAlign.start,
+      keyboardType: widget.keyboardType,
       decoration: InputDecoration(
-        filled: color != null ? true : null,
-        fillColor: color,
+        filled: widget.color != null ? true : null,
+        fillColor: widget.color,
 
-        hintText: hintText,
+        hintText: widget.hintText,
 
-        prefixIcon: iconPrefix != null ? Icon(iconPrefix) : null,
-        labelText: labelText,
-        suffixIcon: iconSuffix != null ? Icon(iconSuffix) : null,
+        prefixIcon: widget.iconPrefix != null ? Icon(widget.iconPrefix) : null,
+        labelText: widget.labelText,
+        suffixIcon: widget.isPassword
+            ? IconButton(
+          icon: Icon(
+            _obSecureText ? Icons.visibility_off : Icons.visibility,
+            color: AppColors.hint ,
+          ),
+          onPressed: () {
+            setState(() {
+              _obSecureText = !_obSecureText;
+            });
+          },
+        )
+            : widget.iconSuffix,
 
-        enabledBorder: borderRadius != null
+        enabledBorder: widget.borderRadius != null
             ? OutlineInputBorder(
-                borderRadius: borderRadius!,
+                borderRadius: widget.borderRadius!,
                 borderSide: const BorderSide(color: AppColors.border, width: 1),
               )
             : null,
 
-        focusedBorder: borderRadius != null
+        focusedBorder: widget.borderRadius != null
             ? OutlineInputBorder(
-                borderRadius: borderRadius!,
+                borderRadius: widget.borderRadius!,
                 borderSide: const BorderSide(
                   color: AppColors.primary,
                   width: 1.3,
@@ -75,16 +100,16 @@ class CustomTextFormField extends StatelessWidget {
               )
             : null,
 
-        errorBorder: borderRadius != null
+        errorBorder: widget.borderRadius != null
             ? OutlineInputBorder(
-                borderRadius: borderRadius!,
+                borderRadius: widget.borderRadius!,
                 borderSide: const BorderSide(color: AppColors.error, width: 1),
               )
             : null,
 
-        focusedErrorBorder: borderRadius != null
+        focusedErrorBorder: widget.borderRadius != null
             ? OutlineInputBorder(
-                borderRadius: borderRadius!,
+                borderRadius: widget.borderRadius!,
                 borderSide: const BorderSide(
                   color: AppColors.error,
                   width: 1.3,

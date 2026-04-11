@@ -1,6 +1,8 @@
 import 'package:aleef/features/home/presentation/widgets/discount_card.dart';
 import 'package:aleef/features/home/presentation/widgets/upcoming_appointment_card.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import '../../../../core/services/secure_storage_service.dart';
 import '../../../../core/services/service_locator.dart';
 import '../../../../core/services/session_service.dart';
@@ -19,17 +21,18 @@ class HomeTab extends StatefulWidget {
 
 class _HomeTabState extends State<HomeTab> {
   late final TextEditingController searchController;
+  late final SessionService session;
 
   @override
   void initState() {
     super.initState();
     searchController = TextEditingController();
+    session = getIt<SessionService>();
     _init();
   }
 
   Future<void> _init() async {
     final storage = getIt<SecureStorageService>();
-    final session = getIt<SessionService>();
 
     final user = await storage.getUser();
     final token = await storage.getToken();
@@ -54,7 +57,6 @@ class _HomeTabState extends State<HomeTab> {
 
   @override
   Widget build(BuildContext context) {
-    final session = getIt<SessionService>();
     final user = session.currentUser;
 
     return Scaffold(
@@ -65,33 +67,34 @@ class _HomeTabState extends State<HomeTab> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               HomeHeader(
-                userName: user?.name,
+                userName: user?.name ?? "Guest",
                 profilePic: user?.profilePic,
                 searchController: searchController,
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: 20.h),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: EdgeInsets.symmetric(horizontal: 16.w),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: [
                     const DiscountCard(),
-                    const SizedBox(height: 24),
+                    SizedBox(height: 24.h),
                     Padding(
-                      padding: const EdgeInsets.only(left: 10),
+                      padding: EdgeInsets.only(left: 10.w),
                       child: Text(
                         "Quick Actions",
-                        style: AppTextStyles.black16Bold.copyWith(fontSize: 20),
+                        style: AppTextStyles.black16Bold.copyWith(
+                          fontSize: 20.sp,
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 24),
-                    const Padding(
-                      padding: EdgeInsets.all(8.0),
-                      child: QuickActionsSection(),
+                    SizedBox(height: 24.h),
+                    Padding(
+                      padding: EdgeInsets.all(8.r),
+                      child: const QuickActionsSection(),
                     ),
-
-                    const SizedBox(height: 24),
+                    SizedBox(height: 24.h),
                     const UpcomingAppointmentCard(
                       doctorName: "Ahmed",
                       specialty: "Cat Specialist",
@@ -100,10 +103,11 @@ class _HomeTabState extends State<HomeTab> {
                       petName: "Milo",
                       onViewDetails: _emptyCallback,
                     ),
-                    const SizedBox(height: 24),
+                    SizedBox(height: 24.h),
                     const SectionHeader(title: "Recommended Vets"),
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12.h),
                     const RecommendedDoctors(),
+                    SizedBox(height: 12.h),
                   ],
                 ),
               ),

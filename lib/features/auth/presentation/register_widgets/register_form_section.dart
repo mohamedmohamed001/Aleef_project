@@ -4,7 +4,6 @@ import '../widgets/auth_primary_button.dart';
 import '../widgets/custom_text_form.dart';
 import 'auth_field_label.dart';
 
-
 class RegisterFormSection extends StatelessWidget {
   final TextEditingController nameController;
   final TextEditingController emailController;
@@ -69,8 +68,7 @@ class RegisterFormSection extends StatelessWidget {
           controller: passwordController,
           hintText: "Enter your password",
           iconPrefix: Icons.lock_outline,
-          iconSuffix: Icons.remove_red_eye_outlined,
-          obSecureText: true,
+          isPassword: true,
           keyboardType: TextInputType.visiblePassword,
         ),
 
@@ -82,8 +80,8 @@ class RegisterFormSection extends StatelessWidget {
           controller: confirmPasswordController,
           hintText: "Confirm your password",
           iconPrefix: Icons.lock_outline,
-          iconSuffix: Icons.remove_red_eye_outlined,
-          obSecureText: true,
+
+          isPassword: true,
           keyboardType: TextInputType.visiblePassword,
         ),
 

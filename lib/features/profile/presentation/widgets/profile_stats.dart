@@ -1,79 +1,91 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../../../core/theme/app_text_styles.dart';
 
 class ProfileStats extends StatelessWidget {
   const ProfileStats({super.key});
 
-
-
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+      padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 20.w),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.6),
-        borderRadius: BorderRadius.circular(30),
+        borderRadius: BorderRadius.circular(30.r),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
-            blurRadius: 20,
-            offset: Offset(0, 10),
+            blurRadius: 20.r,
+            offset: Offset(0, 10.h),
           ),
         ],
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Column(
-            children: [
-              Text(
-                "2",
-                style: AppTextStyles.primary12Regular.copyWith(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 24,
-                ),
-              ),
-              Text("pets", style: AppTextStyles.hint14Regular),
-            ],
+          const Expanded(
+            child: _StatItem(
+              value: "2",
+              label: "Pets",
+            ),
           ),
-          Container(
-            width: 1,
-            height: 40,
-            color: Colors.grey,
+          _buildDivider(),
+          const Expanded(
+            child: _StatItem(
+              value: "2",
+              label: "Orders",
+            ),
           ),
-          Column(
-            children: [
-              Text(
-                "2",
-                style: AppTextStyles.primary12Regular.copyWith(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 24,
-                ),
-              ),
-              Text("pets", style: AppTextStyles.hint14Regular),
-            ],
-          ),
-          Container(
-            width: 1,
-            height: 40,
-            color: Colors.grey,
-          ),
-          Column(
-            children: [
-              Text(
-                "2",
-                style: AppTextStyles.primary12Regular.copyWith(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 24,
-                ),
-              ),
-              Text("pets", style: AppTextStyles.hint14Regular),
-            ],
+          _buildDivider(),
+          const Expanded(
+            child: _StatItem(
+              value: "2",
+              label: "Visits",
+            ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildDivider() {
+    return Container(
+      width: 1.w,
+      height: 40.h,
+      color: Colors.grey.shade300,
+    );
+  }
+}
+
+class _StatItem extends StatelessWidget {
+  final String value;
+  final String label;
+
+  const _StatItem({
+    required this.value,
+    required this.label,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Text(
+          value,
+          style: AppTextStyles.primary12Regular.copyWith(
+            fontWeight: FontWeight.bold,
+            fontSize: 24,
+          ),
+        ),
+        SizedBox(height: 4.h),
+        Text(
+          label,
+          style: AppTextStyles.hint14Regular.copyWith(
+            fontSize: 13,
+          ),
+        ),
+      ],
     );
   }
 }

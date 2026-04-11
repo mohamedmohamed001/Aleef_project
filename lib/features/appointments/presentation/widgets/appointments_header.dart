@@ -1,6 +1,7 @@
 import 'package:aleef/core/theme/app_colors.dart';
 import 'package:aleef/core/theme/app_text_styles.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class AppointmentsHeader extends StatelessWidget {
   final int notificationCount;
@@ -18,15 +19,14 @@ class AppointmentsHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(16, 20, 16, 18),
+      padding: EdgeInsets.fromLTRB(16.w, 20.h, 16.w, 18.h),
       color: const Color(0xFFF7F8FA),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          /// 🔹 LEFT TEXT
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.only(top: 6),
+              padding: EdgeInsets.only(top: 6.h),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -35,16 +35,18 @@ class AppointmentsHeader extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: AppTextStyles.title16SemiBold.copyWith(
-                      fontSize: 20,
+                      fontSize: 20.sp,
                       fontWeight: FontWeight.w800,
                       color: const Color(0xFF0F172A),
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8.h),
                   Text(
                     "Manage your vet visits",
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: AppTextStyles.body14Regular.copyWith(
-                      fontSize: 14,
+                      fontSize: 14.sp,
                       color: const Color(0xFF667085),
                     ),
                   ),
@@ -53,42 +55,47 @@ class AppointmentsHeader extends StatelessWidget {
             ),
           ),
 
-          const SizedBox(width: 12),
+          SizedBox(width: 12.w),
 
-          /// 🔔 NOTIFICATION BUTTON
           InkWell(
             onTap: onNotificationTap,
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(18.r),
             child: Container(
-              width: 36,
-              height: 36,
+              width: 36.r,
+              height: 36.r,
               decoration: BoxDecoration(
                 color: const Color(0xFFEFF4F4),
-                borderRadius: BorderRadius.circular(18),
+                borderRadius: BorderRadius.circular(18.r),
               ),
               child: Stack(
                 clipBehavior: Clip.none,
                 children: [
-                  const Center(
+                  Center(
                     child: Icon(
                       Icons.notifications_none_rounded,
                       color: AppColors.primary,
-                      size: 28,
+                      size: 24.sp,
                     ),
                   ),
                   if (notificationCount > 0)
                     Positioned(
-                      top: -10,
-                      right: -8,
+                      top: -8.h,
+                      right: -6.w,
                       child: Container(
-                        width: 24,
-                        height: 24,
+                        constraints: BoxConstraints(
+                          minWidth: 20.r,
+                          minHeight: 20.r,
+                        ),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 4.w,
+                          vertical: 2.h,
+                        ),
                         decoration: BoxDecoration(
                           color: const Color(0xFFFF3B30),
                           shape: BoxShape.circle,
                           border: Border.all(
                             color: const Color(0xFFF7F8FA),
-                            width: 2.5,
+                            width: 2.w,
                           ),
                         ),
                         alignment: Alignment.center,
@@ -96,7 +103,7 @@ class AppointmentsHeader extends StatelessWidget {
                           '$notificationCount',
                           style: AppTextStyles.title16SemiBold.copyWith(
                             color: Colors.white,
-                            fontSize: 15,
+                            fontSize: 11.sp,
                             fontWeight: FontWeight.w800,
                           ),
                         ),
@@ -107,25 +114,24 @@ class AppointmentsHeader extends StatelessWidget {
             ),
           ),
 
-          const SizedBox(width: 10),
+          SizedBox(width: 10.w),
 
-          /// 🟢 PREVIOUS BUTTON
           InkWell(
             onTap: onPreviousTap,
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(18.r),
             child: Container(
-              height: 41,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              height: 41.h,
+              padding: EdgeInsets.symmetric(horizontal: 16.w),
               decoration: BoxDecoration(
                 color: const Color(0xFFEFF4F4),
-                borderRadius: BorderRadius.circular(18),
+                borderRadius: BorderRadius.circular(18.r),
               ),
               alignment: Alignment.center,
               child: Text(
                 "Previous",
                 style: AppTextStyles.title16SemiBold.copyWith(
                   color: AppColors.primary,
-                  fontSize: 16,
+                  fontSize: 14.sp,
                   fontWeight: FontWeight.w700,
                 ),
               ),

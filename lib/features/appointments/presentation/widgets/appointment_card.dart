@@ -3,6 +3,7 @@ import 'package:aleef/core/theme/app_text_styles.dart';
 import 'package:aleef/core/utils/app_assets.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'appointment_header_section.dart';
 import 'appointment_info_item.dart';
@@ -31,20 +32,18 @@ class AppointmentCard extends StatelessWidget {
     this.onViewDetails,
   });
 
-  bool get _isConfirmed => status.toLowerCase() == "confirmed";
-
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
         color: AppColors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(24.r),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.06),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
+            blurRadius: 18.r,
+            offset: Offset(0, 8.h),
           ),
         ],
       ),
@@ -56,9 +55,8 @@ class AppointmentCard extends StatelessWidget {
             status: status,
             imagePath: imagePath,
           ),
-
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
+            padding: EdgeInsets.fromLTRB(16.w, 18.h, 16.w, 16.h),
             child: Column(
               children: [
                 Row(
@@ -71,7 +69,7 @@ class AppointmentCard extends StatelessWidget {
                         subText: time,
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    SizedBox(width: 12.w),
                     Expanded(
                       child: AppointmentInfoItem(
                         icon: CupertinoIcons.paw,
@@ -82,10 +80,10 @@ class AppointmentCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 18),
+                SizedBox(height: 18.h),
                 SizedBox(
                   width: double.infinity,
-                  height: 54,
+                  height: 54.h,
                   child: ElevatedButton(
                     onPressed: onViewDetails,
                     style: ElevatedButton.styleFrom(
@@ -93,7 +91,7 @@ class AppointmentCard extends StatelessWidget {
                       backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(18),
+                        borderRadius: BorderRadius.circular(18.r),
                       ),
                     ),
                     child: Row(
@@ -103,10 +101,14 @@ class AppointmentCard extends StatelessWidget {
                           "View Details",
                           style: AppTextStyles.title16SemiBold.copyWith(
                             color: Colors.white,
+                            fontSize: 15.sp,
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        const Icon(Icons.arrow_forward_rounded, size: 20),
+                        SizedBox(width: 8.w),
+                        Icon(
+                          Icons.arrow_forward_rounded,
+                          size: 20.sp,
+                        ),
                       ],
                     ),
                   ),

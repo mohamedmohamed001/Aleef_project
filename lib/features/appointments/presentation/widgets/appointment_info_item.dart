@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -10,6 +11,7 @@ class AppointmentInfoItem extends StatelessWidget {
   final String subText;
 
   const AppointmentInfoItem({
+    super.key,
     required this.icon,
     required this.title,
     required this.mainText,
@@ -22,19 +24,21 @@ class AppointmentInfoItem extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          width: 44,
-          height: 44,
+          width: 44.r,
+          height: 44.r,
           decoration: BoxDecoration(
             color: const Color.fromRGBO(38, 125, 119, 0.08),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(12.r),
           ),
           child: Icon(
             icon,
-            size: 22,
+            size: 20.sp,
             color: AppColors.primary,
           ),
         ),
-        const SizedBox(width: 12),
+
+        SizedBox(width: 12.w),
+
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -42,23 +46,31 @@ class AppointmentInfoItem extends StatelessWidget {
               Text(
                 title,
                 style: AppTextStyles.body14Regular.copyWith(
-                  fontSize: 12,
+                  fontSize: 11.sp,
                   color: Colors.grey.shade600,
                 ),
               ),
-              const SizedBox(height: 2),
+
+              SizedBox(height: 2.h),
+
               Text(
                 mainText,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: AppTextStyles.title16SemiBold.copyWith(
+                  fontSize: 13.sp,
                   color: Colors.black87,
                 ),
               ),
-              const SizedBox(height: 2),
+
+              SizedBox(height: 2.h),
+
               Text(
                 subText,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: AppTextStyles.body14Regular.copyWith(
+                  fontSize: 11.sp,
                   color: Colors.grey.shade700,
                 ),
               ),

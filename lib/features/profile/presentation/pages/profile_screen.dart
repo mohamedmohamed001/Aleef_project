@@ -1,6 +1,7 @@
 import 'package:aleef/core/theme/app_colors.dart';
 import 'package:aleef/core/theme/app_text_styles.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../models/account_setting_item.dart';
 import '../widgets/my_pets_card.dart';
@@ -56,9 +57,9 @@ class ProfileTabState extends State<ProfileTab> {
           backgroundColor: Colors.green,
           duration: const Duration(seconds: 2),
           behavior: SnackBarBehavior.floating,
-          margin: const EdgeInsets.all(10),
+          margin: EdgeInsets.all(10.r),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(12.r),
           ),
         ),
       );
@@ -89,53 +90,80 @@ class ProfileTabState extends State<ProfileTab> {
           children: [
             const ProfileHeader(),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
+              padding: EdgeInsets.symmetric(horizontal: 24.w),
               child: Column(
                 children: [
                   const ProfileStats(),
-                  const SizedBox(height: 24),
+                  SizedBox(height: 24.h),
+
                   Row(
                     children: [
                       Text(
                         "My Pets",
-                        style: AppTextStyles.black16Bold.copyWith(fontSize: 20),
+                        style: AppTextStyles.black16Bold.copyWith(
+                          fontSize: 20,
+                        ),
                       ),
                       const Spacer(),
                       const Text(
                         "+Add Pet",
-                        style: TextStyle(color: AppColors.primary),
+                        style: TextStyle(
+                          color: AppColors.primary,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 10),
-                  const Row(
+
+                  SizedBox(height: 10.h),
+
+                  Row(
                     children: [
-                      Expanded(child: MyPetsCard()),
-                      SizedBox(width: 12),
-                      Expanded(child: MyPetsCard()),
-                      SizedBox(width: 12),
-                      Expanded(child: MyPetsCard()),
+                      const Expanded(child: MyPetsCard()),
+                      SizedBox(width: 12.w),
+                      const Expanded(child: MyPetsCard()),
+                      SizedBox(width: 12.w),
+                      const Expanded(child: MyPetsCard()),
                     ],
                   ),
-                  const SizedBox(height: 24),
+
+                  SizedBox(height: 24.h),
+
                   const ProfileOptionsCard(),
-                  const SizedBox(height: 24),
+
+                  SizedBox(height: 24.h),
+
                   Align(
                     alignment: AlignmentDirectional.centerStart,
                     child: Text(
                       "Account Settings",
-                      style: AppTextStyles.titleLarge.copyWith(fontSize: 18),
+                      style: AppTextStyles.titleLarge.copyWith(
+                        fontSize: 18,
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 24),
+
+                  SizedBox(height: 24.h),
+
                   InkWell(
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(16.r),
                     onTap: _openEditProfile,
                     child: const AccountSettingItem(),
                   ),
-                  const SizedBox(height: 24),
-                  const Text("ALEEF v1.0.0 · Pet Healthcare Platform"),
-                  const SizedBox(height: 24),
+
+                  SizedBox(height: 24.h),
+
+                  const Text(
+                    "ALEEF v1.0.0 · Pet Healthcare Platform",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.black54,
+                    ),
+                  ),
+
+                  SizedBox(height: 24.h),
                 ],
               ),
             ),

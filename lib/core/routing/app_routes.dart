@@ -7,6 +7,9 @@ class AppRoutes {
   static const String mainLayout='/main layout';
   static const String editProfile = '/editProfile';
   static const String appointments = '/appointments';
+  static const String details = '/details';
+  static const String cart = '/cart';
+
 
 
 
