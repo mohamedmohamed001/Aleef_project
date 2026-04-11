@@ -38,8 +38,8 @@ class _StoreTabState extends State<StoreTab> {
 
     return products.where((product) {
       return product.categories.any(
-            (category) =>
-        category.name.toLowerCase() == selectedCategory.toLowerCase(),
+        (category) =>
+            category.name.toLowerCase() == selectedCategory.toLowerCase(),
       );
     }).toList();
   }
@@ -132,35 +132,32 @@ class _StoreTabState extends State<StoreTab> {
                 ),
               )
             else if (filteredProducts.isEmpty)
-                Padding(
-                  padding: EdgeInsets.symmetric(vertical: 30.h),
-                  child: const Center(
-                    child: Text(
-                      'No products found',
-                      style: TextStyle(fontSize: 16, color: Colors.black54),
-                    ),
+              Padding(
+                padding: EdgeInsets.symmetric(vertical: 30.h),
+                child: const Center(
+                  child: Text(
+                    'No products found',
+                    style: TextStyle(fontSize: 16, color: Colors.black54),
                   ),
-                )
-              else
-                GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: filteredProducts.length,
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    childAspectRatio: 0.72, // 🔥 أهم تعديل
-                    crossAxisSpacing: 16.w,
-                    mainAxisSpacing: 16.h,
-                  ),
-                  itemBuilder: (context, index) {
-                    final product = filteredProducts[index];
-
-                    return ProductCard(
-                      product: product,
-                      onTap: () {},
-                    );
-                  },
                 ),
+              )
+            else
+              GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: filteredProducts.length,
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  childAspectRatio: 0.72, // 🔥 أهم تعديل
+                  crossAxisSpacing: 16.w,
+                  mainAxisSpacing: 16.h,
+                ),
+                itemBuilder: (context, index) {
+                  final product = filteredProducts[index];
+
+                  return ProductCard(product: product, onTap: () {});
+                },
+              ),
 
             SizedBox(height: 20.h),
           ],

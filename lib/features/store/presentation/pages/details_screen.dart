@@ -135,22 +135,26 @@ class _DetailsScreenState extends State<DetailsScreen> {
                       ],
                     ),
                     SizedBox(height: 10.h),
-                    product!.discount !=0?
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: Text(
-                        product!.originalPrice.toString(),
-                        style: TextStyle(
-                          color: AppColors.hint,
-                          fontSize: 18,
-                          decoration: TextDecoration.lineThrough,
-                        ),
-                      ),
-                    ) : Container(),
+                    product!.discount != 0
+                        ? Align(
+                            alignment: Alignment.centerRight,
+                            child: Text(
+                              product!.originalPrice.toString(),
+                              style: TextStyle(
+                                color: AppColors.hint,
+                                fontSize: 18,
+                                decoration: TextDecoration.lineThrough,
+                              ),
+                            ),
+                          )
+                        : Container(),
 
                     SizedBox(height: 10.h),
 
-                     DetailsRatingRow(avgRate: product!.averageRate, ratingQuantity: product!.ratingsQuantity,),
+                    DetailsRatingRow(
+                      avgRate: product!.averageRate,
+                      ratingQuantity: product!.ratingsQuantity,
+                    ),
 
                     SizedBox(height: 28.h),
 
