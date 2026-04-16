@@ -1,4 +1,4 @@
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 
 import '../features/auth/data/models/user_model.dart';
 
@@ -10,8 +10,8 @@ class UserProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void updateName(UserModel newUser) {
-    user = newUser;
+  void clearUser() {
+    user = null;
     notifyListeners();
   }
 }

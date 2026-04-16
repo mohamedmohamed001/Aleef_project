@@ -20,8 +20,7 @@ class ApiStore {
         },
       );
 
-      print('getAllProducts status code: ${response.statusCode}');
-      print('getAllProducts body: ${response.body}');
+
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = jsonDecode(response.body);
@@ -55,7 +54,7 @@ class ApiStore {
         },
       );
       final data = jsonDecode(response.body);
-      print(data["product"]);
+
       return ProductModel.fromJson(data["product"]);
     } catch (error) {
       throw Exception('Error in getAllProducts: $error');

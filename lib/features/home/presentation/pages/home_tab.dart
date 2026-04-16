@@ -1,12 +1,19 @@
+import 'package:aleef/features/appointments/presentation/widgets/appointment_card.dart';
 import 'package:aleef/features/home/presentation/widgets/discount_card.dart';
 import 'package:aleef/features/home/presentation/widgets/upcoming_appointment_card.dart';
+import 'package:aleef/providers/user_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:provider/provider.dart';
 
+import '../../../../core/routing/app_routes.dart';
 import '../../../../core/services/secure_storage_service.dart';
 import '../../../../core/services/service_locator.dart';
 import '../../../../core/services/session_service.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../appointments/data/models/appointment_model.dart';
+import '../../../appointments/presentation/pages/appointment_details.dart';
+import '../../../appointments/services/appointment_api.dart';
 import '../widgets/home_header.dart';
 import '../widgets/quick)action_section.dart';
 import '../widgets/recommended_doctors.dart';
@@ -20,28 +27,56 @@ class HomeTab extends StatefulWidget {
 }
 
 class _HomeTabState extends State<HomeTab> {
+  AppointmentModel appointment = AppointmentModel();
   late final TextEditingController searchController;
-  late final SessionService session;
+  final SessionService session = getIt<SessionService>();
 
   @override
   void initState() {
     super.initState();
     searchController = TextEditingController();
-    session = getIt<SessionService>();
+    fetchCurrentAppointment();
     _init();
+  }
+
+  Future<void> fetchCurrentAppointment() async {
+    final response = await AppointmentApi().getActiveAppointment();
+
+
+    if (!mounted) return;
+
+    if (response["status"] == "success") {
+      setState(() {
+        appointment = AppointmentModel.fromJson(response["data"]);
+      });
+    } else if (response["status"] == "unauthorized") {
+      final storage = getIt<SecureStorageService>();
+      await storage.deleteToken();
+      await storage.deleteUser();
+
+      if (!mounted) return;
+
+      context.read<UserProvider>().clearUser();
+
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        AppRoutes.login,
+            (route) => false,
+      );
+    }
   }
 
   Future<void> _init() async {
     final storage = getIt<SecureStorageService>();
-
     final user = await storage.getUser();
     final token = await storage.getToken();
 
     if (user != null && token != null && token.isNotEmpty) {
       session.setSession(user: user, tokenValue: token);
-      debugPrint("User موجود ✅");
-    } else {
-      debugPrint("User مش موجود ❌");
+
+      if (mounted) {
+        context.read<UserProvider>().setUser(user);
+      }
     }
 
     if (mounted) {
@@ -57,7 +92,7 @@ class _HomeTabState extends State<HomeTab> {
 
   @override
   Widget build(BuildContext context) {
-    final user = session.currentUser;
+    final user = context.watch<UserProvider>().user ?? session.currentUser;
 
     return Scaffold(
       body: SafeArea(
@@ -95,14 +130,41 @@ class _HomeTabState extends State<HomeTab> {
                       child: const QuickActionsSection(),
                     ),
                     SizedBox(height: 24.h),
-                    const UpcomingAppointmentCard(
-                      doctorName: "Ahmed",
-                      specialty: "Cat Specialist",
-                      date: "12/1",
-                      time: "10:00 AM",
-                      petName: "Milo",
-                      onViewDetails: _emptyCallback,
-                    ),
+                    appointment.doctor?.id != null
+                        ? Text(
+                      "Upcoming Appointment",
+                      style: AppTextStyles.black16Bold.copyWith(
+                        fontSize: 18.sp,
+                      ),
+                    )
+                        : Container(),
+                    appointment.doctor?.id != null
+                        ? SizedBox(height: 24.h)
+                        : Container(),
+                    appointment.doctor?.id != null
+                        ? AppointmentCard(
+                      doctorName: appointment.doctor?.name ?? "",
+                      specialty: appointment.doctor?.specialization ?? "",
+                      date: appointment.date != null
+                          ? "${appointment.date!.day}/${appointment.date!.month}/${appointment.date!.year}"
+                          : "",
+                      time: appointment.time ?? "",
+                      petName: appointment.pet?.name ?? "",
+                      petType: appointment.pet?.type ?? "",
+                      status: appointment.status ?? "",
+                      imagePath: appointment.doctor?.profilePic ?? "",
+                      onViewDetails: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => AppointmentDetails(
+                              appointmentId: appointment.id!,
+                            ),
+                          ),
+                        );
+                      },
+                    )
+                        : Container(),
                     SizedBox(height: 24.h),
                     const SectionHeader(title: "Recommended Vets"),
                     SizedBox(height: 12.h),

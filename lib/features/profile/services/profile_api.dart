@@ -32,7 +32,6 @@ class ProfileApi {
       );
 
       final data = jsonDecode(response.body);
-      debugPrint("editProfile response: $data");
 
       if (response.statusCode == 200) {
         final user = UserModel.fromJson(
@@ -52,7 +51,6 @@ class ProfileApi {
         return false;
       }
     } catch (error) {
-      debugPrint("editProfile error: $error");
       return false;
     }
   }
@@ -77,7 +75,6 @@ class ProfileApi {
       );
 
       final data = jsonDecode(response.body);
-      debugPrint("removeProfilePic response: $data");
 
       if (response.statusCode == 200) {
         final user = UserModel.fromJson(
@@ -97,7 +94,6 @@ class ProfileApi {
         return false;
       }
     } catch (error) {
-      debugPrint("removeProfilePic error: $error");
       return false;
     }
   }
@@ -133,19 +129,15 @@ class ProfileApi {
         request.fields['changeProfilePic'] = 'false';
       }
 
-      debugPrint("request fields: ${request.fields}");
-      debugPrint("request files count: ${request.files.length}");
 
       if (request.files.isNotEmpty) {
-        debugPrint("file field name: ${request.files.first.field}");
-        debugPrint("file path: ${imageFile?.path}");
+
       }
 
       final streamedResponse = await request.send();
       final response = await http.Response.fromStream(streamedResponse);
 
-      debugPrint("editProfileWithImage status code: ${response.statusCode}");
-      debugPrint("editProfileWithImage body: ${response.body}");
+
 
       final data = jsonDecode(response.body);
 
@@ -167,7 +159,6 @@ class ProfileApi {
         return false;
       }
     } catch (error) {
-      debugPrint("editProfileWithImage error: $error");
       return false;
     }
   }

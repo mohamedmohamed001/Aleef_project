@@ -43,7 +43,7 @@ class AppointmentHeaderSection extends StatelessWidget {
               ),
               borderRadius: BorderRadius.circular(16.r),
               image: DecorationImage(
-                image: AssetImage(imagePath),
+                image: NetworkImage(imagePath),
                 fit: BoxFit.cover,
               ),
             ),

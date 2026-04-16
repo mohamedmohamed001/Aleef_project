@@ -1,3 +1,4 @@
+import 'package:aleef/features/appointments/data/models/appointment_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -7,6 +8,7 @@ import '../../services/appointment_api.dart';
 import '../widgets/appointments_header.dart';
 import '../widgets/appointment_card.dart';
 import '../widgets/available_doctors/available_doctors_section.dart';
+import 'appointment_details.dart';
 
 class AppointmentTab extends StatefulWidget {
   const AppointmentTab({super.key});
@@ -16,58 +18,86 @@ class AppointmentTab extends StatefulWidget {
 }
 
 class _AppointmentTabState extends State<AppointmentTab> {
-  @override
-  void initState() {
-    super.initState();
-    fetchDoctors();
-  }
+  AppointmentModel appointment = AppointmentModel();
 
-  Future<void> fetchDoctors() async {
-    final response = await AppointmentApi().getAvailableDoctor();
+  // void initState() {
+  //   super.initState();
+  //   fetchCurrentAppointment();
+  // }
 
-    if (response == 200) {
-      debugPrint("Success");
-    } else if (response == 401) {
-      SecureStorageService().deleteUser();
+  Future<void> fetchCurrentAppointment() async {
+    final response = await AppointmentApi().getActiveAppointment();
+    if (!mounted) return;
+    if (response["status"] == "success") {
+      setState(() {
+        appointment = AppointmentModel.fromJson(response["data"]);
+      });
+    } else if (response["status"] == "unauthorized") {
       SecureStorageService().deleteToken();
+      SecureStorageService().deleteUser();
+
       Navigator.pushNamedAndRemoveUntil(
         context,
         AppRoutes.login,
         (route) => false,
       );
-    } else {
-      debugPrint("Error");
     }
   }
 
+@override
+  void didChangeDependencies() {
+    fetchCurrentAppointment();
+    super.didChangeDependencies();
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF7F8FA),
       body: SafeArea(
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          child: Column(
-            children: [
-              const AppointmentsHeader(),
-              SizedBox(height: 16.h),
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16.w),
-                child: AppointmentCard(
-                  doctorName: "Dr. Amira Hassan",
-                  specialty: "General Veterinarian",
-                  date: "March 10, 2026",
-                  time: "10:00 AM",
-                  petName: "Max",
-                  petType: "Dog",
-                  status: "Confirmed",
-                  onViewDetails: () {},
+        child: RefreshIndicator(
+          onRefresh: () {
+            return fetchCurrentAppointment();
+          },
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            child: Column(
+              children: [
+                const AppointmentsHeader(),
+                SizedBox(height: 16.h),
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16.w),
+                  child: appointment.doctor?.name != null
+                      ? AppointmentCard(
+                          doctorName: appointment.doctor?.name ?? "",
+                          specialty: appointment.doctor?.specialization ?? "",
+                          date: appointment.date != null
+                              ? "${appointment.date!.day}/${appointment.date!.month}/${appointment.date!.year}"
+                              : "",
+                          time: appointment.time ?? "",
+                          petName: appointment.pet?.name ?? "",
+                          petType: appointment.pet?.type ?? "",
+                          status: appointment.status ?? "",
+                          imagePath: appointment.doctor?.profilePic ?? "",
+                          onViewDetails: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => AppointmentDetails(
+                                  appointmentId: appointment.id!,
+                                ),
+                              ),
+                            );
+                          },
+                        )
+                      : Container(),
                 ),
-              ),
-              SizedBox(height: 24.h),
-              const AvailableDoctorsSection(),
-              SizedBox(height: 16.h),
-            ],
+                appointment.doctor?.name != null
+                    ? SizedBox(height: 24.h)
+                    : Container(),
+                const AvailableDoctorsSection(),
+                SizedBox(height: 16.h),
+              ],
+            ),
           ),
         ),
       ),

@@ -6,14 +6,12 @@ class ImagePickerService {
   final ImagePicker _picker = ImagePicker();
 
   Future<File?> pickFromGallery() async {
-    debugPrint("Picking from gallery...");
 
     final pickedImage = await _picker.pickImage(
       source: ImageSource.gallery,
       imageQuality: 75,
     );
 
-    debugPrint("Gallery result: ${pickedImage?.path}");
 
     if (pickedImage == null) return null;
 
@@ -21,14 +19,12 @@ class ImagePickerService {
   }
 
   Future<File?> pickFromCamera() async {
-    debugPrint("Picking from camera...");
 
     final pickedImage = await _picker.pickImage(
       source: ImageSource.camera,
       imageQuality: 75,
     );
 
-    debugPrint("Camera result: ${pickedImage?.path}");
 
     if (pickedImage == null) return null;
 

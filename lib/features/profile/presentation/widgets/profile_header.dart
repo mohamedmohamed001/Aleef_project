@@ -44,7 +44,6 @@ class _ProfileHeaderState extends State<ProfileHeader> {
       animation: session,
       builder: (context, _) {
         final user = session.currentUser;
-        debugPrint("ProfileHeader rebuild: ${user?.name}");
 
         if (user == null) {
           return SizedBox(

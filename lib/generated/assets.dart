@@ -9,17 +9,20 @@ class Assets {
   static const AssetGenImage cat = AssetGenImage('assets/images/cat.png');
   static const AssetGenImage cat3d = AssetGenImage('assets/images/cat_3d.png');
   static const $AssetsAssetsGen assets = $AssetsAssetsGen();
+  static const $AssetsLibGen lib = $AssetsLibGen();
 }
 
 class $AssetsAssetsGen {
   const $AssetsAssetsGen();
 
   final $AssetsImagesGen images = const $AssetsImagesGen();
+  final $AssetsSoundsGen sounds = const $AssetsSoundsGen();
 }
 
 class $AssetsImagesGen {
   const $AssetsImagesGen();
 
+  final $AssetsSvgsGen svgs = const $AssetsSvgsGen();
   final AssetGenImage adjustablePetCollar = const AssetGenImage(
     'assets/images/Adjustable Pet Collar.png',
   );
@@ -56,6 +59,66 @@ class $AssetsImagesGen {
     'assets/images/profile_photo.jpg',
   );
   final AssetGenImage splash = const AssetGenImage('assets/images/splash.png');
+}
+
+class $AssetsSvgsGen {
+  const $AssetsSvgsGen();
+
+  final SvgGenImage container = const SvgGenImage(
+    'assets/images/svgs/Container.svg',
+  );
+  final SvgGenImage backGround = const SvgGenImage(
+    'assets/images/svgs/backGround.svg',
+  );
+}
+
+class $AssetsSoundsGen {
+  const $AssetsSoundsGen();
+
+  final String meow = 'assets/sounds/meow.wav';
+}
+
+class $AssetsLibGen {
+  const $AssetsLibGen();
+
+  final $AssetsFeaturesGen features = const $AssetsFeaturesGen();
+}
+
+class $AssetsFeaturesGen {
+  const $AssetsFeaturesGen();
+
+  final $AssetsProfileGen profile = const $AssetsProfileGen();
+}
+
+class $AssetsProfileGen {
+  const $AssetsProfileGen();
+
+  final $AssetsPresentationGen presentation = const $AssetsPresentationGen();
+}
+
+class $AssetsPresentationGen {
+  const $AssetsPresentationGen();
+
+  final $AssetsWidgetsGen widgets = const $AssetsWidgetsGen();
+}
+
+class $AssetsWidgetsGen {
+  const $AssetsWidgetsGen();
+
+  final $AssetsEditProfileGen editProfile = const $AssetsEditProfileGen();
+}
+
+class $AssetsEditProfileGen {
+  const $AssetsEditProfileGen();
+
+  final String editProfileAvatarSection =
+      'lib/features/profile/presentation/widgets/edit_profile/edit_profile_avatar_section.dart';
+  final String editProfileFormSection =
+      'lib/features/profile/presentation/widgets/edit_profile/edit_profile_form_section.dart';
+  final String editProfileSaveButton =
+      'lib/features/profile/presentation/widgets/edit_profile/edit_profile_save_button.dart';
+  final String editProfileTextField =
+      'lib/features/profile/presentation/widgets/edit_profile/edit_profile_text_field.dart';
 }
 
 class AssetGenImage {

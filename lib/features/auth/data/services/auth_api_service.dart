@@ -20,7 +20,6 @@ class AuthApiService {
       );
 
       final data = jsonDecode(response.body);
-      print(data);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final storage = getIt<SecureStorageService>();
@@ -39,13 +38,11 @@ class AuthApiService {
           tokenValue: data['token'],
         );
 
-        print(response.statusCode);
         return true;
       } else {
         return false;
       }
     } catch (error) {
-      print(error);
       return false;
     }
   }
@@ -72,8 +69,6 @@ class AuthApiService {
         }),
       );
 
-      print("Status: ${response.statusCode}");
-      print("Body: ${response.body}");
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         return true;
@@ -81,7 +76,6 @@ class AuthApiService {
         return false;
       }
     } catch (error) {
-      print("Error: $error");
       return false;
     }
   }
@@ -93,15 +87,13 @@ class AuthApiService {
     );
 
     try {
-      print(email);
-      print(otp);
+
       final response = await http.post(
         url,
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({"email": email, "otp": otp}),
       );
       final data = jsonDecode(response.body);
-      print(data);
       if (response.statusCode == 200) {
         final storage = getIt<SecureStorageService>();
         final session = getIt<SessionService>();
@@ -138,7 +130,6 @@ class AuthApiService {
         body: jsonEncode({"email": email}),
       );
       final data = jsonDecode(response.body);
-      print(data);
     } catch (error) {
       return false;
     }
@@ -158,7 +149,6 @@ class AuthApiService {
 
       );
       final data = jsonDecode(response.body);
-      print(data);
       if (response.statusCode == 200) {
         await storage.deleteUser();
         await storage.deleteToken();

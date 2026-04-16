@@ -19,7 +19,6 @@ class DoctorRatingWidget extends StatelessWidget {
         color: Color(0xFF2E8B7F),
       ),
       onRatingUpdate: (rating) {
-        print(rating);
       },
     );
   }

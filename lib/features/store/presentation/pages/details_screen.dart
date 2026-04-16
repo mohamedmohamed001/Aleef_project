@@ -10,16 +10,16 @@ import '../widgets/details/details_header_section.dart';
 import '../widgets/details/details_rating_row.dart';
 import '../widgets/details/quantity_selector.dart';
 
-class DetailsScreen extends StatefulWidget {
+class ProductDetails extends StatefulWidget {
   final String productId;
 
-  const DetailsScreen({super.key, required this.productId});
+  const ProductDetails({super.key, required this.productId});
 
   @override
-  State<DetailsScreen> createState() => _DetailsScreenState();
+  State<ProductDetails> createState() => _ProductDetailsState();
 }
 
-class _DetailsScreenState extends State<DetailsScreen> {
+class _ProductDetailsState extends State<ProductDetails> {
   ProductModel? product;
   bool isLoading = true;
   int quantity = 1;
@@ -65,7 +65,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
       setState(() {
         isLoading = false;
       });
-      print(e);
+
     }
   }
 

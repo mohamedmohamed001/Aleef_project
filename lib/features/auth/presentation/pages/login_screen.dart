@@ -1,11 +1,13 @@
 import 'package:aleef/core/routing/app_routes.dart';
 import 'package:flutter/material.dart';
 
+import '../../../../providers/bottom_nav_provider.dart';
 import '../../data/services/auth_api_service.dart';
 import '../widgets/auth_footer_text.dart';
 import '../widgets/auth_header.dart';
 import '../widgets/auth_primary_button.dart';
 import '../widgets/custom_text_form.dart';
+import 'package:provider/provider.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -48,6 +50,8 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     if (success == true) {
+      context.read<BottomNavProvider>().changeTab(0);
+
       Navigator.pushNamedAndRemoveUntil(
         context,
         AppRoutes.mainLayout,

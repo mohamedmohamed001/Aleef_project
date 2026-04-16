@@ -7,10 +7,10 @@ class AppRoutes {
   static const String mainLayout='/main layout';
   static const String editProfile = '/editProfile';
   static const String appointments = '/appointments';
-  static const String details = '/details';
+  static const String detailsProduct = '/detailsProduct';
   static const String cart = '/cart';
-
-
-
+  static const String appointmentDetails= '/appointmentDetails';
+  static const String bookAppointment= '/bookAppointment';
+  static const String doctorDetails= '/doctorDetails';
 
 }

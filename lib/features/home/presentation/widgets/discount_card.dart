@@ -1,6 +1,8 @@
 import 'package:aleef/core/theme/app_text_styles.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import '../../../../providers/bottom_nav_provider.dart';
+import 'package:provider/provider.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/app_assets.dart';
@@ -35,10 +37,7 @@ class DiscountCard extends StatelessWidget {
             ),
           ),
           Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: 12.w,
-              vertical: 10.h,
-            ),
+            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -75,7 +74,9 @@ class DiscountCard extends StatelessWidget {
                     ),
                     padding: EdgeInsets.symmetric(horizontal: 14.w),
                   ),
-                  onPressed: () {},
+                  onPressed: () {
+                    context.read<BottomNavProvider>().changeTab(3);
+                  },
                   child: Text(
                     "Shop Now",
                     style: TextStyle(

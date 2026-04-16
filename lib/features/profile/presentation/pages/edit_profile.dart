@@ -1,7 +1,9 @@
 import 'dart:io';
 
+import 'package:aleef/providers/user_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:provider/provider.dart';
 
 import '../../../../core/services/image_picker_service.dart';
 import '../../../../core/services/secure_storage_service.dart';
@@ -52,9 +54,16 @@ class _EditProfileState extends State<EditProfile> {
 
     if (user != null && token != null && token.isNotEmpty) {
       session.setSession(user: user, tokenValue: token);
-      debugPrint("User موجود ✅");
+
+      if (mounted) {
+        context.read<UserProvider>().setUser(user);
+      }
+
     } else {
-      debugPrint("User مش موجود ❌");
+      if (mounted) {
+        context.read<UserProvider>().clearUser();
+      }
+
     }
 
     if (!mounted) return;
@@ -82,7 +91,6 @@ class _EditProfileState extends State<EditProfile> {
         _selectedImage = file;
       });
     } catch (e) {
-      debugPrint("Pick image error: $e");
 
       if (!mounted) return;
 
@@ -214,6 +222,11 @@ class _EditProfileState extends State<EditProfile> {
 
       if (!mounted) return;
 
+      final updatedUser = session.currentUser;
+      if (updatedUser != null) {
+        context.read<UserProvider>().setUser(updatedUser);
+      }
+
       _showSnackBar(
         message: 'Profile updated successfully',
         backgroundColor: Colors.green,
@@ -255,7 +268,7 @@ class _EditProfileState extends State<EditProfile> {
 
   @override
   Widget build(BuildContext context) {
-    final user = session.currentUser;
+    final user = context.watch<UserProvider>().user ?? session.currentUser;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF4F5F7),

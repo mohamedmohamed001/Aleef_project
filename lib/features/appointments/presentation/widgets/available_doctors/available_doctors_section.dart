@@ -1,7 +1,10 @@
+import 'package:aleef/features/appointments/services/appointment_api.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import '../../../../../core/routing/app_routes.dart';
 import '../../../data/models/doctor_model.dart';
+import '../../pages/doctor_details_screen.dart';
 import 'doctor_card.dart';
 import 'doctor_search_field.dart';
 
@@ -14,43 +17,61 @@ class AvailableDoctorsSection extends StatefulWidget {
 }
 
 class _AvailableDoctorsSectionState extends State<AvailableDoctorsSection> {
-  final List<DoctorModel> doctors = [
-    DoctorModel(
-      name: "Dr. Amira Hassan",
-      specialty: "General Veterinarian",
-      rating: 4.9,
-      reviewsCount: 128,
-      location: "Cairo",
-      image: "assets/images/doctor.png",
-    ),
-    DoctorModel(
-      name: "Dr. Ahmed Ali",
-      specialty: "Surgery Specialist",
-      rating: 4.7,
-      reviewsCount: 98,
-      location: "Giza",
-      image: "assets/images/doctor.png",
-    ),
-  ];
-
-  List<DoctorModel> filteredDoctors = [];
+  List<DoctorModel> doctors = [];
+  bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    filteredDoctors = doctors;
+    fetchDoctors();
   }
 
-  void searchDoctors(String query) {
-    final results = doctors.where((doctor) {
-      return doctor.name.toLowerCase().contains(query.toLowerCase());
-    }).toList();
+  Future<void> fetchDoctors() async {
+    try {
+      final response = await AppointmentApi().getAvailableDoctor();
 
-    setState(() {
-      filteredDoctors = results;
-    });
+      if (!mounted) return;
+
+      final status = response["status"].toString().trim();
+
+      if (status == "success") {
+        final List doctorsData = response["data"] ?? [];
+
+        final loadedDoctors = doctorsData
+            .whereType<Map<String, dynamic>>()
+            .map((e) => DoctorModel.fromJson(e))
+            .toList();
+
+        setState(() {
+          doctors = loadedDoctors;
+          isLoading = false;
+        });
+      } else if (status == "unauthorized") {
+        setState(() {
+          isLoading = false;
+        });
+
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          AppRoutes.login,
+              (route) => false,
+        );
+      } else {
+        setState(() {
+          isLoading = false;
+        });
+      }
+    } catch (e, s) {
+      print("fetchDoctors error: $e");
+      print("stack: $s");
+
+      if (!mounted) return;
+
+      setState(() {
+        isLoading = false;
+      });
+    }
   }
-
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -60,7 +81,7 @@ class _AvailableDoctorsSectionState extends State<AvailableDoctorsSection> {
         children: [
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 16.w),
-            child: Text(
+            child: const Text(
               "Available Doctors",
               style: TextStyle(
                 fontSize: 20,
@@ -72,28 +93,61 @@ class _AvailableDoctorsSectionState extends State<AvailableDoctorsSection> {
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 16.w),
             child: DoctorSearchField(
-              onChanged: searchDoctors,
+              onChanged: (search) {},
             ),
           ),
           SizedBox(height: 16.h),
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16.w),
-            child: Column(
-              children: filteredDoctors
-                  .map(
-                    (doctor) => Padding(
-                  padding: EdgeInsets.only(bottom: 12.h),
-                  child: DoctorCard(
+
+          if (isLoading)
+            Padding(
+              padding: EdgeInsets.symmetric(vertical: 32.h),
+              child: const Center(
+                child: CircularProgressIndicator(),
+              ),
+            )
+          else if (doctors.isEmpty)
+            Padding(
+              padding: EdgeInsets.symmetric(vertical: 24.h),
+              child: Center(
+                child: Text(
+                  "No doctors available",
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    color: Colors.grey,
+                  ),
+                ),
+              ),
+            )
+          else
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.w),
+              child: ListView.separated(
+                itemCount: doctors.length,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                separatorBuilder: (_, __) => SizedBox(height: 12.h),
+                itemBuilder: (context, index) {
+                  final doctor = doctors[index];
+
+                  return DoctorCard(
                     doctor: doctor,
+                      onTapDetails: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => DoctorDetailsScreen(
+                              doctorId: doctor.id!,
+                            ),
+                          ),
+                        );
+                      },
                     onTap: () {
                       // TODO: navigate to schedule
                     },
-                  ),
-                ),
-              )
-                  .toList(),
+                  );
+                },
+              ),
             ),
-          ),
         ],
       ),
     );
