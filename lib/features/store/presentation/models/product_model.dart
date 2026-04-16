@@ -56,10 +56,7 @@ class ProductCategoryModel {
   final String id;
   final String name;
 
-  const ProductCategoryModel({
-    required this.id,
-    required this.name,
-  });
+  const ProductCategoryModel({required this.id, required this.name});
 
   factory ProductCategoryModel.fromJson(Map<String, dynamic> json) {
     return ProductCategoryModel(

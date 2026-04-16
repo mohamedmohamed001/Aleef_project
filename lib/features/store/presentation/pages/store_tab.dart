@@ -70,7 +70,7 @@ class _StoreTabState extends State<StoreTab> {
 
             SizedBox(height: 24.h),
 
-            /// 🔥 Categories Title
+            ///  Categories Title
             const Text(
               'Categories',
               style: TextStyle(
@@ -102,7 +102,7 @@ class _StoreTabState extends State<StoreTab> {
 
             SizedBox(height: 24.h),
 
-            /// 🔥 Products Title
+            /// Products Title
             const Text(
               'Popular Products',
               style: TextStyle(
@@ -114,7 +114,7 @@ class _StoreTabState extends State<StoreTab> {
 
             SizedBox(height: 12.h),
 
-            /// 🔄 حالات الـ API
+            ///  حالات الـ API
             if (storeProvider.isLoading)
               Padding(
                 padding: EdgeInsets.symmetric(vertical: 40.h),
@@ -148,14 +148,25 @@ class _StoreTabState extends State<StoreTab> {
                 itemCount: filteredProducts.length,
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2,
-                  childAspectRatio: 0.72, // 🔥 أهم تعديل
+                  childAspectRatio: 0.72, //  أهم تعديل
                   crossAxisSpacing: 16.w,
                   mainAxisSpacing: 16.h,
                 ),
                 itemBuilder: (context, index) {
                   final product = filteredProducts[index];
 
-                  return ProductCard(product: product, onTap: () {});
+                  return ProductCard(
+                    product: product,
+                    onTap: () {
+                      context.read<StoreProvider>().addToCart(product);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('${product.title}added to cart!'),
+                          duration: const Duration(seconds: 1),
+                        ),
+                      );
+                    },
+                  );
                 },
               ),
 

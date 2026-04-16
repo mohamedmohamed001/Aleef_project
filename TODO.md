@@ -1,0 +1,1 @@
+# Fix Errors in MyOrdersScreen and ProductCard&#10;&#10;- [x] Fixed imports in both files&#10;- [ ] Fix navigation class names&#10;- [ ] Add dispose in my_orders_screen.dart&#10;- [ ] Improve safety and formatting&#10;- [ ] Fix provider path in product_card if needed&#10;- [ ] Add RefreshIndicator&#10;- [ ] Test&#10;

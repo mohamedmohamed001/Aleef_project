@@ -1,7 +1,13 @@
+import 'dart:convert';
+import 'package:aleef/features/store/presentation/pages/checkout_screen.dart';
+import 'package:aleef/features/store/services/store_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:aleef/core/constants/api_constant.dart';
+import 'package:http/http.dart' as http;
+import 'package:provider/provider.dart';
 import '../../../../core/theme/app_colors.dart';
 
-// Global list to store cart items
 List<Map<String, dynamic>> cartItems = [];
 
 class CartScreen extends StatefulWidget {
@@ -12,14 +18,57 @@ class CartScreen extends StatefulWidget {
 }
 
 class _CartScreenState extends State<CartScreen> {
+  final storage = const FlutterSecureStorage();
+  double subtotalServer = 0.0;
+  double deliveryServer = 0.0;
+  double totalServer = 0.0;
+
+  @override
+  void initState() {
+    super.initState();
+    calculateCartFromApi();
+  }
+
+  Future<void> calculateCartFromApi() async {
+    final storeProvider = Provider.of<StoreProvider>(context, listen: false);
+    final url = Uri.parse('${ApiConstant.baseUrl}/products/calculate-cart');
+    final token = await storage.read(key: "token");
+
+    final body = {
+      "cart": storeProvider.cartItems.map((item) {
+        return {
+          "productId": item.id,
+          "quantity": storeProvider.itemQuantities[item.id.toString()] ?? 1,
+        };
+      }).toList(),
+    };
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $token",
+        },
+        body: jsonEncode(body),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        setState(() {
+          subtotalServer = (data['subTotal'] ?? 0).toDouble();
+          deliveryServer = (data['delivery'] ?? 0).toDouble();
+          totalServer = subtotalServer + deliveryServer;
+        });
+      }
+    } catch (e) {
+      print("Error: $e");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    double subtotal = 0;
-    for (var item in cartItems) {
-      String priceStr = item['price'].toString().replaceAll('\$', '');
-      subtotal += double.parse(priceStr) * item['quantity'];
-    }
-
+    final storeProvider = Provider.of<StoreProvider>(context);
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -49,7 +98,7 @@ class _CartScreenState extends State<CartScreen> {
                   shape: BoxShape.circle,
                 ),
                 child: Text(
-                  "${cartItems.length}",
+                  "${storeProvider.cartItems.length}",
                   style: TextStyle(
                     color: AppColors.primary,
                     fontWeight: FontWeight.bold,
@@ -61,29 +110,34 @@ class _CartScreenState extends State<CartScreen> {
           ),
         ],
       ),
-      body: cartItems.isEmpty
+      body: storeProvider.cartItems.isEmpty
           ? const Center(child: Text("Your cart is empty"))
           : Column(
               children: [
                 Expanded(
                   child: ListView.builder(
                     padding: const EdgeInsets.all(20),
-                    itemCount: cartItems.length,
+                    itemCount: storeProvider.cartItems.length,
                     itemBuilder: (context, index) {
+                      final product = storeProvider.cartItems[index];
                       return _buildCartItem(
-                        cartItems[index]['name'],
-                        cartItems[index]['price'].toString().replaceAll(
-                          '\$',
-                          '',
-                        ),
-                        cartItems[index]['image'],
-                        cartItems[index]['quantity'],
+                        product.title,
+                        product.finalPrice.toString(),
+                        product.thumbnail.url,
+                        storeProvider.itemQuantities[product.id.toString()] ??
+                            1,
                         index,
+                        product,
+                        storeProvider,
                       );
                     },
                   ),
                 ),
-                _buildCheckoutSection(subtotal),
+                _buildCheckoutSection(
+                  subtotalServer,
+                  deliveryServer,
+                  totalServer,
+                ),
               ],
             ),
     );
@@ -95,6 +149,8 @@ class _CartScreenState extends State<CartScreen> {
     String image,
     int quantity,
     int index,
+    dynamic product,
+    StoreProvider storeProvider,
   ) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -108,13 +164,14 @@ class _CartScreenState extends State<CartScreen> {
           Container(
             width: 80,
             height: 80,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-            ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: Image.asset(image, fit: BoxFit.contain),
+              borderRadius: BorderRadius.circular(15),
+              child: Image.network(
+                image,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) =>
+                    const Icon(Icons.broken_image, color: Colors.grey),
+              ),
             ),
           ),
           const SizedBox(width: 16),
@@ -145,11 +202,8 @@ class _CartScreenState extends State<CartScreen> {
                     _buildQuantityBtn(
                       Icons.remove,
                       onTap: () {
-                        setState(() {
-                          if (cartItems[index]['quantity'] > 1) {
-                            cartItems[index]['quantity']--;
-                          }
-                        });
+                        storeProvider.decrementQuantity(product.id.toString());
+                        calculateCartFromApi();
                       },
                     ),
                     Padding(
@@ -163,9 +217,8 @@ class _CartScreenState extends State<CartScreen> {
                       Icons.add,
                       isPrimary: true,
                       onTap: () {
-                        setState(() {
-                          cartItems[index]['quantity']++;
-                        });
+                        storeProvider.addToCart(product);
+                        calculateCartFromApi();
                       },
                     ),
                   ],
@@ -176,9 +229,8 @@ class _CartScreenState extends State<CartScreen> {
           IconButton(
             icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
             onPressed: () {
-              setState(() {
-                cartItems.removeAt(index);
-              });
+              storeProvider.cartItems.removeAt(index);
+              calculateCartFromApi();
             },
           ),
         ],
@@ -211,10 +263,7 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 
-  Widget _buildCheckoutSection(double subtotal) {
-    double delivery = 5.00;
-    double total = subtotal + delivery;
-
+  Widget _buildCheckoutSection(double subtotal, double delivery, double total) {
     return Container(
       padding: const EdgeInsets.all(25),
       decoration: BoxDecoration(
@@ -245,7 +294,12 @@ class _CartScreenState extends State<CartScreen> {
           ),
           const SizedBox(height: 25),
           ElevatedButton(
-            onPressed: () {},
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const CheckoutScreen()),
+              );
+            },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
               minimumSize: const Size(double.infinity, 55),

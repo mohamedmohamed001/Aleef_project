@@ -1,10 +1,11 @@
-import 'package:aleef/core/routing/app_routes.dart';
-import 'package:aleef/features/store/presentation/pages/details_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:provider/provider.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../models/product_model.dart';
+import 'package:aleef/features/store/presentation/pages/details_screen.dart';
+import '../../services/store_provider.dart';
 
 class ProductCard extends StatelessWidget {
   final ProductModel product;
@@ -19,7 +20,7 @@ class ProductCard extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => DetailsScreen(productId: product.id),
+            builder: (context) => DetailsScreen(productId: product.id),
           ),
         );
       },
@@ -30,7 +31,7 @@ class ProductCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(20.r),
           boxShadow: [
             BoxShadow(
-              color: AppColors.shadow,
+              color: Colors.black.withOpacity(0.05),
               blurRadius: 10.r,
               offset: Offset(0, 4.h),
             ),
@@ -43,7 +44,7 @@ class ProductCard extends StatelessWidget {
               child: Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: AppColors.inputFill,
+                  color: const Color(0xFFF5F5F5),
                   borderRadius: BorderRadius.vertical(
                     top: Radius.circular(20.r),
                   ),
@@ -74,7 +75,7 @@ class ProductCard extends StatelessWidget {
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 13,
-                      color: AppColors.textPrimary,
+                      color: Colors.black,
                     ),
                   ),
                   SizedBox(height: 4.h),
@@ -107,16 +108,27 @@ class ProductCard extends StatelessWidget {
                         ),
                       ),
                       SizedBox(width: 8.w),
-                      Container(
-                        padding: EdgeInsets.all(4.r),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary,
-                          borderRadius: BorderRadius.circular(8.r),
-                        ),
-                        child: const Icon(
-                          Icons.add,
-                          color: AppColors.white,
-                          size: 18,
+                      GestureDetector(
+                        onTap: () {
+                          Provider.of<StoreProvider>(
+                            context,
+                            listen: false,
+                          ).addToCart(product);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Added to cart')),
+                          );
+                        },
+                        child: Container(
+                          padding: EdgeInsets.all(4.r),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary,
+                            borderRadius: BorderRadius.circular(8.r),
+                          ),
+                          child: const Icon(
+                            Icons.add,
+                            color: Colors.white,
+                            size: 18,
+                          ),
                         ),
                       ),
                     ],

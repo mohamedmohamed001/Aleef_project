@@ -1,6 +1,8 @@
 import 'package:aleef/core/routing/app_routes.dart';
 import 'package:aleef/features/auth/presentation/pages/register_screen.dart';
 import 'package:aleef/features/auth/presentation/pages/verfication_otp_screen.dart';
+import 'package:aleef/features/store/presentation/pages/cart_screen.dart';
+import 'package:aleef/features/store/presentation/pages/my_orders_screen.dart';
 import 'package:aleef/features/store/presentation/pages/store_tab.dart';
 import 'package:aleef/providers/bottom_nav_provider.dart';
 import 'package:aleef/providers/user_provider.dart';
@@ -43,7 +45,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return ScreenUtilInit(
       designSize: const Size(392, 853),
-        minTextAdapt: false,
+      minTextAdapt: false,
       builder: (context, child) => MaterialApp(
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
@@ -56,6 +58,8 @@ class MyApp extends StatelessWidget {
           AppRoutes.mainLayout: (context) => MainLayout(),
           AppRoutes.editProfile: (context) => EditProfile(),
           AppRoutes.appointments: (context) => AppointmentTab(),
+          AppRoutes.cart: (context) => CartScreen(),
+          AppRoutes.order: (context) => MyOrdersScreen(),
         },
       ),
     );

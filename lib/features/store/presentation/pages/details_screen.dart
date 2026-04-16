@@ -1,7 +1,11 @@
 import 'package:aleef/core/theme/app_text_styles.dart';
 import 'package:aleef/features/store/presentation/models/product_model.dart';
+import 'package:aleef/features/store/presentation/pages/cart_screen.dart';
+import 'package:aleef/features/store/services/store_provider.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:provider/provider.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../services/api_store.dart';
@@ -12,8 +16,9 @@ import '../widgets/details/quantity_selector.dart';
 
 class DetailsScreen extends StatefulWidget {
   final String productId;
+  final Map<String, dynamic>? orderData;
 
-  const DetailsScreen({super.key, required this.productId});
+  const DetailsScreen({super.key, required this.productId, this.orderData});
 
   @override
   State<DetailsScreen> createState() => _DetailsScreenState();
@@ -47,7 +52,6 @@ class _DetailsScreenState extends State<DetailsScreen> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
 
     fetchProductDetails();
@@ -56,16 +60,19 @@ class _DetailsScreenState extends State<DetailsScreen> {
   Future<void> fetchProductDetails() async {
     try {
       final response = await ApiStore().getAllProductsDetails(widget.productId);
-
-      setState(() {
-        product = response;
-        isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          product = response;
+          isLoading = false;
+        });
+      }
     } catch (e) {
-      setState(() {
-        isLoading = false;
-      });
-      print(e);
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+        print(e);
+      }
     }
   }
 
@@ -158,7 +165,6 @@ class _DetailsScreenState extends State<DetailsScreen> {
 
                     SizedBox(height: 28.h),
 
-                    /// 🔥 Description
                     Text(
                       'Description',
                       style: AppTextStyles.black16Bold.copyWith(
@@ -176,7 +182,6 @@ class _DetailsScreenState extends State<DetailsScreen> {
 
                     SizedBox(height: 28.h),
 
-                    /// 🔥 Quantity
                     Text('Quantity', style: AppTextStyles.black16Bold),
 
                     SizedBox(height: 12.h),
@@ -215,8 +220,40 @@ class _DetailsScreenState extends State<DetailsScreen> {
 
                     SizedBox(height: 36.h),
 
-                    /// 🔥 Buttons
-                    DetailsActionButtons(onAddToCart: () {}, onBuyNow: () {}),
+                    ///  Buttons
+                    DetailsActionButtons(
+                      onAddToCart: () {
+                        Provider.of<StoreProvider>(
+                          context,
+                          listen: false,
+                        ).addToCart(product!);
+                        int i = cartItems.indexWhere(
+                          (item) => item['productId'] == widget.productId,
+                        );
+                        setState(() {
+                          if (i != -1) {
+                            cartItems[i]['quantity'] += quantity;
+                          } else {
+                            cartItems.add({
+                              "productId": widget.productId,
+                              "quantity": quantity,
+                              "name": product!.title,
+                              "image": product!.productImages,
+                              "price": product!.finalPrice.toString(),
+                            });
+                          }
+                        });
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text("${product!.title} added to cart!"),
+                            duration: const Duration(seconds: 2),
+                            backgroundColor: AppColors.primary,
+                          ),
+                        );
+                      },
+                      onBuyNow: () {},
+                    ),
 
                     SizedBox(height: 20.h),
                   ],

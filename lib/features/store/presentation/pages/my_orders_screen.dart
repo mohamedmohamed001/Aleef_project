@@ -1,150 +1,291 @@
 import 'package:flutter/material.dart';
-import '../../../../core/theme/app_colors.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
 
-class MyOrdersScreen extends StatelessWidget {
+import '../../../../core/theme/app_colors.dart';
+import '../../services/store_provider.dart';
+import 'details_screen.dart';
+
+class MyOrdersScreen extends StatefulWidget {
   const MyOrdersScreen({super.key});
 
   @override
+  State<MyOrdersScreen> createState() => _MyOrdersScreenState();
+}
+
+class _MyOrdersScreenState extends State<MyOrdersScreen>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final provider = context.read<StoreProvider>();
+      provider.getUpcomingOrders();
+      provider.getPreviousOrders();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: 2,
-      child: Scaffold(
-        backgroundColor: Colors.white,
-        appBar: AppBar(
-          backgroundColor: Colors.white,
-          elevation: 0,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Color(0xFF1D1E20)),
-            onPressed: () => Navigator.pop(context),
-          ),
-          title: const Text(
-            "My Orders",
-            style: TextStyle(
-              color: Color(0xFF1D1E20),
-              fontWeight: FontWeight.bold,
-              fontSize: 18,
-            ),
-          ),
-          centerTitle: true,
-          bottom: TabBar(
-            indicatorColor: AppColors.primary,
-            labelColor: AppColors.primary,
-            unselectedLabelColor: AppColors.hint,
-            indicatorWeight: 3,
-            tabs: const [
-              Tab(text: "Upcoming Orders"),
-              Tab(text: "Previous Orders"),
-            ],
-          ),
-        ),
-        body: TabBarView(
-          children: [
-            _buildOrdersList(isUpcoming: true),
-            _buildOrdersList(isUpcoming: false),
+    final storeProvider = context.watch<StoreProvider>();
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("My Orders"),
+        centerTitle: true,
+        backgroundColor: AppColors.primary,
+        bottom: TabBar(
+          controller: _tabController,
+          indicatorColor: Colors.white,
+          tabs: const [
+            Tab(text: "Upcoming Orders"),
+            Tab(text: "Previous Orders"),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildOrdersList({required bool isUpcoming}) {
-    return ListView.builder(
-      padding: const EdgeInsets.all(20),
-      itemCount: isUpcoming ? 1 : 2,
-      itemBuilder: (context, index) {
-        return _buildOrderCard(
-          orderId: isUpcoming ? "ORD-2026-001" : "ORD-2026-002",
-          date: isUpcoming ? "March 3, 2026" : "February 20, 2026",
-          status: isUpcoming ? "Shipped" : "Delivered",
-          price: isUpcoming ? "64.49" : "32.00",
-          isUpcoming: isUpcoming,
-          isCancelled: !isUpcoming && index == 1,
-        );
-      },
-    );
-  }
-
-  Widget _buildOrderCard({
-    required String orderId,
-    required String date,
-    required String status,
-    required String price,
-    required bool isUpcoming,
-    bool isCancelled = false,
-  }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 20),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: const Color(0xFFF5F6F8)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      body: TabBarView(
+        controller: _tabController,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  const Icon(
-                    Icons.inventory_2_outlined,
-                    size: 18,
-                    color: Color(0xFF1D1E20),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    orderId,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
-                    ),
-                  ),
-                ],
-              ),
-              Text(
-                isCancelled ? "Cancelled" : status,
-                style: TextStyle(
-                  color: isCancelled
-                      ? Colors.redAccent
-                      : (status == "Shipped" ? Colors.blue : AppColors.primary),
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                ),
-              ),
-            ],
+          _buildOrdersList(
+            storeProvider.upcomingOrders,
+            storeProvider.isLoadingUpcoming,
+            true,
           ),
-          const SizedBox(height: 6),
-          Text(date, style: TextStyle(color: AppColors.hint, fontSize: 13)),
-          const Divider(height: 30, thickness: 1),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                "2 items • \$$price",
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF1D1E20),
-                  fontSize: 15,
-                ),
-              ),
-              GestureDetector(
-                onTap: () {},
-                child: Row(
-                  children: [
-                    Text(
-                      "View Order Details",
-                      style: TextStyle(color: AppColors.hint, fontSize: 13),
-                    ),
-                    Icon(Icons.chevron_right, color: AppColors.hint, size: 18),
-                  ],
-                ),
-              ),
-            ],
+          _buildOrdersList(
+            storeProvider.previousOrders,
+            storeProvider.isLoadingPrevious,
+            false,
           ),
         ],
       ),
     );
+  }
+
+  Widget _buildOrdersList(
+    List<Map<String, dynamic>> orders,
+    bool isLoading,
+    bool showTracking,
+  ) {
+    if (isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (orders.isEmpty) {
+      return const Center(child: Text("No orders found"));
+    }
+
+    return ListView.separated(
+      padding: EdgeInsets.all(16.w),
+      itemCount: orders.length,
+      separatorBuilder: (_, __) => SizedBox(height: 12.h),
+      itemBuilder: (context, index) {
+        final order = orders[index];
+        return _buildOrderCard(order, showTracking, index);
+      },
+    );
+  }
+
+  Widget _buildOrderCard(
+    Map<String, dynamic> order,
+    bool showTracking,
+    int index,
+  ) {
+    final items = order['items'] as List<dynamic>? ?? [];
+    final total = order['totalOrder'] ?? 0;
+    final orderCode = "ORD-2026-${index + 1}";
+    final dateFormatted = items.isNotEmpty
+        ? DateFormat(
+            "MMM d, yyyy",
+          ).format(DateTime.parse(items[0]['createdAt']))
+        : "Unknown date";
+    final status = order['status'] ?? "Pending";
+
+    return Container(
+      padding: EdgeInsets.all(16.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12.r),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 6,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          //  صف فيه الكود والتاريخ والحالة على جنب
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    orderCode,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    dateFormatted,
+                    style: const TextStyle(color: Colors.grey, fontSize: 14),
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: _getStatusColor(status),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  status.toUpperCase(),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 12),
+          Text(
+            "${items.length} items • \$${total.toString()}",
+            style: const TextStyle(fontWeight: FontWeight.w500),
+          ),
+          const SizedBox(height: 12),
+
+          //  عرض المنتجات بالصور
+          Column(
+            children: items.map((item) {
+              return ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: ClipRRect(
+                  borderRadius: BorderRadius.circular(8.r),
+                  child: Image.network(
+                    item['image'] ?? '',
+                    width: 50.w,
+                    height: 50.w,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                title: Text(
+                  item['title'] ?? '',
+                  style: const TextStyle(fontWeight: FontWeight.w500),
+                ),
+                subtitle: Text("x${item['quantity']} • \$${item['price']}"),
+              );
+            }).toList(),
+          ),
+
+          if (showTracking) ...[
+            const SizedBox(height: 12),
+            _buildTrackingBar(status),
+          ],
+
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: TextButton(
+              style: TextButton.styleFrom(
+                backgroundColor: const Color(0xFFF5F5F5),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => DetailsScreen(
+                      productId: order['_id'],
+                      orderData: order,
+                    ),
+                  ),
+                );
+              },
+              child: const Text(
+                "View Order Details",
+                style: TextStyle(
+                  color: Colors.black87,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTrackingBar(String status) {
+    final stages = ["Order", "Processing", "Shipped", "Out", "Delivered"];
+    int currentStage = 0;
+
+    if (status.toLowerCase() == "pending") currentStage = 0;
+    if (status.toLowerCase() == "processing") currentStage = 1;
+    if (status.toLowerCase() == "shipped") currentStage = 2;
+    if (status.toLowerCase() == "out") currentStage = 3;
+    if (status.toLowerCase() == "delivered") currentStage = 4;
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: stages.asMap().entries.map((entry) {
+        final index = entry.key;
+        final label = entry.value;
+        final isActive = index <= currentStage;
+
+        return Column(
+          children: [
+            CircleAvatar(
+              radius: 10,
+              backgroundColor: isActive ? AppColors.primary : Colors.grey[300],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                color: isActive ? AppColors.primary : Colors.grey,
+              ),
+            ),
+          ],
+        );
+      }).toList(),
+    );
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case "pending":
+        return Colors.orange;
+      case "processing":
+        return Colors.blue;
+      case "shipped":
+        return Colors.purple;
+      case "out":
+        return Colors.teal;
+      case "delivered":
+        return Colors.green;
+      case "cancelled":
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
   }
 }
