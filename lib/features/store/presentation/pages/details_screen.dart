@@ -1,7 +1,11 @@
 import 'package:aleef/core/theme/app_text_styles.dart';
 import 'package:aleef/features/store/presentation/models/product_model.dart';
+import 'package:aleef/features/store/presentation/pages/cart_screen.dart';
+import 'package:aleef/features/store/services/store_provider.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:provider/provider.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../services/api_store.dart';
@@ -12,8 +16,13 @@ import '../widgets/details/quantity_selector.dart';
 
 class ProductDetails extends StatefulWidget {
   final String productId;
+  final Map<String, dynamic>? orderData;
 
-  const ProductDetails({super.key, required this.productId});
+  const ProductDetails({
+    super.key,
+    required this.productId,
+    this.orderData,
+  });
 
   @override
   State<ProductDetails> createState() => _ProductDetailsState();
@@ -26,8 +35,8 @@ class _ProductDetailsState extends State<ProductDetails> {
 
   double get unitPrice {
     return double.tryParse(
-          product!.finalPrice.toString().replaceAll('\$', ''),
-        ) ??
+      product!.finalPrice.toString().replaceAll('\$', ''),
+    ) ??
         0.0;
   }
 
@@ -47,25 +56,26 @@ class _ProductDetailsState extends State<ProductDetails> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
-
     fetchProductDetails();
   }
 
   Future<void> fetchProductDetails() async {
     try {
       final response = await ApiStore().getAllProductsDetails(widget.productId);
-
-      setState(() {
-        product = response;
-        isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          product = response;
+          isLoading = false;
+        });
+      }
     } catch (e) {
-      setState(() {
-        isLoading = false;
-      });
-
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+        print(e);
+      }
     }
   }
 
@@ -89,7 +99,6 @@ class _ProductDetailsState extends State<ProductDetails> {
             children: [
               DetailsHeaderSection(
                 imagePath: product!.productImages,
-
                 onBackPressed: () => Navigator.pop(context),
                 discount: product!.discount.toString(),
               ),
@@ -99,7 +108,6 @@ class _ProductDetailsState extends State<ProductDetails> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    /// 🔥 Stock
                     Text(
                       "in stock",
                       style: TextStyle(
@@ -111,7 +119,6 @@ class _ProductDetailsState extends State<ProductDetails> {
 
                     SizedBox(height: 10.h),
 
-                    /// 🔥 Name + Price
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -134,9 +141,11 @@ class _ProductDetailsState extends State<ProductDetails> {
                         ),
                       ],
                     ),
+
                     SizedBox(height: 10.h),
-                    product!.discount !=0?
-                    Align(
+
+                    product!.discount != 0
+                        ? Align(
                       alignment: Alignment.centerRight,
                       child: Text(
                         product!.originalPrice.toString(),
@@ -146,15 +155,18 @@ class _ProductDetailsState extends State<ProductDetails> {
                           decoration: TextDecoration.lineThrough,
                         ),
                       ),
-                    ) : Container(),
+                    )
+                        : Container(),
 
                     SizedBox(height: 10.h),
 
-                     DetailsRatingRow(avgRate: product!.averageRate, ratingQuantity: product!.ratingsQuantity,),
+                    DetailsRatingRow(
+                      avgRate: product!.averageRate,
+                      ratingQuantity: product!.ratingsQuantity,
+                    ),
 
                     SizedBox(height: 28.h),
 
-                    /// 🔥 Description
                     Text(
                       'Description',
                       style: AppTextStyles.black16Bold.copyWith(
@@ -172,7 +184,6 @@ class _ProductDetailsState extends State<ProductDetails> {
 
                     SizedBox(height: 28.h),
 
-                    /// 🔥 Quantity
                     Text('Quantity', style: AppTextStyles.black16Bold),
 
                     SizedBox(height: 12.h),
@@ -185,7 +196,6 @@ class _ProductDetailsState extends State<ProductDetails> {
                           onIncrement: incrementQuantity,
                           onDecrement: decrementQuantity,
                         ),
-
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
@@ -211,8 +221,41 @@ class _ProductDetailsState extends State<ProductDetails> {
 
                     SizedBox(height: 36.h),
 
-                    /// 🔥 Buttons
-                    DetailsActionButtons(onAddToCart: () {}, onBuyNow: () {}),
+                    DetailsActionButtons(
+                      onAddToCart: () {
+                        Provider.of<StoreProvider>(
+                          context,
+                          listen: false,
+                        ).addToCart(product!);
+
+                        int i = cartItems.indexWhere(
+                              (item) => item['productId'] == widget.productId,
+                        );
+
+                        setState(() {
+                          if (i != -1) {
+                            cartItems[i]['quantity'] += quantity;
+                          } else {
+                            cartItems.add({
+                              "productId": widget.productId,
+                              "quantity": quantity,
+                              "name": product!.title,
+                              "image": product!.productImages,
+                              "price": product!.finalPrice.toString(),
+                            });
+                          }
+                        });
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text("${product!.title} added to cart!"),
+                            duration: const Duration(seconds: 2),
+                            backgroundColor: AppColors.primary,
+                          ),
+                        );
+                      },
+                      onBuyNow: () {},
+                    ),
 
                     SizedBox(height: 20.h),
                   ],

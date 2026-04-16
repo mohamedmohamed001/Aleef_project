@@ -1,6 +1,8 @@
+import 'package:aleef/core/routing/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-
+import 'package:provider/provider.dart';
+import 'package:aleef/features/store/services/store_provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import 'icon_with_badge.dart';
 
@@ -38,10 +40,7 @@ class StoreHeader extends StatelessWidget implements PreferredSizeWidget {
 
             Text(
               'Premium products for your pets',
-              style: TextStyle(
-                color: const Color(0xFF949494),
-                fontSize: 13,
-              ),
+              style: TextStyle(color: const Color(0xFF949494), fontSize: 13),
             ),
           ],
         ),
@@ -59,7 +58,10 @@ class StoreHeader extends StatelessWidget implements PreferredSizeWidget {
 
         SizedBox(width: 8.w),
 
-        const IconWithBadge(
+        IconWithBadge(
+          onTap: () {
+            Navigator.pushNamed(context, AppRoutes.order);
+          },
           icon: Icons.inventory_2_outlined,
           count: '',
           badgeColor: Colors.transparent,
@@ -67,10 +69,13 @@ class StoreHeader extends StatelessWidget implements PreferredSizeWidget {
 
         SizedBox(width: 8.w),
 
-        const IconWithBadge(
+        IconWithBadge(
+          onTap: () {
+            Navigator.pushNamed(context, AppRoutes.cart);
+          },
           icon: Icons.shopping_cart_outlined,
-          count: '2',
-          badgeColor: Color(0xFF5DB1A3),
+          count: context.watch<StoreProvider>().cartItems.length.toString(),
+          badgeColor: const Color(0xFF5DB1A3),
         ),
 
         SizedBox(width: 12.w),
