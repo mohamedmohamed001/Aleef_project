@@ -1,13 +1,15 @@
 import 'package:aleef/core/routing/app_routes.dart';
+import 'package:aleef/core/services/fcm_service.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../../../../core/theme/app_colors.dart';
 import '../../../../providers/bottom_nav_provider.dart';
 import '../../data/services/auth_api_service.dart';
 import '../widgets/auth_footer_text.dart';
 import '../widgets/auth_header.dart';
 import '../widgets/auth_primary_button.dart';
 import '../widgets/custom_text_form.dart';
-import 'package:provider/provider.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -50,12 +52,15 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     if (success == true) {
+      final fcmToken = await FcmService.initAndGetToken();
+      print("✅ Token after login: $fcmToken");
+
       context.read<BottomNavProvider>().changeTab(0);
 
       Navigator.pushNamedAndRemoveUntil(
         context,
         AppRoutes.mainLayout,
-            (route) => false,
+        (route) => false,
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -80,12 +85,31 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const AuthHeader(
-                  title: "Welcome Back!",
-                  subtitle: "Sign in to your ALEEF account",
-                ),
+                const AuthHeader(),
                 const SizedBox(height: 16),
+                Text(
+                  "Welcome Back!",
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w800,
+                    height: 1.15,
+                    color: AppColors.textPrimary,
+                    letterSpacing: -0.4,
+                  ),
+                ),
 
+                const SizedBox(height: 8),
+
+                Text(
+                  "Sign in to your ALEEF account",
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w400,
+                    height: 1.5,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+                const SizedBox(height: 36),
                 Text(
                   "Email Address",
                   style: TextStyle(
@@ -118,7 +142,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   controller: passwordController,
                   hintText: "Enter your password",
                   iconPrefix: Icons.lock_outline,
-
                   keyboardType: TextInputType.visiblePassword,
                 ),
 

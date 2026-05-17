@@ -1,4 +1,5 @@
 import 'package:aleef/core/theme/app_colors.dart';
+import 'package:aleef/features/pets/data/models/pet_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -9,6 +10,7 @@ import '../../../../core/utils/sound_helper.dart';
 import '../../data/models/doctor_model.dart';
 import '../../data/models/scheduled_day_model.dart';
 import '../../services/appointment_api.dart';
+import '../widgets/booking_success_view.dart';
 
 class BookAppointmentScreen extends StatefulWidget {
   final String doctorId;
@@ -20,20 +22,68 @@ class BookAppointmentScreen extends StatefulWidget {
 }
 
 class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
+  final TextEditingController reasonController = TextEditingController();
+  final TextEditingController notesController = TextEditingController();
   DoctorModel? doctor;
+  List<PetModel?> pets=[];
   List<ScheduledDayModel> availableDays = [];
   List<String> availableSlots = [];
+  String? petId;
+  bool isSubmitted=false;
 
   bool isLoading = true;
   int selectedIndex = 0;
   int selectedSlotIndex = 0;
+  bool isButtonLoading=false;
 
   @override
   void initState() {
     super.initState();
     getDoctorSchedule(widget.doctorId);
+    getPets();
   }
+  @override
+  void dispose() {
+    reasonController.dispose();
+    notesController.dispose();
+    super.dispose();
+  }
+Future<void> getPets() async{
+    final response= await AppointmentApi().getPets();
+    if (response["status"] == "success") {
+      final data = response["data"];
 
+
+      if (!mounted) return;
+      setState(() {
+
+
+        pets = (data as List<dynamic>).map((e) => PetModel.fromJson(e)).toList();
+      });
+    } else if (response["status"] == "unauthorized") {
+      setState(() {
+        isLoading = false;
+      });
+
+      SecureStorageService().deleteToken();
+      SecureStorageService().deleteUser();
+
+      if (!mounted) return;
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        AppRoutes.login,
+            (route) => false,
+      );
+    } else {
+
+
+      if (!mounted) return;
+      setState(() {
+        isLoading = false;
+      });
+    }
+
+}
   Future<void> getDoctorSchedule(String doctorId) async {
     final response = await AppointmentApi().getDoctorSchedule(doctorId);
 
@@ -80,13 +130,91 @@ class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
       });
     }
   }
+  Future<void> bookAppointment() async {
+    setState(() {
+      isButtonLoading = true;
+    });
+    final selectedDay = availableDays[selectedIndex];
+    final selectedSlot = availableSlots[selectedSlotIndex];
+    final time = selectedSlot;
+    final reason = reasonController.text;
+    final notes = notesController.text;
+    if (petId == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Please select your pet"),
+          backgroundColor: Colors.red,
+        ),
+      );
+      setState(() {
+        isButtonLoading = false;
+      });
+      return;
+    }
+    if (reason.isEmpty || reason.length < 5 || reason.length > 100) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Please enter a valid reason"),
+          backgroundColor: Colors.red,
+        ),
+      );
+
+      setState(() {
+        isButtonLoading = false;
+      });
+
+      return; // 👈 مهم جدًا
+    }
+    final response = await AppointmentApi().bookAppointment(
+      petId!,
+      widget.doctorId,
+      selectedDay.date,
+      time,
+      reason,
+      notes,
+    );
+    if(response ["status"]=="success"){
+      if (!mounted) return;
+      setState(() {
+        isButtonLoading = false;
+        isSubmitted=true;
+      });
+    }else if(response["status"]=="unauthorized"){
+      setState(() {
+        isButtonLoading = false;
+      });
+      SecureStorageService().deleteToken();
+      SecureStorageService().deleteUser();
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        AppRoutes.login,
+        (route) => false,
+      );
+    }else{
+      setState(() {
+        isButtonLoading = false;
+      });
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(response["message"]),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
-
+    if(isSubmitted){
+      return BookingSuccessView();
+    }
     return Scaffold(
       appBar: AppBar(title: const Text("Book Appointment")),
       body: SingleChildScrollView(
@@ -349,19 +477,29 @@ class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
             SizedBox(height: 12.h),
             DropdownButtonFormField(
               hint: Text("Select your pet"),
-              items: const [
-                DropdownMenuItem(value: "1", child: Text("1")),
-                DropdownMenuItem(value: "2", child: Text("2")),
-                DropdownMenuItem(value: "3", child: Text("3")),
+              items: [
+                DropdownMenuItem(
+                  value: null,
+                  child: Text("Select your pet"),
+                ),
+                ...pets.map((pet) {
+                  return DropdownMenuItem(
+                    value: pet?.id.toString() ?? "",
+                    child: Text(pet?.name ?? ""),
+                  );
+                }).toList(),
               ],
               onChanged: (value) {
-
+                setState(() {
+                  petId = value;
+                });
               },
             ),
             SizedBox(height: 12.h),
             Text("Reason for Visit"),
             SizedBox(height: 12.h),
             TextFormField(
+              controller: reasonController,
               decoration: InputDecoration(
                 hintText: "e.g. Annual checkup, vaccination...",
                 border: OutlineInputBorder(
@@ -378,6 +516,7 @@ class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
             Text("Additional Notes (optional)"),
             SizedBox(height: 12.h,),
             TextFormField(
+              controller:notesController,
               decoration: InputDecoration(
                 hintText: "Any additional info for the doctor...",
                 border: OutlineInputBorder(
@@ -388,7 +527,16 @@ class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
               maxLines: 3,
             ),
             SizedBox(height: 24.h,),
-            ElevatedButton(onPressed: () {}, child: Text("Book Appointment")),
+            ElevatedButton(
+                onPressed: isButtonLoading == true? null:
+                    () {
+              bookAppointment();
+
+            }, child: isButtonLoading == true ? CircularProgressIndicator(
+              color: AppColors.primary,
+              strokeWidth: 2.sp,
+            ) :
+            Text("Book Appointment")),
             SizedBox(height: 24.h,)
           ],
         ),

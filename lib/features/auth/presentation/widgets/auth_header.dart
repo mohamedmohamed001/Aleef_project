@@ -2,13 +2,13 @@ import 'package:aleef/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 
 class AuthHeader extends StatelessWidget {
-  final String title;
-  final String subtitle;
+  // final String title;
+  // final String subtitle;
 
   const AuthHeader({
     super.key,
-    required this.title,
-    required this.subtitle,
+    // required this.title,
+    // required this.subtitle,
   });
 
   @override
@@ -56,43 +56,20 @@ class AuthHeader extends StatelessWidget {
 
               const SizedBox(height: 6),
 
-              Text(
-                "Pet care made simple",
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w400,
-                  color: Colors.grey.shade600,
-                  letterSpacing: 0.2,
-                ),
-              ),
+              // Text(
+              //   "Pet care made simple",
+              //   style: TextStyle(
+              //     fontSize: 14,
+              //     fontWeight: FontWeight.w400,
+              //     color: Colors.grey.shade600,
+              //     letterSpacing: 0.2,
+              //   ),
+              // ),
             ],
           ),
         ),
 
-        const SizedBox(height: 36),
-
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 24  ,
-            fontWeight: FontWeight.w800,
-            height: 1.15,
-            color: AppColors.textPrimary,
-            letterSpacing: -0.4,
-          ),
-        ),
-
-        const SizedBox(height: 8),
-
-        Text(
-          subtitle,
-          style: TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w400,
-            height: 1.5,
-            color: Colors.grey.shade600,
-          ),
-        ),
+        // const SizedBox(height: 36),
       ],
     );
   }

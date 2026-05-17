@@ -1,13 +1,15 @@
 import 'package:aleef/features/appointments/data/models/appointment_model.dart';
+import 'package:aleef/features/appointments/data/models/doctor_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:aleef/providers/user_provider.dart';
-import '../../../../core/services/service_locator.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/services/secure_storage_service.dart';
+import '../../../../providers/bottom_nav_provider.dart';
+import '../../../../providers/user_provider.dart';
 import '../../services/appointment_api.dart';
+import '../widgets/appointment_screen_skeleton.dart';
 import '../widgets/appointments_header.dart';
 import '../widgets/appointment_card.dart';
 import '../widgets/available_doctors/available_doctors_section.dart';
@@ -21,47 +23,103 @@ class AppointmentTab extends StatefulWidget {
 }
 
 class _AppointmentTabState extends State<AppointmentTab> {
-  AppointmentModel? appointment;
+  bool isPageLoading = true;
 
-  // void initState() {
-  //   super.initState();
-  //   fetchCurrentAppointment();
-  // }
+  AppointmentModel appointment = AppointmentModel();
+  List<DoctorModel> doctors = [];
 
-  Future<void> fetchCurrentAppointment() async {
-    final response = await AppointmentApi().getActiveAppointment();
+  @override
+  void initState() {
+    super.initState();
+    fetchAppointmentPageData();
+  }
 
-    if (!mounted) return;
+  Future<void> fetchAppointmentPageData() async {
+    setState(() {
+      isPageLoading = true;
+    });
 
-    if (response["status"] == "success" && response["data"] != null) {
-      setState(() {
-        appointment = AppointmentModel.fromJson(response["data"]);
-      });
-    } else if (response["status"] == "unauthorized") {
-      final storage = getIt<SecureStorageService>();
-      await storage.deleteToken();
-      await storage.deleteUser();
+    try {
+      final results = await Future.wait([
+        AppointmentApi().getActiveAppointment(),
+        AppointmentApi().getAvailableDoctor(),
+      ]);
 
       if (!mounted) return;
 
-      context.read<UserProvider>().clearUser();
+      final appointmentResponse = results[0];
+      final doctorsResponse = results[1];
 
-      Navigator.pushNamedAndRemoveUntil(
-        context,
-        AppRoutes.login,
-        (route) => false,
-      );
-    } else {
+      if (appointmentResponse["status"] == "unauthorized" ||
+          doctorsResponse["status"] == "unauthorized") {
+        final storage = SecureStorageService();
+
+        await storage.deleteToken();
+        await storage.deleteUser();
+
+        if (!mounted) return;
+
+        context.read<UserProvider>().clearUser();
+
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          AppRoutes.login,
+          (route) => false,
+        );
+        return;
+      }
+
+      final appointmentData = appointmentResponse["data"];
+
+      final loadedAppointment =
+          appointmentResponse["status"] == "success" &&
+              appointmentData != null &&
+              appointmentData is Map<String, dynamic> &&
+              appointmentData.isNotEmpty
+          ? AppointmentModel.fromJson(appointmentData)
+          : AppointmentModel();
+
+      final List doctorsData = doctorsResponse["data"] ?? [];
+
+      final loadedDoctors = doctorsData
+          .whereType<Map<String, dynamic>>()
+          .map((e) => DoctorModel.fromJson(e))
+          .toList();
+
       setState(() {
-        appointment = null;
+        appointment = loadedAppointment;
+        doctors = loadedDoctors;
+        isPageLoading = false;
+      });
+    } catch (e, s) {
+      print("fetchAppointmentPageData error: $e");
+      print("stack: $s");
+
+      if (!mounted) return;
+
+      setState(() {
+        appointment = AppointmentModel();
+        doctors = [];
+        isPageLoading = false;
       });
     }
   }
 
   @override
   void didChangeDependencies() {
-    fetchCurrentAppointment();
     super.didChangeDependencies();
+
+    final provider = context.watch<BottomNavProvider>();
+
+    if (provider.shouldRefreshAppointments) {
+      fetchAppointmentPageData();
+      provider.doneRefresh();
+    }
+  }
+
+  String _formatDate(DateTime? date) {
+    if (date == null) return "";
+    return "${date.day}/${date.month}/${date.year}";
   }
 
   @override
@@ -69,52 +127,63 @@ class _AppointmentTabState extends State<AppointmentTab> {
     return Scaffold(
       backgroundColor: const Color(0xFFF7F8FA),
       body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: () {
-            return fetchCurrentAppointment();
-          },
-          child: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            child: Column(
-              children: [
-                const AppointmentsHeader(),
-                SizedBox(height: 16.h),
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16.w),
-                  child: appointment?.doctor?.name != null
-                      ? AppointmentCard(
-                          doctorName: appointment?.doctor?.name ?? "",
-                          specialty: appointment?.doctor?.specialization ?? "",
-                          date: appointment?.date != null
-                              ? "${appointment?.date!.day}/${appointment?.date!.month}/${appointment?.date!.year}"
-                              : "",
-                          time: appointment?.time ?? "",
-                          petName: appointment?.pet?.name ?? "",
-                          petType: appointment?.pet?.type ?? "",
-                          status: appointment?.status ?? "",
-                          imagePath: appointment?.doctor?.profilePic ?? "",
-                          onViewDetails: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => AppointmentDetails(
-                                  appointmentId: appointment?.id ?? "",
+        child: isPageLoading
+            ? const AppointmentTabSkeleton()
+            : RefreshIndicator(
+                onRefresh: fetchAppointmentPageData,
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(
+                    parent: AlwaysScrollableScrollPhysics(),
+                  ),
+                  child: Column(
+                    children: [
+                      AppointmentsHeader(
+                        onPreviousTap: () {
+                          Navigator.pushNamed(
+                            context,
+                            AppRoutes.previousAppointmentScreen,
+                          );
+                        },
+                      ),
+                      SizedBox(height: 16.h),
+
+                      if (appointment.doctor?.name != null)
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 16.w),
+                          child: AppointmentCard(
+                            doctorName: appointment.doctor?.name ?? "",
+                            specialty: appointment.doctor?.specialization ?? "",
+                            date: _formatDate(appointment.date),
+                            time: appointment.time ?? "",
+                            petName: appointment.pet?.name ?? "",
+                            petType: appointment.pet?.type ?? "",
+                            status: appointment.status ?? "",
+                            imagePath: appointment.doctor?.profilePic ?? "",
+                            onViewDetails: () {
+                              if (appointment.id == null) return;
+
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => AppointmentDetails(
+                                    appointmentId: appointment.id!,
+                                  ),
                                 ),
-                              ),
-                            );
-                          },
-                        )
-                      : const SizedBox.shrink(),
+                              );
+                            },
+                          ),
+                        ),
+
+                      if (appointment.doctor?.name != null)
+                        SizedBox(height: 24.h),
+
+                      AvailableDoctorsSection(doctors: doctors),
+
+                      SizedBox(height: 16.h),
+                    ],
+                  ),
                 ),
-                appointment?.doctor?.name != null
-                    ? SizedBox(height: 24.h)
-                    : Container(),
-                const AvailableDoctorsSection(),
-                SizedBox(height: 16.h),
-              ],
-            ),
-          ),
-        ),
+              ),
       ),
     );
   }

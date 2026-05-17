@@ -1,77 +1,20 @@
-import 'package:aleef/features/appointments/services/appointment_api.dart';
+import 'package:aleef/features/appointments/presentation/pages/book_appointment_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import '../../../../../core/routing/app_routes.dart';
 import '../../../data/models/doctor_model.dart';
 import '../../pages/doctor_details_screen.dart';
 import 'doctor_card.dart';
 import 'doctor_search_field.dart';
 
-class AvailableDoctorsSection extends StatefulWidget {
-  const AvailableDoctorsSection({super.key});
+class AvailableDoctorsSection extends StatelessWidget {
+  final List<DoctorModel> doctors;
 
-  @override
-  State<AvailableDoctorsSection> createState() =>
-      _AvailableDoctorsSectionState();
-}
+  const AvailableDoctorsSection({
+    super.key,
+    required this.doctors,
+  });
 
-class _AvailableDoctorsSectionState extends State<AvailableDoctorsSection> {
-  List<DoctorModel> doctors = [];
-  bool isLoading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    fetchDoctors();
-  }
-
-  Future<void> fetchDoctors() async {
-    try {
-      final response = await AppointmentApi().getAvailableDoctor();
-
-      if (!mounted) return;
-
-      final status = response["status"].toString().trim();
-
-      if (status == "success") {
-        final List doctorsData = response["data"] ?? [];
-
-        final loadedDoctors = doctorsData
-            .whereType<Map<String, dynamic>>()
-            .map((e) => DoctorModel.fromJson(e))
-            .toList();
-
-        setState(() {
-          doctors = loadedDoctors;
-          isLoading = false;
-        });
-      } else if (status == "unauthorized") {
-        setState(() {
-          isLoading = false;
-        });
-
-        Navigator.pushNamedAndRemoveUntil(
-          context,
-          AppRoutes.login,
-              (route) => false,
-        );
-      } else {
-        setState(() {
-          isLoading = false;
-        });
-      }
-    } catch (e, s) {
-      print("fetchDoctors error: $e");
-      print("stack: $s");
-
-      if (!mounted) return;
-
-      setState(() {
-        isLoading = false;
-      });
-    }
-  }
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -90,6 +33,7 @@ class _AvailableDoctorsSectionState extends State<AvailableDoctorsSection> {
             ),
           ),
           SizedBox(height: 12.h),
+
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 16.w),
             child: DoctorSearchField(
@@ -98,14 +42,7 @@ class _AvailableDoctorsSectionState extends State<AvailableDoctorsSection> {
           ),
           SizedBox(height: 16.h),
 
-          if (isLoading)
-            Padding(
-              padding: EdgeInsets.symmetric(vertical: 32.h),
-              child: const Center(
-                child: CircularProgressIndicator(),
-              ),
-            )
-          else if (doctors.isEmpty)
+          if (doctors.isEmpty)
             Padding(
               padding: EdgeInsets.symmetric(vertical: 24.h),
               child: Center(
@@ -131,18 +68,29 @@ class _AvailableDoctorsSectionState extends State<AvailableDoctorsSection> {
 
                   return DoctorCard(
                     doctor: doctor,
-                      onTapDetails: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => DoctorDetailsScreen(
-                              doctorId: doctor.id!,
-                            ),
+                    onTapDetails: () {
+                      if (doctor.id == null) return;
+
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => DoctorDetailsScreen(
+                            doctorId: doctor.id!,
                           ),
-                        );
-                      },
+                        ),
+                      );
+                    },
                     onTap: () {
-                      // TODO: navigate to schedule
+                      if (doctor.id == null) return;
+
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => BookAppointmentScreen(
+                            doctorId: doctor.id!,
+                          ),
+                        ),
+                      );
                     },
                   );
                 },

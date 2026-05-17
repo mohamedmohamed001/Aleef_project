@@ -25,6 +25,11 @@ dependencies:
   dio: ^5.9.2
   audioplayers: ^6.6.0
   intl: ^0.20.2
+  socket_io_client: ^3.1.1
+  shimmer: ^3.0.0
+  firebase_messaging: ^14.7.10
+  firebase_core: ^2.30.0
+  lucide_icons_flutter: ^3.1.13
 
 dev_dependencies:
   flutter_test:
@@ -42,3 +47,4 @@ flutter:
     - assets/
     - assets/images/svgs/
     - assets/sounds/
+    - assets/images/chat_bot.png

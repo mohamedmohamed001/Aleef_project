@@ -36,10 +36,22 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("My Orders"),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: const Text("My Orders", style: TextStyle(color: Colors.white)),
         centerTitle: true,
         backgroundColor: AppColors.primary,
         bottom: TabBar(
+          dividerHeight: 0,
+          padding: EdgeInsets.symmetric(horizontal: 16.w),
+          indicatorPadding: EdgeInsets.zero,
+          labelPadding: EdgeInsets.zero,
+          indicatorWeight: 3,
+          indicatorSize: TabBarIndicatorSize.label,
+          labelColor: Colors.white,
+          unselectedLabelColor: Colors.white.withOpacity(0.5),
           controller: _tabController,
           indicatorColor: Colors.white,
           tabs: const [
@@ -233,53 +245,113 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
     );
   }
 
+
+
   Widget _buildTrackingBar(String status) {
-    final stages = ["Order", "Processing", "Shipped", "Out", "Delivered"];
+    final stages = ["Order", "Shipped", "Delivered"];
+
+    final icons = [
+      Icons.shopping_cart,
+      Icons.local_shipping,
+      Icons.check_circle,
+    ];
+
     int currentStage = 0;
 
     if (status.toLowerCase() == "pending") currentStage = 0;
-    if (status.toLowerCase() == "processing") currentStage = 1;
-    if (status.toLowerCase() == "shipped") currentStage = 2;
-    if (status.toLowerCase() == "out") currentStage = 3;
-    if (status.toLowerCase() == "delivered") currentStage = 4;
+    if (status.toLowerCase() == "shipped") currentStage = 1;
+    if (status.toLowerCase() == "delivered") currentStage = 2;
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: stages.asMap().entries.map((entry) {
-        final index = entry.key;
-        final label = entry.value;
-        final isActive = index <= currentStage;
-
-        return Column(
-          children: [
-            CircleAvatar(
-              radius: 10,
-              backgroundColor: isActive ? AppColors.primary : Colors.grey[300],
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                color: isActive ? AppColors.primary : Colors.grey,
+    return Column(
+      children: [
+        SizedBox(
+          height: 36.h,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              /// الخطوط
+              Positioned(
+                left: 5,
+                right: 0,
+                child: Row(
+                  children: List.generate(stages.length - 1, (index) {
+                    return Expanded(
+                      child: Container(
+                        height: 3.h,
+                        margin: EdgeInsets.symmetric(horizontal: 6.w),
+                        decoration: BoxDecoration(
+                          color: index < currentStage
+                              ? AppColors.primary
+                              : Colors.grey.shade300,
+                          borderRadius: BorderRadius.circular(10.r),
+                        ),
+                      ),
+                    );
+                  }),
+                ),
               ),
-            ),
-          ],
-        );
-      }).toList(),
-    );
-  }
 
-  Color _getStatusColor(String status) {
+              /// الأيقونات
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: List.generate(stages.length, (index) {
+                  final isActive = index <= currentStage;
+
+                  return Container(
+                    width: 32.w,
+                    height: 32.h,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: isActive
+                          ? AppColors.primary.withOpacity(0.1)
+                          : Colors.grey.shade200,
+                    ),
+                    child: Icon(
+                      icons[index],
+                      size: 18.sp,
+                      color:
+                      isActive ? AppColors.primary : Colors.grey,
+                    ),
+                  );
+                }),
+              ),
+            ],
+          ),
+        ),
+
+        SizedBox(height: 8.h),
+
+        /// labels
+        Padding(
+          padding: EdgeInsets.only(left: 10),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: List.generate(stages.length, (index) {
+              final isActive = index <= currentStage;
+
+              return Text(
+                stages[index],
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 11.sp,
+                  fontWeight:
+                  isActive ? FontWeight.w600 : FontWeight.normal,
+                  color: isActive
+                      ? AppColors.primary
+                      : Colors.grey,
+                ),
+              );
+            }),
+          ),
+        ),
+      ],
+    );
+  }  Color _getStatusColor(String status) {
     switch (status.toLowerCase()) {
       case "pending":
         return Colors.orange;
-      case "processing":
-        return Colors.blue;
       case "shipped":
-        return Colors.purple;
-      case "out":
-        return Colors.teal;
+        return Colors.blue ;
       case "delivered":
         return Colors.green;
       case "cancelled":

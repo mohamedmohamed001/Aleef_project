@@ -1,9 +1,11 @@
+import 'package:aleef/core/theme/app_text_styles.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:aleef/features/store/services/store_provider.dart';
+import '../../../../core/constants/api_constant.dart';
 import '../../../../core/theme/app_colors.dart';
 import 'my_orders_screen.dart';
 
@@ -26,7 +28,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   Future<void> placeOrderAction() async {
     if (_addressController.text.isEmpty || _phoneController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please fill in address and phone")),
+        const SnackBar(
+          content: Text("Please fill in address and phone"),
+          backgroundColor: Colors.red,
+            duration: const Duration(seconds: 2)
+        ),
       );
       return;
     }
@@ -37,7 +43,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final cartItems = storeProvider.cartItems;
     final String? token = await _storage.read(key: "token");
 
-    final url = Uri.parse('https://aleef-server.up.railway.app/api/v1/orders');
+    final url = Uri.parse("${ApiConstant.baseUrl}/orders/");
 
     final cartData = cartItems.map((product) {
       final qty = storeProvider.itemQuantities[product.id.toString()] ?? 1;
@@ -87,6 +93,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
+            duration: const Duration(seconds:3),
+            backgroundColor: Colors.red,
             content: Text(
               "Error: ${jsonDecode(response.body)['message'] ?? 'Failed'}",
             ),
@@ -99,7 +107,15 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       if (mounted) setState(() => _isLoading = false);
     }
   }
+@override
+  void dispose() {
+    // TODO: implement dispose
 
+    _addressController.dispose();
+    _cityController.dispose();
+    _phoneController.dispose();
+    super.dispose();
+  }
   @override
   Widget build(BuildContext context) {
     final storeProvider = context.watch<StoreProvider>();
@@ -121,27 +137,32 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               "Shipping Address",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: AppTextStyles.title16SemiBold.copyWith(
+                fontSize: 20
+              ),
             ),
-            const SizedBox(height: 15),
+            const SizedBox(height: 20),
             _buildTextField(
               _addressController,
               "Street Address",
               Icons.location_on_outlined,
+              TextInputType.streetAddress,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 20),
             _buildTextField(
               _cityController,
               "City",
               Icons.location_city_outlined,
+              TextInputType.streetAddress,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 20),
             _buildTextField(
               _phoneController,
               "Phone Number",
               Icons.phone_android_outlined,
+              TextInputType.phone,
             ),
             const SizedBox(height: 30),
             const Text(
@@ -200,8 +221,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     TextEditingController controller,
     String label,
     IconData icon,
+  TextInputType? keyboardType,
   ) {
     return TextField(
+      keyboardType:keyboardType ,
       controller: controller,
       cursorColor: AppColors.primary,
       style: const TextStyle(color: Colors.black),

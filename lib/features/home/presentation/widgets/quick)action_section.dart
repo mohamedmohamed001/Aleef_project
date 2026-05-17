@@ -1,14 +1,12 @@
 import 'package:aleef/features/home/presentation/widgets/quick_action_button.dart';
-import 'package:aleef/features/pets/services/pets_service.dart';
-import 'package:aleef/features/pets/presentation/pages/add_pet_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
+
 import '../../../../providers/bottom_nav_provider.dart';
 
 class QuickActionsSection extends StatelessWidget {
-  final PetsService service;
-  const QuickActionsSection({super.key, required this.service});
+  const QuickActionsSection({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -45,14 +43,6 @@ class QuickActionsSection extends StatelessWidget {
           gradientColors: const [Color(0xFF9B5CFF), Color(0xFF7B3FF2)],
         ),
         QuickActionButton(
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => AddPetScreen(service: PetsService()),
-              ),
-            );
-          },
           title: 'Add Pet',
           icon: Icons.add_circle_outline,
           gradientColors: const [Color(0xFF4B8DFF), Color(0xFF2F6FEA)],

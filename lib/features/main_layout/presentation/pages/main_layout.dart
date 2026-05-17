@@ -1,3 +1,7 @@
+import 'package:aleef/core/constants/api_constant.dart';
+import 'package:aleef/core/services/secure_storage_service.dart';
+import 'package:aleef/core/services/service_locator.dart';
+import 'package:aleef/core/services/socket_service.dart';
 import 'package:aleef/features/appointments/presentation/pages/appointments_screen.dart';
 import 'package:aleef/features/chat/presentation/pages/chat_tab.dart';
 import 'package:aleef/features/home/presentation/pages/home_tab.dart';
@@ -10,8 +14,38 @@ import 'package:provider/provider.dart';
 
 final GlobalKey<ProfileTabState> profileTabKey = GlobalKey<ProfileTabState>();
 
-class MainLayout extends StatelessWidget {
+class MainLayout extends StatefulWidget {
   const MainLayout({super.key});
+
+  @override
+  State<MainLayout> createState() => _MainLayoutState();
+}
+
+class _MainLayoutState extends State<MainLayout> {
+  @override
+  void initState() {
+    super.initState();
+    _connectSocket();
+  }
+
+  Future<void> _connectSocket() async {
+    final storage = getIt<SecureStorageService>();
+    final socketService = getIt<SocketService>();
+
+    final token = await storage.getToken();
+    final user = await storage.getUser();
+
+    if (token == null || token.isEmpty || user == null || user.id.isEmpty) {
+      print("⚠️ Socket connection skipped: token/user missing");
+      return;
+    }
+
+    socketService.connect(
+      baseUrl: ApiConstant.socketUrl,
+      token: token,
+      userId: user.id,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {

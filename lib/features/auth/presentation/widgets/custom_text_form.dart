@@ -11,22 +11,28 @@ class CustomTextFormField extends StatefulWidget {
   final String? labelText;
   final Widget? iconSuffix;
   final int? maxLines;
+  final int? minLines;
   final TextAlign? textAlign;
   final String? hintText;
   final TextInputType? keyboardType;
   final Color? color;
   final BorderRadius? borderRadius;
   final bool isPassword;
+  final EdgeInsetsGeometry? contentPadding;
+  final TextInputAction? textInputAction;
+  final ValueChanged<String>? onChanged;
+  final VoidCallback? onTap;
+  final bool readOnly;
+  final bool enabled;
 
   const CustomTextFormField({
     super.key,
     required this.controller,
-
     this.iconPrefix,
     this.labelText,
     this.iconSuffix,
     this.maxLines = 1,
-
+    this.minLines,
     this.textAlign,
     this.hintText,
     this.validator,
@@ -34,6 +40,12 @@ class CustomTextFormField extends StatefulWidget {
     this.color,
     this.borderRadius,
     this.isPassword = false,
+    this.contentPadding,
+    this.textInputAction,
+    this.onChanged,
+    this.onTap,
+    this.readOnly = false,
+    this.enabled = true,
   });
 
   @override
@@ -41,81 +53,110 @@ class CustomTextFormField extends StatefulWidget {
 }
 
 class _CustomTextFormFieldState extends State<CustomTextFormField> {
-  late bool _obSecureText;
+  late bool _obscureText;
+
+  bool get _isMultiline =>
+      (widget.maxLines ?? 1) > 1 || (widget.minLines ?? 1) > 1;
 
   @override
   void initState() {
     super.initState();
-    _obSecureText = widget.isPassword;
+    _obscureText = widget.isPassword;
+  }
+
+  @override
+  void didUpdateWidget(covariant CustomTextFormField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (oldWidget.isPassword != widget.isPassword) {
+      _obscureText = widget.isPassword;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final BorderRadius borderRadius =
+        widget.borderRadius ?? BorderRadius.circular(16);
+
+    final enabledBorder = OutlineInputBorder(
+      borderRadius: borderRadius,
+      borderSide: BorderSide(
+        color: AppColors.border.withValues(alpha: 0.9),
+        width: 1.2,
+      ),
+    );
+
+    final focusedBorder = OutlineInputBorder(
+      borderRadius: borderRadius,
+      borderSide: const BorderSide(
+        color: AppColors.primary,
+        width: 1.5,
+      ),
+    );
+
+    final errorBorder = OutlineInputBorder(
+      borderRadius: borderRadius,
+      borderSide: const BorderSide(
+        color: AppColors.error,
+        width: 1.2,
+      ),
+    );
+
+    final focusedErrorBorder = OutlineInputBorder(
+      borderRadius: borderRadius,
+      borderSide: const BorderSide(
+        color: AppColors.error,
+        width: 1.5,
+      ),
+    );
+
     return TextFormField(
-      validator: widget.validator,
-      // textAlignVertical: TextAlignVertical.top,
-      maxLines: widget.maxLines,
       controller: widget.controller,
-      // textAlign: TextAlign.start,
+      validator: widget.validator,
       autovalidateMode: AutovalidateMode.onUserInteraction,
-      obscureText: _obSecureText ?? false,
+      maxLines: widget.isPassword ? 1 : widget.maxLines,
+      minLines: widget.isPassword ? 1 : widget.minLines,
+      obscureText: widget.isPassword ? _obscureText : false,
       textAlign: widget.textAlign ?? TextAlign.start,
-      keyboardType: widget.keyboardType,
+      keyboardType: widget.keyboardType ??
+          (_isMultiline ? TextInputType.multiline : TextInputType.text),
+      textInputAction: widget.textInputAction ??
+          (_isMultiline ? TextInputAction.newline : TextInputAction.done),
+      onChanged: widget.onChanged,
+      onTap: widget.onTap,
+      readOnly: widget.readOnly,
+      enabled: widget.enabled,
       decoration: InputDecoration(
-        filled: widget.color != null ? true : null,
+        filled: widget.color != null,
         fillColor: widget.color,
-
         hintText: widget.hintText,
-
-        prefixIcon: widget.iconPrefix != null ? Icon(widget.iconPrefix) : null,
         labelText: widget.labelText,
+        alignLabelWithHint: _isMultiline,
+        prefixIcon: widget.iconPrefix != null ? Icon(widget.iconPrefix) : null,
         suffixIcon: widget.isPassword
             ? IconButton(
           icon: Icon(
-            _obSecureText ? Icons.visibility_off : Icons.visibility,
-            color: AppColors.hint ,
+            _obscureText ? Icons.visibility_off : Icons.visibility,
+            color: AppColors.hint,
           ),
           onPressed: () {
             setState(() {
-              _obSecureText = !_obSecureText;
+              _obscureText = !_obscureText;
             });
           },
         )
             : widget.iconSuffix,
-
-        enabledBorder: widget.borderRadius != null
-            ? OutlineInputBorder(
-                borderRadius: widget.borderRadius!,
-                borderSide: const BorderSide(color: AppColors.border, width: 1),
-              )
-            : null,
-
-        focusedBorder: widget.borderRadius != null
-            ? OutlineInputBorder(
-                borderRadius: widget.borderRadius!,
-                borderSide: const BorderSide(
-                  color: AppColors.primary,
-                  width: 1.3,
-                ),
-              )
-            : null,
-
-        errorBorder: widget.borderRadius != null
-            ? OutlineInputBorder(
-                borderRadius: widget.borderRadius!,
-                borderSide: const BorderSide(color: AppColors.error, width: 1),
-              )
-            : null,
-
-        focusedErrorBorder: widget.borderRadius != null
-            ? OutlineInputBorder(
-                borderRadius: widget.borderRadius!,
-                borderSide: const BorderSide(
-                  color: AppColors.error,
-                  width: 1.3,
-                ),
-              )
-            : null,
+        contentPadding: widget.contentPadding ??
+            EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: _isMultiline ? 14 : 12,
+            ),
+        enabledBorder: enabledBorder,
+        focusedBorder: focusedBorder,
+        errorBorder: errorBorder,
+        focusedErrorBorder: focusedErrorBorder,
+        border: enabledBorder,
+        disabledBorder: enabledBorder,
       ),
     );
   }

@@ -13,15 +13,57 @@ class StoreProvider extends ChangeNotifier {
   List<ProductModel> cartItems = [];
   Map<String, int> itemQuantities = {};
 
-  void addToCart(ProductModel product) {
-    int index = cartItems.indexWhere((item) => item.id == product.id);
-    if (index != -1) {
-      String productId = product.id.toString();
-      itemQuantities[productId] = (itemQuantities[productId] ?? 1) + 1;
-    } else {
+  bool addToCart(ProductModel product, int quantity) {
+    final String productId = product.id.toString();
+    final int currentQty = itemQuantities[productId] ?? 0;
+    final int newQty = currentQty + quantity;
+
+    if (quantity <= 0) return false;
+    if (newQty > product.stock) return false;
+
+    final int index = cartItems.indexWhere((item) => item.id == product.id);
+
+    if (index == -1) {
       cartItems.add(product);
-      itemQuantities[product.id.toString()] = 1;
     }
+
+    itemQuantities[productId] = newQty;
+    notifyListeners();
+    return true;
+  }
+
+  void removeFromCart(String productId) {
+    cartItems.removeWhere((item) => item.id.toString() == productId);
+    itemQuantities.remove(productId);
+    notifyListeners();
+  }
+
+  void incrementCartQuantity(String productId) {
+    final int index = cartItems.indexWhere(
+          (item) => item.id.toString() == productId,
+    );
+
+    if (index == -1) return;
+
+    final product = cartItems[index];
+    final currentQty = itemQuantities[productId] ?? 1;
+
+    if (currentQty < product.stock) {
+      itemQuantities[productId] = currentQty + 1;
+      notifyListeners();
+    }
+  }
+
+  void decrementQuantity(String productId) {
+    if (!itemQuantities.containsKey(productId)) return;
+
+    if (itemQuantities[productId]! > 1) {
+      itemQuantities[productId] = itemQuantities[productId]! - 1;
+    } else {
+      removeFromCart(productId);
+      return;
+    }
+
     notifyListeners();
   }
 
@@ -51,6 +93,7 @@ class StoreProvider extends ChangeNotifier {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
+
     try {
       final products = await _apiStore.getAllProducts();
       _allProducts = products;
@@ -58,6 +101,7 @@ class StoreProvider extends ChangeNotifier {
     } catch (e) {
       _errorMessage = e.toString();
     }
+
     _isLoading = false;
     notifyListeners();
   }
@@ -66,6 +110,7 @@ class StoreProvider extends ChangeNotifier {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
+
     try {
       final products = await _apiStore.getAllProducts();
       _allProducts = products;
@@ -73,16 +118,9 @@ class StoreProvider extends ChangeNotifier {
     } catch (e) {
       _errorMessage = e.toString();
     }
+
     _isLoading = false;
     notifyListeners();
-  }
-
-  void decrementQuantity(String productId) {
-    if (itemQuantities.containsKey(productId) &&
-        itemQuantities[productId]! > 1) {
-      itemQuantities[productId] = itemQuantities[productId]! - 1;
-      notifyListeners();
-    }
   }
 
   List<Map<String, dynamic>> upcomingOrders = [];
@@ -106,6 +144,7 @@ class StoreProvider extends ChangeNotifier {
           "Authorization": "Bearer $token",
         },
       );
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         upcomingOrders = List<Map<String, dynamic>>.from(data['orders']);
@@ -134,6 +173,7 @@ class StoreProvider extends ChangeNotifier {
           "Authorization": "Bearer $token",
         },
       );
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         previousOrders = List<Map<String, dynamic>>.from(data['orders']);

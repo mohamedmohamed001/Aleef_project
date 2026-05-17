@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import '../../../../core/utils/app_assets.dart';
 import 'doctor_card.dart';
 
 class RecommendedDoctors extends StatelessWidget {
@@ -16,7 +17,17 @@ class RecommendedDoctors extends StatelessWidget {
         return SizedBox(height: 12.h);
       },
       itemBuilder: (context, index) {
-        return const DoctorCard();
+        return DoctorCard(
+          name: "Dr. Amira Hassan",
+          specialty: "General Veterinarian",
+          imagePath: AppAssets.profilePhoto,
+          statusText: "Available",
+          buttonText: "Book",
+          isAvailable: true,
+          onBookPressed: () {
+            print("Book pressed");
+          },
+        );
       },
     );
   }

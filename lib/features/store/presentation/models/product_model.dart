@@ -40,14 +40,15 @@ class ProductModel {
       categories: (json['category'] as List<dynamic>? ?? [])
           .map((e) => ProductCategoryModel.fromJson(e))
           .toList(),
-      stock: json['stock'] ?? 0,
-      buys: json['buys'] ?? 0,
+      stock: int.tryParse(json['stock']?.toString() ?? '0') ?? 0,
+      buys: int.tryParse(json['buys']?.toString() ?? '0') ?? 0,
       thumbnail: ProductImageModel.fromJson(json['thumbnail'] ?? {}),
       productImages: (json['productImages'] as List<dynamic>? ?? [])
           .map((e) => ProductImageModel.fromJson(e))
           .toList(),
-      averageRate: (json['averageRate'] ?? 0).toDouble(),
-      ratingsQuantity: json['ratingsQuantity'] ?? 0,
+      averageRate: double.tryParse(json['averageRate']?.toString() ?? '0') ?? 0,
+      ratingsQuantity:
+      int.tryParse(json['ratingsQuantity']?.toString() ?? '0') ?? 0,
     );
   }
 }

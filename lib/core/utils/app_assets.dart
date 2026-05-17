@@ -5,6 +5,6 @@ class AppAssets {
   static const String splash="assets/images/splash.png";
   static const String discountCard="assets/images/discountCard.png";
   static const String cat3d= "assets/images/cat3d.png";
-
+  static const String chatBot="assets/images/chat_bot.png";
 
 }
