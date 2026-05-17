@@ -1,6 +1,7 @@
 import 'package:aleef/features/appointments/presentation/widgets/appointment_card.dart';
 import 'package:aleef/features/home/presentation/widgets/discount_card.dart';
 import 'package:aleef/features/home/presentation/widgets/upcoming_appointment_card.dart';
+import 'package:aleef/features/pets/services/pets_service.dart';
 import 'package:aleef/providers/user_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -27,7 +28,7 @@ class HomeTab extends StatefulWidget {
 }
 
 class _HomeTabState extends State<HomeTab> {
-  AppointmentModel appointment = AppointmentModel();
+  AppointmentModel? appointment;
   late final TextEditingController searchController;
   final SessionService session = getIt<SessionService>();
 
@@ -42,10 +43,9 @@ class _HomeTabState extends State<HomeTab> {
   Future<void> fetchCurrentAppointment() async {
     final response = await AppointmentApi().getActiveAppointment();
 
-
     if (!mounted) return;
 
-    if (response["status"] == "success") {
+    if (response["status"] == "success" && response["data"] != null) {
       setState(() {
         appointment = AppointmentModel.fromJson(response["data"]);
       });
@@ -61,8 +61,12 @@ class _HomeTabState extends State<HomeTab> {
       Navigator.pushNamedAndRemoveUntil(
         context,
         AppRoutes.login,
-            (route) => false,
+        (route) => false,
       );
+    } else {
+      setState(() {
+        appointment = null;
+      });
     }
   }
 
@@ -127,43 +131,44 @@ class _HomeTabState extends State<HomeTab> {
                     SizedBox(height: 24.h),
                     Padding(
                       padding: EdgeInsets.all(8.r),
-                      child: const QuickActionsSection(),
+                      child: QuickActionsSection(service: PetsService()),
                     ),
                     SizedBox(height: 24.h),
-                    appointment.doctor?.id != null
+                    appointment?.doctor?.id != null
                         ? Text(
-                      "Upcoming Appointment",
-                      style: AppTextStyles.black16Bold.copyWith(
-                        fontSize: 18.sp,
-                      ),
-                    )
+                            "Upcoming Appointment",
+                            style: AppTextStyles.black16Bold.copyWith(
+                              fontSize: 18.sp,
+                            ),
+                          )
                         : Container(),
-                    appointment.doctor?.id != null
+                    appointment?.doctor?.id != null
                         ? SizedBox(height: 24.h)
                         : Container(),
-                    appointment.doctor?.id != null
+                    appointment?.doctor?.id != null
                         ? AppointmentCard(
-                      doctorName: appointment.doctor?.name ?? "",
-                      specialty: appointment.doctor?.specialization ?? "",
-                      date: appointment.date != null
-                          ? "${appointment.date!.day}/${appointment.date!.month}/${appointment.date!.year}"
-                          : "",
-                      time: appointment.time ?? "",
-                      petName: appointment.pet?.name ?? "",
-                      petType: appointment.pet?.type ?? "",
-                      status: appointment.status ?? "",
-                      imagePath: appointment.doctor?.profilePic ?? "",
-                      onViewDetails: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => AppointmentDetails(
-                              appointmentId: appointment.id!,
-                            ),
-                          ),
-                        );
-                      },
-                    )
+                            doctorName: appointment?.doctor?.name ?? "",
+                            specialty:
+                                appointment?.doctor?.specialization ?? "",
+                            date: appointment?.date != null
+                                ? "${appointment?.date!.day}/${appointment?.date!.month}/${appointment?.date!.year}"
+                                : "",
+                            time: appointment?.time ?? "",
+                            petName: appointment?.pet?.name ?? "",
+                            petType: appointment?.pet?.type ?? "",
+                            status: appointment?.status ?? "",
+                            imagePath: appointment?.doctor?.profilePic ?? "",
+                            onViewDetails: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => AppointmentDetails(
+                                    appointmentId: appointment?.id ?? "",
+                                  ),
+                                ),
+                              );
+                            },
+                          )
                         : Container(),
                     SizedBox(height: 24.h),
                     const SectionHeader(title: "Recommended Vets"),

@@ -1,6 +1,9 @@
 import 'package:aleef/features/appointments/data/models/appointment_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:aleef/providers/user_provider.dart';
+import '../../../../core/services/service_locator.dart';
+import 'package:provider/provider.dart';
 
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/services/secure_storage_service.dart';
@@ -18,7 +21,7 @@ class AppointmentTab extends StatefulWidget {
 }
 
 class _AppointmentTabState extends State<AppointmentTab> {
-  AppointmentModel appointment = AppointmentModel();
+  AppointmentModel? appointment;
 
   // void initState() {
   //   super.initState();
@@ -27,28 +30,40 @@ class _AppointmentTabState extends State<AppointmentTab> {
 
   Future<void> fetchCurrentAppointment() async {
     final response = await AppointmentApi().getActiveAppointment();
+
     if (!mounted) return;
-    if (response["status"] == "success") {
+
+    if (response["status"] == "success" && response["data"] != null) {
       setState(() {
         appointment = AppointmentModel.fromJson(response["data"]);
       });
     } else if (response["status"] == "unauthorized") {
-      SecureStorageService().deleteToken();
-      SecureStorageService().deleteUser();
+      final storage = getIt<SecureStorageService>();
+      await storage.deleteToken();
+      await storage.deleteUser();
+
+      if (!mounted) return;
+
+      context.read<UserProvider>().clearUser();
 
       Navigator.pushNamedAndRemoveUntil(
         context,
         AppRoutes.login,
         (route) => false,
       );
+    } else {
+      setState(() {
+        appointment = null;
+      });
     }
   }
 
-@override
+  @override
   void didChangeDependencies() {
     fetchCurrentAppointment();
     super.didChangeDependencies();
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -66,32 +81,32 @@ class _AppointmentTabState extends State<AppointmentTab> {
                 SizedBox(height: 16.h),
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: 16.w),
-                  child: appointment.doctor?.name != null
+                  child: appointment?.doctor?.name != null
                       ? AppointmentCard(
-                          doctorName: appointment.doctor?.name ?? "",
-                          specialty: appointment.doctor?.specialization ?? "",
-                          date: appointment.date != null
-                              ? "${appointment.date!.day}/${appointment.date!.month}/${appointment.date!.year}"
+                          doctorName: appointment?.doctor?.name ?? "",
+                          specialty: appointment?.doctor?.specialization ?? "",
+                          date: appointment?.date != null
+                              ? "${appointment?.date!.day}/${appointment?.date!.month}/${appointment?.date!.year}"
                               : "",
-                          time: appointment.time ?? "",
-                          petName: appointment.pet?.name ?? "",
-                          petType: appointment.pet?.type ?? "",
-                          status: appointment.status ?? "",
-                          imagePath: appointment.doctor?.profilePic ?? "",
+                          time: appointment?.time ?? "",
+                          petName: appointment?.pet?.name ?? "",
+                          petType: appointment?.pet?.type ?? "",
+                          status: appointment?.status ?? "",
+                          imagePath: appointment?.doctor?.profilePic ?? "",
                           onViewDetails: () {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
                                 builder: (_) => AppointmentDetails(
-                                  appointmentId: appointment.id!,
+                                  appointmentId: appointment?.id ?? "",
                                 ),
                               ),
                             );
                           },
                         )
-                      : Container(),
+                      : const SizedBox.shrink(),
                 ),
-                appointment.doctor?.name != null
+                appointment?.doctor?.name != null
                     ? SizedBox(height: 24.h)
                     : Container(),
                 const AvailableDoctorsSection(),

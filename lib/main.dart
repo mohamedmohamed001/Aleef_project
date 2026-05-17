@@ -3,6 +3,7 @@ import 'package:aleef/features/appointments/presentation/pages/appointment_detai
 import 'package:aleef/features/appointments/presentation/pages/book_appointment_screen.dart';
 import 'package:aleef/features/auth/presentation/pages/register_screen.dart';
 import 'package:aleef/features/auth/presentation/pages/verfication_otp_screen.dart';
+import 'package:aleef/features/pets/presentation/manager/pets_provider.dart';
 import 'package:aleef/features/store/presentation/pages/details_screen.dart';
 import 'package:aleef/features/store/presentation/pages/cart_screen.dart';
 import 'package:aleef/features/store/presentation/pages/my_orders_screen.dart';
@@ -32,6 +33,7 @@ void main() {
         ChangeNotifierProvider(create: (_) => BottomNavProvider()),
         ChangeNotifierProvider(create: (_) => StoreProvider()),
         ChangeNotifierProvider(create: (_) => UserProvider()),
+        ChangeNotifierProvider(create: (_) => PetsProvider()),
       ],
       child: MyApp(),
     ),
@@ -60,8 +62,7 @@ class MyApp extends StatelessWidget {
           AppRoutes.appointments: (context) => AppointmentTab(),
 
           // 🔥 شغلك أنت
-          AppRoutes.detailsProduct: (context) =>
-              ProductDetails(productId: ''),
+          AppRoutes.detailsProduct: (context) => ProductDetails(productId: ''),
           AppRoutes.appointmentDetails: (context) =>
               AppointmentDetails(appointmentId: ''),
           AppRoutes.bookAppointment: (context) =>

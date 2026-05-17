@@ -1,12 +1,14 @@
 import 'package:aleef/features/home/presentation/widgets/quick_action_button.dart';
+import 'package:aleef/features/pets/services/pets_service.dart';
+import 'package:aleef/features/pets/presentation/pages/add_pet_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
-
 import '../../../../providers/bottom_nav_provider.dart';
 
 class QuickActionsSection extends StatelessWidget {
-  const QuickActionsSection({super.key});
+  final PetsService service;
+  const QuickActionsSection({super.key, required this.service});
 
   @override
   Widget build(BuildContext context) {
@@ -24,10 +26,7 @@ class QuickActionsSection extends StatelessWidget {
           },
           title: 'Book Appointment',
           icon: Icons.calendar_month_outlined,
-          gradientColors: const [
-            Color(0xFF2F8A83),
-            Color(0xFF1F6E67),
-          ],
+          gradientColors: const [Color(0xFF2F8A83), Color(0xFF1F6E67)],
         ),
         QuickActionButton(
           onPressed: () {
@@ -35,10 +34,7 @@ class QuickActionsSection extends StatelessWidget {
           },
           title: 'Chat with Doctor',
           icon: Icons.chat_bubble_outline,
-          gradientColors: const [
-            Color(0xFFFF8A26),
-            Color(0xFFFF6A00),
-          ],
+          gradientColors: const [Color(0xFFFF8A26), Color(0xFFFF6A00)],
         ),
         QuickActionButton(
           onPressed: () {
@@ -46,18 +42,20 @@ class QuickActionsSection extends StatelessWidget {
           },
           title: 'Shop Products',
           icon: Icons.shopping_bag_outlined,
-          gradientColors: const [
-            Color(0xFF9B5CFF),
-            Color(0xFF7B3FF2),
-          ],
+          gradientColors: const [Color(0xFF9B5CFF), Color(0xFF7B3FF2)],
         ),
         QuickActionButton(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => AddPetScreen(service: PetsService()),
+              ),
+            );
+          },
           title: 'Add Pet',
           icon: Icons.add_circle_outline,
-          gradientColors: const [
-            Color(0xFF4B8DFF),
-            Color(0xFF2F6FEA),
-          ],
+          gradientColors: const [Color(0xFF4B8DFF), Color(0xFF2F6FEA)],
         ),
       ],
     );
