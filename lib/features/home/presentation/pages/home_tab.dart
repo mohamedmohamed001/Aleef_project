@@ -172,15 +172,7 @@ class _HomeTabState extends State<HomeTab> {
                       ),
                     ),
                     SizedBox(height: 12.h),
-                    Row(
-                      children: [
-                        const Expanded(child: MyPetsCard()),
-                        SizedBox(width: 12.w),
-                        const Expanded(child: MyPetsCard()),
-                        SizedBox(width: 12.w),
-                        const Expanded(child: MyPetsCard()),
-                      ],
-                    ),
+
                     SizedBox(height: 12.h),
                   ],
                 ),
