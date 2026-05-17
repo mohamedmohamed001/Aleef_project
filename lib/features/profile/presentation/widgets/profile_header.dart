@@ -1,3 +1,4 @@
+import 'package:aleef/core/theme/app_colors.dart';
 import 'package:aleef/features/profile/presentation/widgets/profile_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -62,10 +63,10 @@ class _ProfileHeaderState extends State<ProfileHeader> {
               bottomLeft: Radius.circular(30.r),
               bottomRight: Radius.circular(30.r),
             ),
-            gradient: const LinearGradient(
+            gradient:  LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [Color(0xFF267D77), Color(0xFF1A5550), Colors.white],
+              colors: [AppColors.primary, Color(0xFF1A5550), Colors.white],
               stops: [0.0, 0.65, 1.0],
             ),
           ),

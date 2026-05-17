@@ -8,6 +8,9 @@ class Assets {
 
   static const AssetGenImage cat = AssetGenImage('assets/images/cat.png');
   static const AssetGenImage cat3d = AssetGenImage('assets/images/cat_3d.png');
+  static const AssetGenImage chatBot = AssetGenImage(
+    'assets/images/chat_bot.png',
+  );
   static const $AssetsAssetsGen assets = $AssetsAssetsGen();
   static const $AssetsLibGen lib = $AssetsLibGen();
 }
@@ -43,6 +46,9 @@ class $AssetsImagesGen {
   );
   final AssetGenImage cat = const AssetGenImage('assets/images/cat.png');
   final AssetGenImage cat3d = const AssetGenImage('assets/images/cat_3d.png');
+  final AssetGenImage chatBot = const AssetGenImage(
+    'assets/images/chat_bot.png',
+  );
   final AssetGenImage discountCard = const AssetGenImage(
     'assets/images/discountCard.png',
   );
@@ -246,26 +252,6 @@ class SvgGenImage {
       cacheColorFilter: cacheColorFilter,
     );
   }
-
-  Widget custom({
-    Key? key,
-    required Widget Function(BuildContext context, String assetPath) builder,
-  }) {
-    return Builder(
-      key: key,
-      builder: (context) => builder(context, _assetName),
-    );
-  }
-
-  String get path => _assetName;
-
-  String get keyName => _assetName;
-}
-
-class LottieGenImage {
-  const LottieGenImage(this._assetName);
-
-  final String _assetName;
 
   Widget custom({
     Key? key,

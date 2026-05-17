@@ -7,6 +7,8 @@ import '../../../core/services/secure_storage_service.dart';
 import '../../../core/services/service_locator.dart';
 import 'package:dio/dio.dart';
 
+import '../data/models/previous_appointment_model.dart';
+
 final dio = Dio();
 
 class AppointmentApi {
@@ -129,24 +131,15 @@ class AppointmentApi {
       final data = response.data;
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        return {
-          "status": "success",
-          "data": data,
-        };
+        return {"status": "success", "data": data};
       } else if (response.statusCode == 401 || response.statusCode == 403) {
-        return {
-          "status": "unauthorized",
-        };
+        return {"status": "unauthorized"};
       } else {
-        return {
-          "status": "error",
-        };
+        return {"status": "error"};
       }
     } on DioException catch (e) {
       if (e.response?.statusCode == 401 || e.response?.statusCode == 403) {
-        return {
-          "status": "unauthorized",
-        };
+        return {"status": "unauthorized"};
       }
 
       return {
@@ -154,10 +147,123 @@ class AppointmentApi {
         "message": e.response?.data?["message"] ?? e.message,
       };
     } catch (e) {
-      return {
-        "status": "error",
-        "message": e.toString(),
-      };
+      return {"status": "error", "message": e.toString()};
     }
   }
-}
+
+  Future<Map<String, dynamic>> getPets() async {
+    final token = await storage.getToken();
+    final response = await dio.get(
+      '$baseUrl/pets/get-my-pets',
+      options: Options(
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      ),
+    );
+    try {
+      final data = response.data["pets"];
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return {"status": "success", "data": data};
+      } else if (response.statusCode == 401 || response.statusCode == 403) {
+        return {"status": "unauthorized"};
+      } else {
+        return {"status": "error"};
+      }
+    } catch (e) {
+      return {"status": "error"};
+    }
+  }
+
+  Future<Map<String, dynamic>> bookAppointment(
+    String pet,
+    String doctor,
+    String date,
+    String time,
+    String reason,
+    String? notes,
+  ) async {
+    try {
+      final token = await storage.getToken();
+
+      final response = await dio.post(
+        '$baseUrl/appointments',
+        data: {
+          "pet": pet,
+          "doctor": doctor,
+          "date": date,
+          "time": time,
+          "reason": reason,
+          "notes": notes ?? "",
+        },
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
+
+      final data = response.data;
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return {"status": "success", "data": data};
+      } else if (response.statusCode == 401 || response.statusCode == 403) {
+        return {"status": "unauthorized"};
+      } else {
+        return {
+          "status": "error",
+          "message": data["message"] ?? "Something went wrong",
+        };
+      }
+    } on DioException catch (e) {
+
+
+      if (e.response?.statusCode == 401 || e.response?.statusCode == 403) {
+        return {"status": "unauthorized"};
+      }
+
+      return {
+        "status": "error",
+        "message": e.response?.data?["message"] ?? "Something went wrong",
+      };
+    } catch (e) {
+      return {"status": "error", "message": "Network error, please try again"};
+    }
+  }
+
+  Future<Map<String, dynamic>> getPreviousAppointments() async {
+    try {
+      final token = await storage.getToken();
+
+      final response = await dio.get(
+        '$baseUrl/appointments/get-my-previous-appointments',
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
+
+      final List data = response.data["appointments"] ?? [];
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final appointments = data
+            .map<PreviousAppointmentModel>(
+              (e) => PreviousAppointmentModel.fromJson(e),
+        )
+            .toList();
+
+        return {"status": "success", "data": appointments};
+      } else if (response.statusCode == 401 || response.statusCode == 403) {
+        return {"status": "unauthorized"};
+      } else {
+        return {"status": "error"};
+      }
+    } catch (e) {
+      return {"status": "error"};
+    }
+  }}

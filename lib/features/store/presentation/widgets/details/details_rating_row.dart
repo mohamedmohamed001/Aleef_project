@@ -7,21 +7,24 @@ class DetailsRatingRow extends StatelessWidget {
   final double avgRate;
   final int ratingQuantity;
 
-  const DetailsRatingRow({super.key, required this.avgRate, required this.ratingQuantity,});
+  const DetailsRatingRow({
+    super.key,
+    required this.avgRate,
+    required this.ratingQuantity,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        ...List.generate(
+        ... List.generate(
           5,
-              (index) => Padding(
-            padding: EdgeInsets.only(right: 2.w),
-            child: Icon(
-              Icons.star,
-              color: AppColors.primary,
-              size: 18, // ثابت عشان ميصغرش زيادة
-            ),
+              (index) => Icon(
+            Icons.star,
+            color: index < avgRate.round()
+                ? const Color(0xFF5DB1A3)
+                : Colors.grey.shade300,
+            size: 14,
           ),
         ),
 
@@ -29,10 +32,7 @@ class DetailsRatingRow extends StatelessWidget {
 
         Text(
           '$avgRate ($ratingQuantity)',
-          style: const TextStyle(
-            color: AppColors.hint,
-            fontSize: 13,
-          ),
+          style: const TextStyle(color: AppColors.hint, fontSize: 13),
         ),
       ],
     );

@@ -1,12 +1,29 @@
-import 'package:aleef/features/home/presentation/widgets/Interactive_rating_stars.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../../../core/theme/app_text_styles.dart';
-import '../../../../core/utils/app_assets.dart';
 
 class DoctorCard extends StatelessWidget {
-  const DoctorCard({super.key});
+  final String name;
+  final String specialty;
+  final String imagePath;
+  final String statusText;
+  final String buttonText;
+  final bool isAvailable;
+  final double rating;
+  final VoidCallback? onBookPressed;
+
+  const DoctorCard({
+    super.key,
+    required this.name,
+    required this.specialty,
+    required this.imagePath,
+    this.statusText = "Available",
+    this.buttonText = "Book",
+    this.isAvailable = true,
+    this.rating = 0.0,
+    this.onBookPressed,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +46,7 @@ class DoctorCard extends StatelessWidget {
         children: [
           CircleAvatar(
             radius: 28.r,
-            backgroundImage: AssetImage(AppAssets.profilePhoto),
+            backgroundImage: AssetImage(imagePath),
           ),
 
           SizedBox(width: 12.w),
@@ -39,7 +56,7 @@ class DoctorCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "Dr. Amira Hassan",
+                  name,
                   style: AppTextStyles.black16Bold.copyWith(
                     fontSize: 14.sp,
                   ),
@@ -50,7 +67,7 @@ class DoctorCard extends StatelessWidget {
                 SizedBox(height: 4.h),
 
                 Text(
-                  "General Veterinarian",
+                  specialty,
                   style: AppTextStyles.hint14Regular.copyWith(
                     fontSize: 12.sp,
                   ),
@@ -60,7 +77,23 @@ class DoctorCard extends StatelessWidget {
 
                 SizedBox(height: 6.h),
 
-                const DoctorRatingWidget(),
+                /// ⭐ rating
+                Row(
+                  children: [
+                    Icon(
+                      Icons.star,
+                      color: Colors.amber,
+                      size: 16.sp,
+                    ),
+                    SizedBox(width: 4.w),
+                    Text(
+                      rating.toStringAsFixed(1),
+                      style: AppTextStyles.black16Bold.copyWith(
+                        fontSize: 12.sp,
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
@@ -74,14 +107,18 @@ class DoctorCard extends StatelessWidget {
                   horizontal: 8.w,
                 ),
                 decoration: BoxDecoration(
-                  color: const Color.fromRGBO(240, 253, 244, 1),
+                  color: isAvailable
+                      ? const Color.fromRGBO(240, 253, 244, 1)
+                      : const Color.fromRGBO(254, 242, 242, 1),
                   borderRadius: BorderRadius.circular(30.r),
                 ),
                 child: Text(
-                  "Available",
+                  statusText,
                   style: AppTextStyles.primary12Regular.copyWith(
                     fontSize: 12.sp,
-                    color: const Color.fromRGBO(22, 163, 74, 1),
+                    color: isAvailable
+                        ? const Color.fromRGBO(22, 163, 74, 1)
+                        : const Color.fromRGBO(220, 38, 38, 1),
                   ),
                 ),
               ),
@@ -99,9 +136,9 @@ class DoctorCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(30.r),
                     ),
                   ),
-                  onPressed: () {},
+                  onPressed: onBookPressed,
                   child: Text(
-                    "Book",
+                    buttonText,
                     style: AppTextStyles.primary12Regular.copyWith(
                       fontSize: 12.sp,
                     ),

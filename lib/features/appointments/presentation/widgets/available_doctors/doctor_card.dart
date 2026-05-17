@@ -122,7 +122,7 @@ class DoctorCard extends StatelessWidget {
                     child: ElevatedButton(
                       onPressed: onTap,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF2E7D6F),
+                        backgroundColor: AppColors.primary,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12.r),
                         ),

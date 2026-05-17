@@ -143,10 +143,21 @@ class _HomeHeaderState extends State<HomeHeader> {
                   borderRadius: BorderRadius.circular(26.r),
                 ),
                 child: CustomTextFormField(
-                  borderRadius: BorderRadius.circular(24.r),
-                  iconPrefix: Icons.search,
                   controller: widget.searchController,
                   hintText: 'Search services, doctors, products...',
+                  iconPrefix: Icons.search,
+                  borderRadius: BorderRadius.circular(24.r),
+
+                  /// 🎨 اللون
+                  color: const Color(0xffF3F4F6),
+
+                  /// 📦 padding
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 12.w,
+                    vertical: 12.h,
+                  ),
+
+                  textInputAction: TextInputAction.search,
                 ),
               ),
             ],

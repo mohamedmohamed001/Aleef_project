@@ -39,7 +39,7 @@ class _AppointmentDetailsState extends State<AppointmentDetails> {
       Navigator.pushNamedAndRemoveUntil(
         context,
         AppRoutes.login,
-        (route) => false,
+            (route) => false,
       );
     } else {
       SnackBar(
@@ -65,21 +65,22 @@ class _AppointmentDetailsState extends State<AppointmentDetails> {
   }
 
   @override
+  @override
   Widget build(BuildContext context) {
-    return appointment.id == null
-        ? const Center(child: CircularProgressIndicator())
-        :
-      Scaffold(
+    return Scaffold(
       appBar: AppBar(
         title: Text(
           'Appointment Details',
           style: AppTextStyles.black16Bold.copyWith(fontSize: 20.sp),
         ),
       ),
-      body: Padding(
+      body: appointment.id == null
+          ? const Center(
+        child: CircularProgressIndicator(),
+      )
+          : Padding(
         padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
         child: RefreshIndicator(
-
           onRefresh: () {
             return getAppointmentDetails();
           },
@@ -90,7 +91,7 @@ class _AppointmentDetailsState extends State<AppointmentDetails> {
                 Container(
                   width: double.infinity,
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadiusGeometry.circular(30),
+                    borderRadius: BorderRadius.circular(30.r),
                     color: AppColors.primary,
                   ),
                   child: Padding(
@@ -109,9 +110,7 @@ class _AppointmentDetailsState extends State<AppointmentDetails> {
                             ),
                           ),
                         ),
-
                         SizedBox(width: 12.w),
-
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -124,31 +123,27 @@ class _AppointmentDetailsState extends State<AppointmentDetails> {
                                   color: Colors.white,
                                 ),
                               ),
-
                               Row(
                                 children: [
                                   Expanded(
-                                    // ✅ يخلي النص ياخد المساحة والباقي للـ chip
                                     child: Text(
                                       appointment.doctor?.specialization
-                                              .toString() ??
+                                          .toString() ??
                                           "",
-                                      style: AppTextStyles.hint14Regular.copyWith(
+                                      style: AppTextStyles.hint14Regular
+                                          .copyWith(
                                         fontSize: 14.sp,
                                         color: Colors.white,
                                       ),
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
-
                                   SizedBox(width: 8.w),
-
                                   AppointmentStatusChip(
                                     status: appointment.status.toString(),
                                   ),
                                 ],
                               ),
-
                               Row(
                                 children: [
                                   Icon(
@@ -159,7 +154,7 @@ class _AppointmentDetailsState extends State<AppointmentDetails> {
                                   SizedBox(width: 4.w),
                                   Text(
                                     "4.5",
-                                    style: TextStyle(color: Colors.white),
+                                    style: const TextStyle(color: Colors.white),
                                   ),
                                 ],
                               ),
@@ -173,7 +168,7 @@ class _AppointmentDetailsState extends State<AppointmentDetails> {
                                   SizedBox(width: 4.w),
                                   Text(
                                     appointment.doctor!.city.toString(),
-                                    style: TextStyle(color: Colors.white),
+                                    style: const TextStyle(color: Colors.white),
                                   ),
                                 ],
                               ),
@@ -187,28 +182,31 @@ class _AppointmentDetailsState extends State<AppointmentDetails> {
                 SizedBox(height: 16.h),
                 AppointmentDetailsCard(appointment: appointment),
                 SizedBox(height: 16.h),
-                AppointmentTimeLine(appointment: appointment, ),
+                AppointmentTimeLine(appointment: appointment),
                 SizedBox(height: 16.h),
                 ElevatedButton(
-                  onPressed: appointment.status == "cancelled"
-                      ? null // 👈 disable
-                      : () {
-                    // action
-                  },
+                  onPressed: appointment.status == "cancelled" ||
+                      appointment.status == "pending"
+                      ? null
+                      : () {},
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      appointment.status == "cancelled"
-                          ? Icon(Icons.chat_bubble_outline, color: Colors.grey)
-                          :
-                      Icon(Icons.chat_bubble_outline, color: Colors.white),
+                      Icon(
+                        Icons.chat_bubble_outline,
+                        color: appointment.status == "cancelled"
+                            ? Colors.grey
+                            : Colors.white,
+                      ),
                       SizedBox(width: 8.w),
                       Text(
-                        "Chat with Doctor ${appointment.doctor?.name?.split(" ")[0]}",
-                        style: appointment.status == "cancelled"
-                            ? TextStyle(color: Colors.grey)
-                            :
-                        TextStyle(color: Colors.white),
+                        "Chat with Doctor ${appointment.doctor?.name?.split(
+                            " ")[0]}",
+                        style: TextStyle(
+                          color: appointment.status == "cancelled"
+                              ? Colors.grey
+                              : Colors.white,
+                        ),
                       ),
                     ],
                   ),

@@ -4,13 +4,15 @@ class PetModel {
   final String? type;
   final String? gender;
   final String? profilePic;
+  final int? age;
+  final String? birthDate;
 
   PetModel({
     this.id,
     this.name,
     this.type,
     this.gender,
-    this.profilePic,
+    this.profilePic, this.age, this.birthDate,
   });
 
   factory PetModel.fromJson(Map<String, dynamic> json) {
@@ -20,6 +22,9 @@ class PetModel {
       type: json['type'],
       gender: json['gender'],
       profilePic: json['profilePic'],
+      age: json['age'],
+      birthDate: json['birthDate'],
     );
+
   }
 }

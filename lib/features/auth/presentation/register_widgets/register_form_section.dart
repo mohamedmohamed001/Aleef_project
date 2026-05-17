@@ -36,6 +36,7 @@ class RegisterFormSection extends StatelessWidget {
           hintText: "Enter your name",
           iconPrefix: Icons.person_outline,
           keyboardType: TextInputType.name,
+          textInputAction: TextInputAction.next,
         ),
 
         const SizedBox(height: 18),
