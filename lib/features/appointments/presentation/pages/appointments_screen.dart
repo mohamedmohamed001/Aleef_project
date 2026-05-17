@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/services/secure_storage_service.dart';
 import '../../../../providers/bottom_nav_provider.dart';
+import '../../../../providers/user_provider.dart';
 import '../../services/appointment_api.dart';
 import '../widgets/appointment_screen_skeleton.dart';
 import '../widgets/appointments_header.dart';
@@ -51,15 +52,19 @@ class _AppointmentTabState extends State<AppointmentTab> {
 
       if (appointmentResponse["status"] == "unauthorized" ||
           doctorsResponse["status"] == "unauthorized") {
-        await SecureStorageService().deleteToken();
-        await SecureStorageService().deleteUser();
+        final storage = SecureStorageService();
+
+        await storage.deleteToken();
+        await storage.deleteUser();
 
         if (!mounted) return;
+
+        context.read<UserProvider>().clearUser();
 
         Navigator.pushNamedAndRemoveUntil(
           context,
           AppRoutes.login,
-              (route) => false,
+          (route) => false,
         );
         return;
       }
@@ -67,10 +72,10 @@ class _AppointmentTabState extends State<AppointmentTab> {
       final appointmentData = appointmentResponse["data"];
 
       final loadedAppointment =
-      appointmentResponse["status"] == "success" &&
-          appointmentData != null &&
-          appointmentData is Map<String, dynamic> &&
-          appointmentData.isNotEmpty
+          appointmentResponse["status"] == "success" &&
+              appointmentData != null &&
+              appointmentData is Map<String, dynamic> &&
+              appointmentData.isNotEmpty
           ? AppointmentModel.fromJson(appointmentData)
           : AppointmentModel();
 
@@ -114,7 +119,6 @@ class _AppointmentTabState extends State<AppointmentTab> {
 
   String _formatDate(DateTime? date) {
     if (date == null) return "";
-
     return "${date.day}/${date.month}/${date.year}";
   }
 
@@ -126,64 +130,60 @@ class _AppointmentTabState extends State<AppointmentTab> {
         child: isPageLoading
             ? const AppointmentTabSkeleton()
             : RefreshIndicator(
-          onRefresh: fetchAppointmentPageData,
-          child: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(
-              parent: AlwaysScrollableScrollPhysics(),
-            ),
-            child: Column(
-              children: [
-                AppointmentsHeader(
-                  onPreviousTap: () {
-                    Navigator.pushNamed(
-                      context,
-                      AppRoutes.previousAppointmentScreen,
-                    );
-                  },
-                ),
-                SizedBox(height: 16.h),
-
-                if (appointment.doctor?.name != null)
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16.w),
-                    child: AppointmentCard(
-                      doctorName: appointment.doctor?.name ?? "",
-                      specialty:
-                      appointment.doctor?.specialization ?? "",
-                      date: _formatDate(appointment.date),
-                      time: appointment.time ?? "",
-                      petName: appointment.pet?.name ?? "",
-                      petType: appointment.pet?.type ?? "",
-                      status: appointment.status ?? "",
-                      imagePath:
-                      appointment.doctor?.profilePic ?? "",
-                      onViewDetails: () {
-                        if (appointment.id == null) return;
-
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => AppointmentDetails(
-                              appointmentId: appointment.id!,
-                            ),
-                          ),
-                        );
-                      },
-                    ),
+                onRefresh: fetchAppointmentPageData,
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(
+                    parent: AlwaysScrollableScrollPhysics(),
                   ),
+                  child: Column(
+                    children: [
+                      AppointmentsHeader(
+                        onPreviousTap: () {
+                          Navigator.pushNamed(
+                            context,
+                            AppRoutes.previousAppointmentScreen,
+                          );
+                        },
+                      ),
+                      SizedBox(height: 16.h),
 
-                if (appointment.doctor?.name != null)
-                  SizedBox(height: 24.h),
+                      if (appointment.doctor?.name != null)
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 16.w),
+                          child: AppointmentCard(
+                            doctorName: appointment.doctor?.name ?? "",
+                            specialty: appointment.doctor?.specialization ?? "",
+                            date: _formatDate(appointment.date),
+                            time: appointment.time ?? "",
+                            petName: appointment.pet?.name ?? "",
+                            petType: appointment.pet?.type ?? "",
+                            status: appointment.status ?? "",
+                            imagePath: appointment.doctor?.profilePic ?? "",
+                            onViewDetails: () {
+                              if (appointment.id == null) return;
 
-                AvailableDoctorsSection(
-                  doctors: doctors,
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => AppointmentDetails(
+                                    appointmentId: appointment.id!,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+
+                      if (appointment.doctor?.name != null)
+                        SizedBox(height: 24.h),
+
+                      AvailableDoctorsSection(doctors: doctors),
+
+                      SizedBox(height: 16.h),
+                    ],
+                  ),
                 ),
-
-                SizedBox(height: 16.h),
-              ],
-            ),
-          ),
-        ),
+              ),
       ),
     );
   }

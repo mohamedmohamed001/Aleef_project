@@ -5,6 +5,7 @@ import 'package:aleef/features/appointments/presentation/pages/previous_appointm
 import 'package:aleef/features/auth/presentation/pages/choose_role_screen.dart';
 import 'package:aleef/features/auth/presentation/pages/register_screen.dart';
 import 'package:aleef/features/auth/presentation/pages/verfication_otp_screen.dart';
+import 'package:aleef/features/pets/presentation/manager/pets_provider.dart';
 import 'package:aleef/features/store/presentation/pages/details_screen.dart';
 import 'package:aleef/features/store/presentation/pages/cart_screen.dart';
 import 'package:aleef/features/store/presentation/pages/my_orders_screen.dart';
@@ -46,6 +47,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => BottomNavProvider()),
         ChangeNotifierProvider(create: (_) => StoreProvider()),
         ChangeNotifierProvider(create: (_) => UserProvider()),
+        ChangeNotifierProvider(create: (_) => PetsProvider()),
         ChangeNotifierProvider(create: (_) => ChatProvider()),
         ChangeNotifierProvider(create: (_) => ChatbotProvider()),
         ChangeNotifierProvider(create: (_) => AppointmentProvider()),

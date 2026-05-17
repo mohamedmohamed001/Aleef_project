@@ -24,10 +24,7 @@ class QuickActionsSection extends StatelessWidget {
           },
           title: 'Book Appointment',
           icon: Icons.calendar_month_outlined,
-          gradientColors: const [
-            Color(0xFF2F8A83),
-            Color(0xFF1F6E67),
-          ],
+          gradientColors: const [Color(0xFF2F8A83), Color(0xFF1F6E67)],
         ),
         QuickActionButton(
           onPressed: () {
@@ -35,10 +32,7 @@ class QuickActionsSection extends StatelessWidget {
           },
           title: 'Chat with Doctor',
           icon: Icons.chat_bubble_outline,
-          gradientColors: const [
-            Color(0xFFFF8A26),
-            Color(0xFFFF6A00),
-          ],
+          gradientColors: const [Color(0xFFFF8A26), Color(0xFFFF6A00)],
         ),
         QuickActionButton(
           onPressed: () {
@@ -46,18 +40,12 @@ class QuickActionsSection extends StatelessWidget {
           },
           title: 'Shop Products',
           icon: Icons.shopping_bag_outlined,
-          gradientColors: const [
-            Color(0xFF9B5CFF),
-            Color(0xFF7B3FF2),
-          ],
+          gradientColors: const [Color(0xFF9B5CFF), Color(0xFF7B3FF2)],
         ),
         QuickActionButton(
           title: 'Add Pet',
           icon: Icons.add_circle_outline,
-          gradientColors: const [
-            Color(0xFF4B8DFF),
-            Color(0xFF2F6FEA),
-          ],
+          gradientColors: const [Color(0xFF4B8DFF), Color(0xFF2F6FEA)],
         ),
       ],
     );
