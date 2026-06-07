@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:aleef/core/routing/app_routes.dart';
+import 'package:aleef/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -92,7 +93,7 @@ class _DoctorDetailsScreenState extends State<DoctorDetailsScreen> {
               );
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF2E7D6F),
+              backgroundColor: AppColors.primary,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16.r),
               ),

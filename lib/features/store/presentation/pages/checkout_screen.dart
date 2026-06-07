@@ -1,4 +1,5 @@
 import 'package:aleef/core/theme/app_text_styles.dart';
+import 'package:aleef/features/store/presentation/pages/order_success_view.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'dart:convert';
@@ -87,7 +88,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const MyOrdersScreen()),
+          MaterialPageRoute(builder: (context) => OrderSuccessView()),
         );
       } else {
         if (!mounted) return;

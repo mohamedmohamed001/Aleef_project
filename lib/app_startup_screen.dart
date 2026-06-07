@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:aleef/core/services/secure_storage_service.dart';
 import 'package:aleef/core/services/service_locator.dart';
 
-
-import 'features/auth/presentation/pages/login_screen.dart';
 import 'features/main_layout/presentation/pages/main_layout.dart';
+import 'features/onboarding/presentation/pages/onboarding_screen.dart';
+import 'features/onboarding/presentation/pages/welcome_screen.dart';
 
 class AppStartupScreen extends StatefulWidget {
   const AppStartupScreen({super.key});
@@ -31,8 +31,9 @@ class _AppStartupScreenState extends State<AppStartupScreen> {
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
-        builder: (_) =>
-        hasUser ? const MainLayout() : const LoginScreen(),
+        builder: (_) => hasUser
+            ? const MainLayout()
+            : const OnboardingScreen(),
       ),
     );
   }

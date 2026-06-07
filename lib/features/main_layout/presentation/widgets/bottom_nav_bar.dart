@@ -16,77 +16,61 @@ class BottomNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      minimum: EdgeInsets.symmetric(horizontal: 16.w),
+      top: false,
+      minimum: EdgeInsets.only(
+        left: 18.w,
+        right: 18.w,
+        bottom: 12.h,
+      ),
       child: Container(
-        height: 74.h,
-        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+        height: 72.h,
+        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 9.h),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(38.r),
+          borderRadius: BorderRadius.circular(36.r),
+          border: Border.all(
+            color: AppColors.primary.withOpacity(0.08),
+            width: 1,
+          ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black12,
-              blurRadius: 18.r,
-              offset: Offset(0, 6.h),
+              color: Colors.black.withOpacity(0.075),
+              blurRadius: 24.r,
+              offset: Offset(0, 10.h),
             ),
           ],
         ),
         child: Row(
           children: [
-            _NavBarItem(
+            _NavItem(
               index: 0,
-              title: "Home",
+              icon: FontAwesomeIcons.house,
               selectedIndex: selectedIndex,
               onTap: onItemSelected,
-              iconBuilder: (isSelected) => FaIcon(
-                FontAwesomeIcons.house,
-                size: 18.sp,
-                color: isSelected ? Colors.white : const Color(0xFF8D8D8D),
-              ),
             ),
-            _NavBarItem(
+            _NavItem(
               index: 1,
-              title: "Booking",
+              icon: FontAwesomeIcons.calendarDays,
               selectedIndex: selectedIndex,
               onTap: onItemSelected,
-              iconBuilder: (isSelected) => FaIcon(
-                FontAwesomeIcons.calendarDays,
-                size: 18.sp,
-                color: isSelected ? Colors.white : const Color(0xFF8D8D8D),
-              ),
             ),
-            _NavBarItem(
+            _NavItem(
               index: 2,
-              title: "Chatbot",
+              icon: FontAwesomeIcons.comment,
               selectedIndex: selectedIndex,
               onTap: onItemSelected,
-              iconBuilder: (isSelected) => FaIcon(
-                FontAwesomeIcons.comment,
-                size: 18.sp,
-                color: isSelected ? Colors.white : const Color(0xFF8D8D8D),
-              ),
             ),
-            _NavBarItem(
+            _NavItem(
               index: 3,
-              title: "Shop",
+              icon: FontAwesomeIcons.bagShopping,
               selectedIndex: selectedIndex,
               onTap: onItemSelected,
-              iconBuilder: (isSelected) => FaIcon(
-                FontAwesomeIcons.bagShopping,
-                size: 18.sp,
-                color: isSelected ? Colors.white : const Color(0xFF8D8D8D),
-              ),
             ),
-            _NavBarItem(
+            _NavItem(
               index: 4,
-              title: "Profile",
+              icon: FontAwesomeIcons.paw,
               selectedIndex: selectedIndex,
               onTap: onItemSelected,
-              iconBuilder: (isSelected) => FaIcon(
-                FontAwesomeIcons.paw,
-                size: 18.sp,
-                color: isSelected ? Colors.white : const Color(0xFF8D8D8D),
-              ),
             ),
           ],
         ),
@@ -95,68 +79,65 @@ class BottomNavBar extends StatelessWidget {
   }
 }
 
-class _NavBarItem extends StatelessWidget {
+class _NavItem extends StatelessWidget {
   final int index;
   final int selectedIndex;
+  final FaIconData icon;
   final ValueChanged<int> onTap;
-  final Widget Function(bool isSelected) iconBuilder;
-  final String title;
 
-  const _NavBarItem({
+  const _NavItem({
     required this.index,
     required this.selectedIndex,
+    required this.icon,
     required this.onTap,
-    required this.iconBuilder,
-    required this.title,
   });
 
   @override
   Widget build(BuildContext context) {
-    final bool isSelected = selectedIndex == index;
+    final bool isSelected = index == selectedIndex;
 
     return Expanded(
       child: GestureDetector(
         onTap: () => onTap(index),
         behavior: HitTestBehavior.opaque,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 220),
-              curve: Curves.easeInOut,
-              width: isSelected ? 42.r : 38.r,
-              height: isSelected ? 42.r : 38.r,
-              decoration: BoxDecoration(
-                color: isSelected ? AppColors.primary : Colors.transparent,
-                shape: BoxShape.circle,
-              ),
-              child: Center(
-                child: iconBuilder(isSelected),
-              ),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 240),
+          curve: Curves.easeOutCubic,
+          height: double.infinity,
+          alignment: Alignment.center,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 240),
+            curve: Curves.easeOutCubic,
+            width: isSelected ? 48.r : 44.r,
+            height: isSelected ? 48.r : 44.r,
+            decoration: BoxDecoration(
+              color: isSelected ? AppColors.primary : Colors.transparent,
+              shape: BoxShape.circle,
+              boxShadow: isSelected
+                  ? [
+                BoxShadow(
+                  color: AppColors.primary.withOpacity(0.26),
+                  blurRadius: 14.r,
+                  offset: Offset(0, 7.h),
+                ),
+              ]
+                  : [],
             ),
-            SizedBox(height: 2.h),
-            Flexible(
-              child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 2.w),
-                child: Text(
-                  title,
-                  maxLines: 1,
-                  softWrap: false,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 8.5.sp,
-                    height: 1,
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                    color: isSelected
-                        ? AppColors.primary
-                        : const Color(0xFF8D8D8D),
-                  ),
+            child: AnimatedScale(
+              duration: const Duration(milliseconds: 220),
+              curve: Curves.easeOutCubic,
+              scale: isSelected ? 1.04 : 1.0,
+              child: Center(
+                child: FaIcon(
+                  icon,
+                  size: 18.sp,
+                  color: isSelected
+                      ? Colors.white
+                      : const Color(0xFF9A9A9A),
                 ),
               ),
             ),
-          ],
+          ),
         ),
       ),
     );

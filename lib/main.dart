@@ -3,8 +3,11 @@ import 'package:aleef/features/appointments/presentation/pages/appointment_detai
 import 'package:aleef/features/appointments/presentation/pages/book_appointment_screen.dart';
 import 'package:aleef/features/appointments/presentation/pages/previous_appointment_screen.dart';
 import 'package:aleef/features/auth/presentation/pages/choose_role_screen.dart';
+import 'package:aleef/features/auth/presentation/pages/doctor_register_screen.dart';
 import 'package:aleef/features/auth/presentation/pages/register_screen.dart';
 import 'package:aleef/features/auth/presentation/pages/verfication_otp_screen.dart';
+import 'package:aleef/features/auth/presentation/providers/doctor_register_provider.dart';
+import 'package:aleef/features/doctor/main_layout/doctor_main_layout.dart';
 import 'package:aleef/features/pets/presentation/manager/pets_provider.dart';
 import 'package:aleef/features/store/presentation/pages/details_screen.dart';
 import 'package:aleef/features/store/presentation/pages/cart_screen.dart';
@@ -12,23 +15,32 @@ import 'package:aleef/features/store/presentation/pages/my_orders_screen.dart';
 import 'package:aleef/features/store/presentation/pages/store_tab.dart';
 import 'package:aleef/providers/bottom_nav_provider.dart';
 import 'package:aleef/providers/user_provider.dart';
+import 'package:device_preview/device_preview.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
+
 import 'app_startup_screen.dart';
 import 'core/services/service_locator.dart';
 import 'core/theme/app_theme.dart';
 import 'features/ai_assistant/presentation/pages/chatbot_screen.dart';
-import 'features/ai_assistant/services/chatbot_provider.dart';
+import 'features/ai_assistant/provider/chatbot_provider.dart';
 import 'features/appointments/presentation/pages/appointments_screen.dart';
 import 'features/appointments/presentation/provider/appointment_provider.dart';
+import 'features/auth/data/services/doctor_auth_api_service.dart';
+import 'features/auth/presentation/pages/doctor_login_screen.dart';
+import 'features/auth/presentation/pages/doctor_pending_review_screen.dart';
 import 'features/auth/presentation/pages/login_screen.dart';
 import 'features/auth/presentation/providers/verify_provider.dart';
 import 'features/chat/presentation/pages/chat_details.dart';
 import 'features/chat/presentation/provider/chat_provider.dart';
 import 'features/home/presentation/pages/home_tab.dart';
 import 'features/main_layout/presentation/pages/main_layout.dart';
+import 'features/onboarding/presentation/pages/onboarding_screen.dart';
+import 'features/pets/presentation/pages/add_pet_screen.dart';
+import 'features/pets/services/pets_service.dart';
 import 'features/profile/presentation/pages/edit_profile.dart';
 import 'features/store/services/store_provider.dart';
 import 'firebase_options.dart';
@@ -51,6 +63,9 @@ void main() async {
         ChangeNotifierProvider(create: (_) => ChatProvider()),
         ChangeNotifierProvider(create: (_) => ChatbotProvider()),
         ChangeNotifierProvider(create: (_) => AppointmentProvider()),
+        ChangeNotifierProvider(
+          create: (_) => DoctorRegisterProvider(DoctorAuthApiService()),
+        ),
       ],
       child: const MyApp(),
     ),
@@ -65,35 +80,52 @@ class MyApp extends StatelessWidget {
     return ScreenUtilInit(
       designSize: const Size(392, 853),
       minTextAdapt: false,
-      builder: (context, child) => MaterialApp(
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.lightTheme,
-        home: MainLayout(),
-        routes: {
-          AppRoutes.register: (context) => RegisterScreen(),
-          AppRoutes.login: (context) => LoginScreen(),
-          AppRoutes.chooseRoleScreen: (context) => ChooseRoleScreen(),
-          AppRoutes.verificationOtp: (context) => VerificationOtpScreen(),
-          AppRoutes.home: (context) => HomeTab(),
-          AppRoutes.mainLayout: (context) => MainLayout(),
-          AppRoutes.editProfile: (context) => EditProfile(),
-          AppRoutes.appointments: (context) => AppointmentTab(),
-          AppRoutes.chatDetails: (context) => ChatDetails(chatId: ''),
-          AppRoutes.chatBotScreen: (context) => ChatbotScreen(),
-          AppRoutes.previousAppointmentScreen: (context) =>
-              PreviousAppointmentScreen(),
-          // 🔥 شغلك أنت
-          AppRoutes.detailsProduct: (context) => ProductDetails(productId: ''),
-          AppRoutes.appointmentDetails: (context) =>
-              AppointmentDetails(appointmentId: ''),
-          AppRoutes.bookAppointment: (context) =>
-              BookAppointmentScreen(doctorId: ''),
+      splitScreenMode: true,
+      builder: (context, child) {
+        return MaterialApp(
+          useInheritedMediaQuery: true,
+          locale: DevicePreview.locale(context),
+          builder: DevicePreview.appBuilder,
 
-          // 🔥 شغلها
-          AppRoutes.cart: (context) => CartScreen(),
-          AppRoutes.order: (context) => MyOrdersScreen(),
-        },
-      ),
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.lightTheme,
+          home: const DoctorMainLayout(),
+          routes: {
+            AppRoutes.register: (context) => const RegisterScreen(),
+            AppRoutes.login: (context) => const LoginScreen(),
+            AppRoutes.chooseRole: (context) => const ChooseRoleScreen(),
+            AppRoutes.verificationOtp: (context) =>
+                const VerificationOtpScreen(),
+            AppRoutes.home: (context) => const HomeTab(),
+            AppRoutes.mainLayout: (context) => const MainLayout(),
+            AppRoutes.editProfile: (context) => const EditProfile(),
+            AppRoutes.appointments: (context) => const AppointmentTab(),
+            AppRoutes.chatDetails: (context) => const ChatDetails(chatId: ''),
+            AppRoutes.chatBotScreen: (context) => const ChatbotScreen(),
+            AppRoutes.previousAppointmentScreen: (context) =>
+                const PreviousAppointmentScreen(),
+            AppRoutes.doctorLogin: (context) => const DoctorLoginScreen(),
+
+            // pets
+            AppRoutes.addPet: (context) => AddPetScreen(service: PetsService()),
+
+            // store
+            AppRoutes.detailsProduct: (context) =>
+                const ProductDetails(productId: ''),
+            AppRoutes.cart: (context) => const CartScreen(),
+            AppRoutes.order: (context) => const MyOrdersScreen(),
+
+            // appointments
+            AppRoutes.appointmentDetails: (context) =>
+                const AppointmentDetails(appointmentId: ''),
+            AppRoutes.bookAppointment: (context) =>
+                const BookAppointmentScreen(doctorId: ''),
+            AppRoutes.doctorRegister: (context) => DoctorRegisterScreen(),
+            AppRoutes.onboarding: (context) => const OnboardingScreen(),
+            AppRoutes.doctorPendingReview: (context) => const DoctorPendingReviewScreen()
+          },
+        );
+      },
     );
   }
 }

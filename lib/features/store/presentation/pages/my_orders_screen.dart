@@ -225,7 +225,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
                   context,
                   MaterialPageRoute(
                     builder: (context) => ProductDetails(
-                      productId: order['_id'],
+                      productId: order['id'],
                       orderData: order,
                     ),
                   ),

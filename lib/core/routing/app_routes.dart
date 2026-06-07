@@ -9,16 +9,28 @@ class AppRoutes {
   static const String appointments = '/appointments';
   static const String chatBotScreen = '/chatBot';
   static const String previousAppointmentScreen = "/previous";
-  static const String chooseRoleScreen = "/roleScreen";
+  static const String chooseRole = "/roleScreen";
 
-  // 🔥 store
+  // pets
+  static const String addPet = '/addPet';
+
+  // store
   static const String detailsProduct = '/detailsProduct';
   static const String cart = '/cart';
   static const String order = '/order';
 
-  // 🔥 appointments (بتاعك)
+  // appointments
   static const String appointmentDetails = '/appointmentDetails';
   static const String bookAppointment = '/bookAppointment';
   static const String doctorDetails = '/doctorDetails';
   static const String chatDetails = '/chatDetails';
+  //doctor
+static const String doctorRegister='/doctorRegister';
+  static const doctorPendingReview =
+      '/doctorPendingReview';
+  static const doctorLogin = '/doctorLogin';
+
+//on boarding
+  static const String onboarding = '/onboarding';
+
 }

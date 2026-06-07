@@ -3,13 +3,13 @@ import 'package:flutter/material.dart';
 import '../../../../core/services/service_locator.dart';
 import '../../../../core/services/socket_service.dart';
 import '../../../auth/data/models/user_model.dart';
-import '../../data/chat_model.dart';
-import '../../data/message_model.dart';
+import '../../data/models/chat_model.dart';
+import '../../data/models/message_model.dart';
 import '../../services/chat_api.dart';
 
 class ChatProvider extends ChangeNotifier {
-  final ChatApi chatApi = ChatApi();
-  final SocketService socketService = getIt<SocketService>();
+  final ChatApi _chatApi = ChatApi();
+  final SocketService _socketService = getIt<SocketService>();
 
   List<ChatModel> chats = [];
   List<MessageModel> messages = [];
@@ -17,128 +17,137 @@ class ChatProvider extends ChangeNotifier {
   UserModel? selectedChatUser;
 
   bool isLoading = false;
-  String? errorMessage;
+  bool isChatsLoading = false;
+  bool isMessagesLoading = false;
 
+  String? errorMessage;
   String? currentChatId;
 
-  bool _isListeningToMessages = false;
   bool _isListeningToChatUpdates = false;
 
   // ================= GET CHATS =================
 
   Future<bool> getChats() async {
-    isLoading = true;
+    _setChatsLoading(true);
     errorMessage = null;
-    notifyListeners();
 
     try {
-      final response = await chatApi.getChats();
+      final response = await _chatApi.getChats();
 
-      print("FULL RESPONSE: $response");
+      if (response['status'] == 'success') {
+        final List chatsData = response['data'] ?? [];
 
-      if (response["status"] == "success") {
-        final List chatsData = response["data"] ?? [];
-        chats = chatsData.map((e) => ChatModel.fromJson(e)).toList();
+        chats = chatsData
+            .whereType<Map<String, dynamic>>()
+            .map(ChatModel.fromJson)
+            .toList();
 
+        _sortChats();
         listenToChatUpdates();
 
         return true;
-      } else if (response["status"] == "unauthorized") {
-        return false;
-      } else {
-        errorMessage = response["message"] ?? "Something went wrong";
-        return true;
       }
+
+      if (response['status'] == 'unauthorized') {
+        return false;
+      }
+
+      errorMessage = response['message']?.toString() ?? 'Something went wrong';
+      return true;
     } catch (e) {
       errorMessage = e.toString();
       return true;
     } finally {
-      isLoading = false;
-      notifyListeners();
+      _setChatsLoading(false);
     }
   }
 
   // ================= GET CHAT MESSAGES =================
 
   Future<bool> getChatMessages(String chatId) async {
-    isLoading = true;
+    _setMessagesLoading(true);
+
     errorMessage = null;
     currentChatId = chatId;
-    notifyListeners();
+    markChatAsOpened(chatId, notify: false);
 
     try {
-      final response = await chatApi.getChatMessages(chatId);
+      final response = await _chatApi.getChatMessages(chatId);
 
-      print("FULL RESPONSE: $response");
+      if (response['status'] == 'success') {
+        final List messagesData = response['messages'] ?? [];
 
-      if (response["status"] == "success") {
-        final List messagesData = response["messages"] ?? [];
-        messages = messagesData.map((e) => MessageModel.fromJson(e)).toList();
+        messages = messagesData
+            .whereType<Map<String, dynamic>>()
+            .map(MessageModel.fromJson)
+            .toList();
 
-        if (response["user"] != null) {
-          selectedChatUser = UserModel.fromJson(response["user"]);
+        _sortMessages();
+
+        if (response['user'] is Map<String, dynamic>) {
+          selectedChatUser = UserModel.fromJson(response['user']);
         }
 
         joinChat(chatId);
         listenToIncomingMessages(chatId);
 
         return true;
-      } else if (response["status"] == "unauthorized") {
-        return false;
-      } else {
-        errorMessage = response["message"] ?? "Something went wrong";
-        return true;
       }
+
+      if (response['status'] == 'unauthorized') {
+        return false;
+      }
+
+      errorMessage = response['message']?.toString() ?? 'Something went wrong';
+      return true;
     } catch (e) {
       errorMessage = e.toString();
       return true;
     } finally {
-      isLoading = false;
-      notifyListeners();
+      _setMessagesLoading(false);
     }
   }
 
   // ================= JOIN CHAT =================
 
   void joinChat(String chatId) {
-    socketService.emit('join_chat', chatId);
-    print("📥 Joined chat: $chatId");
+    if (chatId.trim().isEmpty) return;
+
+    _socketService.emit('join_chat', chatId);
   }
 
-  // ================= RECEIVE MESSAGE IN DETAILS =================
+  // ================= RECEIVE MESSAGE =================
 
   void listenToIncomingMessages(String chatId) {
-    socketService.off('receive_message');
-    socketService.off('error_message');
+    _socketService.off('receive_message');
+    _socketService.off('error_message');
 
-    _isListeningToMessages = true;
+    _socketService.listen('receive_message', (data) {
+      final newMessage = _messageFromSocket(data);
+      if (newMessage == null) return;
 
-    socketService.on('receive_message', (data) {
-      print("📩 receive_message: $data");
+      final bool isCurrentOpenedChat = newMessage.chatId == chatId;
+      final bool alreadyExists = messages.any((m) => m.id == newMessage.id);
 
-      try {
-        final map = Map<String, dynamic>.from(data);
-        final newMessage = MessageModel.fromJson(map);
-
-        final alreadyExists = messages.any((m) => m.id == newMessage.id);
-
-        print("newMessage.id = ${newMessage.id}");
-        print("alreadyExists = $alreadyExists");
-
-        if (newMessage.chatId == chatId && !alreadyExists) {
-          messages.add(newMessage);
-          notifyListeners();
-        }
-
-        _updateChatLastMessage(newMessage);
-      } catch (e) {
-        print("❌ Error parsing receive_message: $e");
+      if (isCurrentOpenedChat && !alreadyExists) {
+        messages.add(newMessage);
+        _sortMessages();
       }
+
+      _upsertChatLastMessage(newMessage);
+
+      notifyListeners();
     });
 
-    socketService.on('error_message', (data) {
-      print("❌ error_message: $data");
-      errorMessage = data['errMessage']?.toString() ?? "Something went wrong";
+    _socketService.listen('error_message', (data) {
+      if (data is Map) {
+        errorMessage = data['errMessage']?.toString() ??
+            data['message']?.toString() ??
+            'Something went wrong';
+      } else {
+        errorMessage = 'Something went wrong';
+      }
+
       notifyListeners();
     });
   }
@@ -150,94 +159,24 @@ class ChatProvider extends ChangeNotifier {
 
     _isListeningToChatUpdates = true;
 
-    socketService.off('chat_updated');
+    _socketService.off('chat_updated');
 
-    socketService.on('chat_updated', (data) {
-      print("💬 chat_updated: $data");
+    _socketService.listen('chat_updated', (data) {
+      final updatedChat = _chatFromSocketUpdate(data);
+      if (updatedChat == null) return;
 
-      try {
-        final map = Map<String, dynamic>.from(data);
+      final index = chats.indexWhere((chat) => chat.id == updatedChat.id);
 
-        final chatId = map['id']?.toString();
-        if (chatId == null || chatId.isEmpty) return;
-
-        final personMap = Map<String, dynamic>.from(map['person'] ?? {});
-        final lastMessageMap =
-        Map<String, dynamic>.from(map['lastMessage'] ?? {});
-
-        final lastMessage = MessageModel.fromJson({
-          '_id': lastMessageMap['_id'] ?? '',
-          'chatId': chatId,
-          'sender': lastMessageMap['sender'],
-          'text': lastMessageMap['text'] ?? '',
-          'createdAt':
-          lastMessageMap['createdAt'] ?? DateTime.now().toIso8601String(),
-          'isDeleted': lastMessageMap['isDeleted'] ?? false,
-        });
-
-        final updatedChat = ChatModel(
-          id: chatId,
-          person: UserModel.fromJson(personMap),
-          lastMessage: lastMessage,
-          unreadCount: currentChatId == chatId
-              ? 0
-              : _parseInt(map['unreadCount']) ?? 1,
-        );
-
-        final index = chats.indexWhere((chat) => chat.id == chatId);
-
-        if (index != -1) {
-          chats.removeAt(index);
-        }
-
+      if (index != -1) {
+        chats[index] = updatedChat;
+      } else {
         chats.insert(0, updatedChat);
-
-        notifyListeners();
-      } catch (e) {
-        print("❌ Error parsing chat_updated: $e");
       }
-    });
-  }
 
-  // ================= UPDATE CHAT LAST MESSAGE =================
-
-  void _updateChatLastMessage(MessageModel message) {
-    final index = chats.indexWhere((chat) => chat.id == message.chatId);
-
-    if (index != -1) {
-      final oldChat = chats[index];
-
-      final updatedChat = ChatModel(
-        id: oldChat.id,
-        lastMessage: message,
-        person: oldChat.person,
-        unreadCount: currentChatId == oldChat.id ? 0 : oldChat.unreadCount,
-      );
-
-      chats.removeAt(index);
-      chats.insert(0, updatedChat);
+      _sortChats();
 
       notifyListeners();
-    }
-  }
-
-  // ================= OPEN CHAT =================
-
-  void markChatAsOpened(String chatId) {
-    final index = chats.indexWhere((chat) => chat.id == chatId);
-
-    if (index == -1) return;
-
-    final oldChat = chats[index];
-
-    chats[index] = ChatModel(
-      id: oldChat.id,
-      lastMessage: oldChat.lastMessage,
-      person: oldChat.person,
-      unreadCount: 0,
-    );
-
-    notifyListeners();
+    });
   }
 
   // ================= SEND MESSAGE =================
@@ -249,17 +188,28 @@ class ChatProvider extends ChangeNotifier {
     required String receiverId,
   }) {
     final text = content.trim();
-    if (text.isEmpty) return;
+    if (text.isEmpty || chatId.trim().isEmpty) return;
 
-    socketService.emit('send_message', {
+    _socketService.emit('send_message', {
       'chatId': chatId,
       'message': text,
     });
-
-    print("📤 send_message emitted");
   }
 
-  // ================= CLEAR =================
+  // ================= OPEN CHAT =================
+
+  void markChatAsOpened(String chatId, {bool notify = true}) {
+    final index = chats.indexWhere((chat) => chat.id == chatId);
+    if (index == -1) return;
+
+    final oldChat = chats[index];
+
+    chats[index] = oldChat.copyWith(unreadCount: 0);
+
+    if (notify) notifyListeners();
+  }
+
+  // ================= CLEAR DETAILS =================
 
   void clearChatDetails() {
     messages = [];
@@ -267,21 +217,164 @@ class ChatProvider extends ChangeNotifier {
     currentChatId = null;
     errorMessage = null;
 
-    socketService.off('receive_message');
-    socketService.off('error_message');
-
-    _isListeningToMessages = false;
+    _socketService.off('receive_message');
+    _socketService.off('error_message');
 
     notifyListeners();
   }
 
-  // ================= HELPERS =================
+  // ================= CLEAR ALL =================
+
+  void clearAll() {
+    chats = [];
+    messages = [];
+    selectedChatUser = null;
+    currentChatId = null;
+    errorMessage = null;
+
+    isLoading = false;
+    isChatsLoading = false;
+    isMessagesLoading = false;
+
+    _isListeningToChatUpdates = false;
+
+    _socketService.off('receive_message');
+    _socketService.off('error_message');
+    _socketService.off('chat_updated');
+
+    notifyListeners();
+  }
+
+  // ================= SOCKET PARSING =================
+
+  MessageModel? _messageFromSocket(dynamic data) {
+    try {
+      if (data is! Map) return null;
+
+      final map = Map<String, dynamic>.from(data);
+      return MessageModel.fromJson(map);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  ChatModel? _chatFromSocketUpdate(dynamic data) {
+    try {
+      if (data is! Map) return null;
+
+      final map = Map<String, dynamic>.from(data);
+
+      final chatId = _readString(map, ['id', 'id', 'chatId']);
+      if (chatId.isEmpty) return null;
+
+      final existingIndex = chats.indexWhere((chat) => chat.id == chatId);
+      final ChatModel? oldChat =
+      existingIndex == -1 ? null : chats[existingIndex];
+
+      final lastMessageMap = map['lastMessage'] is Map
+          ? Map<String, dynamic>.from(map['lastMessage'])
+          : <String, dynamic>{};
+
+      final lastMessage = MessageModel.fromJson({
+        ...lastMessageMap,
+        'chatId': chatId,
+      });
+
+      final UserModel person = map['person'] is Map
+          ? UserModel.fromJson(Map<String, dynamic>.from(map['person']))
+          : oldChat?.person ?? UserModel.fromJson({});
+
+      final unreadCount = currentChatId == chatId
+          ? 0
+          : _parseInt(map['unreadCount']) ?? oldChat?.unreadCount ?? 1;
+
+      return ChatModel(
+        id: chatId,
+        person: person,
+        lastMessage: lastMessage,
+        unreadCount: unreadCount,
+        updatedAt: _readDate(map['updatedAt']) ?? lastMessage.createdAt,
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
+  // ================= UPDATE CHAT LAST MESSAGE =================
+
+  void _upsertChatLastMessage(MessageModel message) {
+    if (message.chatId.isEmpty) return;
+
+    final index = chats.indexWhere((chat) => chat.id == message.chatId);
+
+    if (index == -1) return;
+
+    final oldChat = chats[index];
+
+    final updatedChat = oldChat.copyWith(
+      lastMessage: message,
+      unreadCount: currentChatId == oldChat.id ? 0 : oldChat.unreadCount,
+      updatedAt: message.createdAt,
+    );
+
+    chats[index] = updatedChat;
+    _sortChats();
+  }
+
+  // ================= SORTING =================
+
+  void _sortMessages() {
+    messages.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+  }
+
+  void _sortChats() {
+    chats.sort((a, b) {
+      final aDate = a.updatedAt ?? a.lastMessage?.createdAt ?? DateTime(1970);
+      final bDate = b.updatedAt ?? b.lastMessage?.createdAt ?? DateTime(1970);
+
+      return bDate.compareTo(aDate);
+    });
+  }
+
+  // ================= LOADING HELPERS =================
+
+  void _setChatsLoading(bool value) {
+    isChatsLoading = value;
+    isLoading = value || isMessagesLoading;
+    notifyListeners();
+  }
+
+  void _setMessagesLoading(bool value) {
+    isMessagesLoading = value;
+    isLoading = value || isChatsLoading;
+    notifyListeners();
+  }
+
+  // ================= GENERAL HELPERS =================
+
+  String _readString(Map<String, dynamic> json, List<String> keys) {
+    for (final key in keys) {
+      final value = json[key];
+
+      if (value != null && value.toString().trim().isNotEmpty) {
+        return value.toString();
+      }
+    }
+
+    return '';
+  }
 
   int? _parseInt(dynamic value) {
     if (value == null) return null;
-
     if (value is int) return value;
+    if (value is num) return value.toInt();
 
     return int.tryParse(value.toString());
+  }
+
+  DateTime? _readDate(dynamic value) {
+    if (value == null) return null;
+
+    return DateTime.tryParse(value.toString());
   }
 }

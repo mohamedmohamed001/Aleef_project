@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:aleef/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -59,8 +60,8 @@ class EditProfileAvatarSection extends StatelessWidget {
                     child: Container(
                       width: 38.r,
                       height: 38.r,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF2B8C84),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
                         shape: BoxShape.circle,
                       ),
                       child: Icon(

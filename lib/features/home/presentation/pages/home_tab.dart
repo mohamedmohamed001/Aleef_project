@@ -1,23 +1,26 @@
-import 'package:aleef/features/appointments/presentation/widgets/appointment_card.dart';
-import 'package:aleef/features/home/presentation/widgets/discount_card.dart';
-import 'package:aleef/features/home/presentation/widgets/upcoming_appointment_card.dart';
+import 'package:aleef/core/routing/app_routes.dart';
+import 'package:aleef/core/services/secure_storage_service.dart';
+import 'package:aleef/core/services/service_locator.dart';
+import 'package:aleef/core/services/session_service.dart';
+import 'package:aleef/core/theme/app_colors.dart';
+import 'package:aleef/features/appointments/data/models/appointment_model.dart';
+import 'package:aleef/features/appointments/presentation/pages/appointment_details.dart';
+import 'package:aleef/features/appointments/services/appointment_api.dart';
+import 'package:aleef/features/home/presentation/widgets/home_content_panel.dart';
+import 'package:aleef/features/home/presentation/widgets/home_products_section.dart';
+import 'package:aleef/features/home/presentation/widgets/home_section_title.dart';
+import 'package:aleef/features/home/presentation/widgets/home_top_section.dart';
+import 'package:aleef/features/home/presentation/widgets/quick_action_section.dart';
+import 'package:aleef/features/home/presentation/widgets/upcoming_appointment_section.dart';
+import 'package:aleef/features/pets/presentation/pages/pet_profile_screen.dart';
+import 'package:aleef/features/store/presentation/pages/details_screen.dart';
+import 'package:aleef/providers/bottom_nav_provider.dart';
 import 'package:aleef/providers/user_provider.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 
-import '../../../../core/routing/app_routes.dart';
-import '../../../../core/services/secure_storage_service.dart';
-import '../../../../core/services/service_locator.dart';
-import '../../../../core/services/session_service.dart';
-import '../../../../core/theme/app_text_styles.dart';
-import '../../../appointments/data/models/appointment_model.dart';
-import '../../../appointments/presentation/pages/appointment_details.dart';
-import '../../../appointments/services/appointment_api.dart';
-import '../../../profile/presentation/widgets/my_pets_card.dart';
-import '../widgets/home_header.dart';
-import '../widgets/quick)action_section.dart';
-import '../widgets/section_header.dart';
+import '../../../pets/presentation/manager/pets_provider.dart';
+import '../../../store/services/store_provider.dart';
 
 class HomeTab extends StatefulWidget {
   const HomeTab({super.key});
@@ -28,44 +31,28 @@ class HomeTab extends StatefulWidget {
 
 class _HomeTabState extends State<HomeTab> {
   AppointmentModel appointment = AppointmentModel();
-  late final TextEditingController searchController;
+
   final SessionService session = getIt<SessionService>();
+
+  bool isAppointmentLoading = true;
 
   @override
   void initState() {
     super.initState();
-    searchController = TextEditingController();
-    fetchCurrentAppointment();
-    _init();
+    _initHome();
   }
 
-  Future<void> fetchCurrentAppointment() async {
-    final response = await AppointmentApi().getActiveAppointment();
+  Future<void> _initHome() async {
+    await _initSession();
 
-    if (!mounted) return;
-
-    if (response["status"] == "success") {
-      setState(() {
-        appointment = AppointmentModel.fromJson(response["data"]);
-      });
-    } else if (response["status"] == "unauthorized") {
-      final storage = getIt<SecureStorageService>();
-      await storage.deleteToken();
-      await storage.deleteUser();
-
-      if (!mounted) return;
-
-      context.read<UserProvider>().clearUser();
-
-      Navigator.pushNamedAndRemoveUntil(
-        context,
-        AppRoutes.login,
-        (route) => false,
-      );
-    }
+    await Future.wait([
+      fetchCurrentAppointment(),
+      fetchPets(),
+      fetchProducts(),
+    ]);
   }
 
-  Future<void> _init() async {
+  Future<void> _initSession() async {
     final storage = getIt<SecureStorageService>();
     final user = await storage.getUser();
     final token = await storage.getToken();
@@ -73,107 +60,192 @@ class _HomeTabState extends State<HomeTab> {
     if (user != null && token != null && token.isNotEmpty) {
       session.setSession(user: user, tokenValue: token);
 
-      if (mounted) {
-        context.read<UserProvider>().setUser(user);
-      }
+      if (!mounted) return;
+      context.read<UserProvider>().setUser(user);
     }
 
-    if (mounted) {
-      setState(() {});
+    if (!mounted) return;
+    setState(() {});
+  }
+
+  Future<void> fetchPets() async {
+    final storage = getIt<SecureStorageService>();
+    final token = await storage.getToken();
+
+    if (token == null || token.isEmpty) return;
+    if (!mounted) return;
+
+    try {
+      await context.read<PetsProvider>().getAllPets(token);
+    } catch (_) {
+      // Prevent home from crashing if pets API fails.
     }
   }
 
-  @override
-  void dispose() {
-    searchController.dispose();
-    super.dispose();
+  Future<void> fetchProducts() async {
+    if (!mounted) return;
+
+    try {
+      await context.read<StoreProvider>().getAllProducts();
+    } catch (_) {
+      // Prevent home from crashing if products API fails.
+    }
+  }
+
+  Future<void> fetchCurrentAppointment() async {
+    if (mounted) {
+      setState(() {
+        isAppointmentLoading = true;
+      });
+    }
+
+    final response = await AppointmentApi().getActiveAppointment();
+
+    if (!mounted) return;
+
+    if (response["status"] == "success" && response["data"] != null) {
+      setState(() {
+        appointment = AppointmentModel.fromJson(response["data"]);
+        isAppointmentLoading = false;
+      });
+    } else if (response["status"] == "unauthorized") {
+      await _logoutAndGoLogin();
+    } else {
+      setState(() {
+        isAppointmentLoading = false;
+      });
+    }
+  }
+
+  Future<void> _logoutAndGoLogin() async {
+    final storage = getIt<SecureStorageService>();
+
+    await storage.deleteToken();
+    await storage.deleteUser();
+
+    if (!mounted) return;
+
+    context.read<UserProvider>().clearUser();
+
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      AppRoutes.login,
+          (route) => false,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final topPadding = MediaQuery.of(context).padding.top;
+
     final user = context.watch<UserProvider>().user ?? session.currentUser;
+    final petsProvider = context.watch<PetsProvider>();
+    final storeProvider = context.watch<StoreProvider>();
+
+    final selectedPet =
+    petsProvider.allPets.isNotEmpty ? petsProvider.allPets.first : null;
+
+    final homeProducts = storeProvider.allProducts.take(5).map((product) {
+      return HomeProductData(
+        id: product.id,
+        name: product.title,
+        imageUrl: product.thumbnail.url,
+        price: "EGP ${product.finalPrice.toStringAsFixed(0)}",
+      );
+    }).toList();
 
     return Scaffold(
-      body: SafeArea(
+      backgroundColor: const Color(0xFFF8FAFA),
+      body: RefreshIndicator(
+        color: AppColors.primary,
+        edgeOffset: topPadding,
+        displacement: topPadding + 28,
+        onRefresh: _initHome,
         child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
+          physics: const AlwaysScrollableScrollPhysics(
+            parent: BouncingScrollPhysics(),
+          ),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              HomeHeader(
+              HomeTopSection(
                 userName: user?.name ?? "Guest",
                 profilePic: user?.profilePic,
-                searchController: searchController,
+                selectedPet: selectedPet,
+                onPetTap: () {
+                  if (selectedPet == null) return;
+
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => PetProfileScreen(
+                        pet: selectedPet,
+                      ),
+                    ),
+                  );
+                },
+                onAddPetTap: () {
+                  Navigator.pushNamed(context, AppRoutes.addPet);
+                },
               ),
-              SizedBox(height: 20.h),
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16.w),
+
+              HomeContentPanel(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.start,
                   children: [
-                    const DiscountCard(),
-                    SizedBox(height: 24.h),
-                    Padding(
-                      padding: EdgeInsets.only(left: 10.w),
-                      child: Text(
-                        "Quick Actions",
-                        style: AppTextStyles.black16Bold.copyWith(
-                          fontSize: 20.sp,
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: 24.h),
-                    Padding(
-                      padding: EdgeInsets.all(8.r),
-                      child: const QuickActionsSection(),
-                    ),
-                    SizedBox(height: 24.h),
-                    appointment.doctor?.id != null
-                        ? Text(
-                            "Upcoming Appointment",
-                            style: AppTextStyles.black16Bold.copyWith(
-                              fontSize: 18.sp,
-                            ),
-                          )
-                        : Container(),
-                    appointment.doctor?.id != null
-                        ? SizedBox(height: 24.h)
-                        : Container(),
-                    appointment.doctor?.id != null
-                        ? AppointmentCard(
-                            doctorName: appointment.doctor?.name ?? "",
-                            specialty: appointment.doctor?.specialization ?? "",
-                            date: appointment.date != null
-                                ? "${appointment.date!.day}/${appointment.date!.month}/${appointment.date!.year}"
-                                : "",
-                            time: appointment.time ?? "",
-                            petName: appointment.pet?.name ?? "",
-                            petType: appointment.pet?.type ?? "",
-                            status: appointment.status ?? "",
-                            imagePath: appointment.doctor?.profilePic ?? "",
-                            onViewDetails: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => AppointmentDetails(
-                                    appointmentId: appointment.id!,
-                                  ),
-                                ),
-                              );
-                            },
-                          )
-                        : Container(),
-                    SizedBox(height: 12.h),
-                    SectionHeader(
-                      title: "My Pets",
-                      textStyle: AppTextStyles.black16Bold.copyWith(
-                        fontSize: 20,
-                      ),
-                    ),
-                    SizedBox(height: 12.h),
+                    const HomeSectionTitle(title: "Quick Care"),
 
-                    SizedBox(height: 12.h),
+                    const SizedBox(height: 14),
+
+                    const QuickActionsSection(),
+
+                    const SizedBox(height: 26),
+
+                    UpcomingAppointmentSection(
+                      isLoading: isAppointmentLoading,
+                      appointment: appointment,
+                      onBookTap: () {
+                        context.read<BottomNavProvider>().changeTab(1);
+                      },
+                      onViewDetails: () {
+                        if (appointment.id == null) return;
+
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => AppointmentDetails(
+                              appointmentId: appointment.id!,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+
+                    const SizedBox(height: 26),
+
+                    HomeProductsSection(
+                      title: selectedPet != null
+                          ? "Picked for ${selectedPet.name}"
+                          : "Pet Essentials",
+                      subtitle: selectedPet != null
+                          ? "Products your ${selectedPet.type} may need"
+                          : "Handpicked care products for pets",
+                      isLoading: storeProvider.isLoading,
+                      products: homeProducts,
+                      onViewAllTap: () {
+                        context.read<BottomNavProvider>().changeTab(3);
+                      },
+                      onProductTap: (product) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => ProductDetails(
+                              productId: product.id,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 105),
                   ],
                 ),
               ),
@@ -183,6 +255,4 @@ class _HomeTabState extends State<HomeTab> {
       ),
     );
   }
-
-  static void _emptyCallback() {}
 }

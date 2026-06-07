@@ -160,28 +160,28 @@ class _ProductCardState extends State<ProductCard>
                         },
                       ),
                     ),
-                    Positioned(
-                      top: 10.h,
-                      left: 10.w,
-                      child: Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 8.w,
-                          vertical: 4.h,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isOutOfStock ? Colors.red : AppColors.primary,
-                          borderRadius: BorderRadius.circular(20.r),
-                        ),
-                        child: Text(
-                          isOutOfStock ? 'Out' : 'In stock',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 10.sp,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
+                    // Positioned(
+                    //   top: 10.h,
+                    //   left: 10.w,
+                    //   child: Container(
+                    //     padding: EdgeInsets.symmetric(
+                    //       horizontal: 8.w,
+                    //       vertical: 4.h,
+                    //     ),
+                    //     decoration: BoxDecoration(
+                    //       color: isOutOfStock ? Colors.red : AppColors.primary,
+                    //       borderRadius: BorderRadius.circular(20.r),
+                    //     ),
+                    //     // child: Text(
+                    //     //   isOutOfStock ? 'Out' : 'In stock',
+                    //     //   style: TextStyle(
+                    //     //     color: Colors.white,
+                    //     //     fontSize: 10.sp,
+                    //     //     fontWeight: FontWeight.w600,
+                    //     //   ),
+                    //     // ),
+                    //   ),
+                    // ),
                   ],
                 ),
               ),
@@ -214,17 +214,16 @@ class _ProductCardState extends State<ProductCard>
                       ),
                     ),
                   ),
-                  SizedBox(height: 6.h),
-                  Text(
-                    isOutOfStock
-                        ? 'Out of stock'
-                        : 'Only $availableStock left',
-                    style: TextStyle(
-                      color: isOutOfStock ? Colors.red : Colors.grey.shade600,
-                      fontSize: 11.sp,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
+                  // Text(
+                  //   isOutOfStock
+                  //       ? 'Out of stock'
+                  //       : 'Only $availableStock left',
+                  //   style: TextStyle(
+                  //     color: isOutOfStock ? Colors.red : Colors.grey.shade600,
+                  //     fontSize: 11.sp,
+                  //     fontWeight: FontWeight.w500,
+                  //   ),
+                  // ),
                   SizedBox(height: 8.h),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,

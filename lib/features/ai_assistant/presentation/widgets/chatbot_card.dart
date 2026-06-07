@@ -21,12 +21,15 @@ class ChatBotCard extends StatelessWidget {
       margin: EdgeInsets.only(bottom: 12.h),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18.r),
+        borderRadius: BorderRadius.circular(22.r),
+        border: Border.all(
+          color: Colors.black.withOpacity(0.04),
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 12.r,
-            offset: Offset(0, 4.h),
+            color: Colors.black.withOpacity(0.045),
+            blurRadius: 14.r,
+            offset: Offset(0, 6.h),
           ),
         ],
       ),
@@ -34,19 +37,50 @@ class ChatBotCard extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: onTapDetails ?? onTap,
-          borderRadius: BorderRadius.circular(18.r),
+          borderRadius: BorderRadius.circular(22.r),
           child: Padding(
-            padding: EdgeInsets.all(16.r),
+            padding: EdgeInsets.all(14.r),
             child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                CircleAvatar(
-                  radius: 28.r,
-                  backgroundColor: const Color(0x1A267D77),
-                  backgroundImage: AssetImage(AppAssets.chatBot),
+                Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Container(
+                      width: 58.r,
+                      height: 58.r,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withOpacity(0.09),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Padding(
+                        padding: EdgeInsets.all(7.r),
+                        child: Image.asset(
+                          AppAssets.chatBot,
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                    ),
+
+                    Positioned(
+                      right: 1.w,
+                      bottom: 2.h,
+                      child: Container(
+                        width: 13.r,
+                        height: 13.r,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF27C26A),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: Colors.white,
+                            width: 2.w,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
 
-                SizedBox(width: 12.w),
+                SizedBox(width: 13.w),
 
                 Expanded(
                   child: Column(
@@ -61,57 +95,69 @@ class ChatBotCard extends StatelessWidget {
                               overflow: TextOverflow.ellipsis,
                               style: AppTextStyles.titleLarge.copyWith(
                                 fontSize: 16.sp,
+                                fontWeight: FontWeight.w800,
+                                height: 1.1,
                               ),
                             ),
                           ),
 
                           SizedBox(width: 8.w),
 
-                          Container(
-                            height: 38.r,
-                            width: 38.r,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(14.r),
-                              color: const Color(0x1A267D77),
-                            ),
-                            child: Center(
-                              child: Text(
-                                "AI",
-                                style: AppTextStyles.body14Regular.copyWith(
-                                  color: AppColors.primary,
-                                  fontSize: 15.sp,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
+                          Text(
+                            "Online",
+                            style: AppTextStyles.body14Regular.copyWith(
+                              color: AppColors.primary,
+                              fontSize: 11.5.sp,
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
                         ],
                       ),
 
-                      SizedBox(height: 2.h),
-
-                      Text(
-                        "24/7 Pet Care Advisor",
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTextStyles.body14Regular.copyWith(
-                          color: const Color(0xff6B7280),
-                          fontSize: 13.sp,
-                        ),
-                      ),
-
                       SizedBox(height: 6.h),
 
-                      Text(
-                        "Ask me anything about your pet's health...",
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTextStyles.body14Regular.copyWith(
-                          color: const Color(0xff374151),
-                          fontSize: 12.sp,
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 11.w,
+                          vertical: 8.h,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF3F6F6),
+                          borderRadius: BorderRadius.only(
+                            topRight: Radius.circular(14.r),
+                            bottomLeft: Radius.circular(14.r),
+                            bottomRight: Radius.circular(14.r),
+                          ),
+                        ),
+                        child: Text(
+                          "How can I help your pet today?",
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTextStyles.body14Regular.copyWith(
+                            color: const Color(0xFF374151),
+                            fontSize: 12.5.sp,
+                            fontWeight: FontWeight.w600,
+                            height: 1.2,
+                          ),
                         ),
                       ),
                     ],
+                  ),
+                ),
+
+                SizedBox(width: 10.w),
+
+                Container(
+                  width: 36.r,
+                  height: 36.r,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.arrow_forward_rounded,
+                    color: Colors.white,
+                    size: 19.sp,
                   ),
                 ),
               ],

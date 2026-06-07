@@ -31,7 +31,7 @@ class ProductModel {
 
   factory ProductModel.fromJson(Map<String, dynamic> json) {
     return ProductModel(
-      id: json['_id'] ?? '',
+      id: json['id'] ?? '',
       title: json['title'] ?? '',
       description: json['description'] ?? '',
       originalPrice: (json['originalPrice'] ?? 0).toDouble(),
@@ -82,7 +82,7 @@ class ProductImageModel {
     return ProductImageModel(
       url: json['url'] ?? '',
       cloudinaryId: json['cloudinary_id'] ?? '',
-      id: json['_id'],
+      id: json['id'],
     );
   }
 }

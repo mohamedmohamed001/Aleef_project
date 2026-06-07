@@ -42,23 +42,27 @@ class PetsService {
     required String type,
     required String gender,
     required double weight,
-    required int age,
-    required String imagePath,
+    required String age,
+   String? imagePath,
     required String token,
   }) async {
     try {
-      final formData = FormData.fromMap({
+      final Map<String, dynamic> data = {
         "weight": weight.toString(),
         "name": name,
         "type": type,
         "gender": gender,
-        "age": age.toString(),
-        "profilePic": await MultipartFile.fromFile(
+        "birthDate": age.toString(),
+      };
+
+      if (imagePath != null && imagePath.trim().isNotEmpty) {
+        data["profilePic"] = await MultipartFile.fromFile(
           imagePath,
           filename: imagePath.split('/').last,
-        ),
-      });
+        );
+      }
 
+      final formData = FormData.fromMap(data);
       await _dio.post(
         "$baseUrl/pets",
         data: formData,

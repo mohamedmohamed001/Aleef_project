@@ -40,7 +40,7 @@ class DoctorModel {
       address: json['address'],
       profilePic: json['profilePic'],
       ratingsCount: (json['ratingsCount'] as num?)?.toDouble(),
-      id: json['_id'],
+      id: json['id'],
       about: json['about'],
       appointmentFee: json['appointmentFee'],
     );

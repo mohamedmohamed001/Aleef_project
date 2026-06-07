@@ -52,16 +52,11 @@ class PetsProvider with ChangeNotifier {
         _selectedPet = PetModel.fromJson(responseData);
       }
 
-      debugPrint("SUCCESS: Pet data successfully parsed into PetModel.");
     } catch (error) {
-      debugPrint("=================================================");
       debugPrint("API ERROR CAUGHT IN PROVIDER: $error");
       if (error.toString().contains("HandshakeException")) {
-        debugPrint(
-          "DIAGNOSIS: Secure SSL connection dropped. Check your Wi-Fi/Internet connection.",
-        );
+
       }
-      debugPrint("=================================================");
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -73,8 +68,8 @@ class PetsProvider with ChangeNotifier {
     required String type,
     required String gender,
     required double weight,
-    required int age,
-    required String imagePath,
+    required String age,
+    String? imagePath,
     required String token,
   }) async {
     _isLoading = true;

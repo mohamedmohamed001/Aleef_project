@@ -7,86 +7,186 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../../../core/theme/app_text_styles.dart';
-import '../../../../core/utils/app_assets.dart';
 
 class MyPetsCard extends StatelessWidget {
   final PetModel pet;
-  const MyPetsCard({super.key, required this.pet});
+
+  const MyPetsCard({
+    super.key,
+    required this.pet,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => PetProfileScreen(pet:pet)),
-        );
-      },
-      child: Container(
-        padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 8.w),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(18.r),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 12.r,
-              offset: Offset(0, 6.h),
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(26.r),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(26.r),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => PetProfileScreen(pet: pet),
             ),
-          ],
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            /// 🐶 Image
-            ClipRRect(
-              borderRadius: BorderRadius.circular(12.r),
-              child: 
-              _buildPetImage(pet.profilePic),
+          );
+        },
+        child: Ink(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(26.r),
+            border: Border.all(
+              color: AppColors.primary.withOpacity(0.06),
             ),
-
-            SizedBox(height: 10.h),
-
-            /// 🐾 Name
-            Text(
-              pet.name,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: AppTextStyles.black16Bold.copyWith(fontSize: 14),
-            ),
-
-            SizedBox(height: 4.h),
-
-            /// 🐾 Info
-            Text(
-              "${pet.type}.${pet.age}years",
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: AppTextStyles.hint14Regular.copyWith(
-                color: Colors.grey.shade600,
-                fontSize: 11,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.045),
+                blurRadius: 18.r,
+                offset: Offset(0, 8.h),
               ),
+            ],
+          ),
+          child: Padding(
+            padding: EdgeInsets.all(11.r),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Stack(
+                    children: [
+                      Positioned.fill(
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(21.r),
+                          child: _buildPetImage(pet.profilePic),
+                        ),
+                      ),
+
+                      Positioned(
+                        top: 8.h,
+                        right: 8.w,
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 8.w,
+                            vertical: 4.h,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.92),
+                            borderRadius: BorderRadius.circular(20.r),
+                          ),
+                          child: Text(
+                            pet.gender.isEmpty ? "Pet" : pet.gender,
+                            style: TextStyle(
+                              color: AppColors.primary,
+                              fontSize: 10.sp,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                SizedBox(height: 10.h),
+
+                Text(
+                  pet.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.black16Bold.copyWith(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+
+                SizedBox(height: 5.h),
+
+                Row(
+                  children: [
+                    Icon(
+                      Icons.pets_rounded,
+                      size: 13.sp,
+                      color: AppColors.primary,
+                    ),
+                    SizedBox(width: 5.w),
+                    Expanded(
+                      child: Text(
+                        _petSubtitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTextStyles.hint14Regular.copyWith(
+                          color: Colors.grey.shade600,
+                          fontSize: 11.5.sp,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
   }
-  // ضيفي دي تحت خالص في الكلاس
-Widget _buildPetImage(String? path) {
-  if (path == null || path.isEmpty) {
-    return Container(
-      height: 60.r, width: 60.r,
-      color: AppColors.inputFill,
-      child: Icon(Icons.pets, color: AppColors.hint),
+
+  String get _petSubtitle {
+    final type = pet.type.isEmpty ? "Pet" : pet.type;
+    final age = pet.age.isEmpty ? "0" : pet.age;
+
+    return "$type • $age years";
+  }
+
+  Widget _buildPetImage(String? path) {
+    final placeholder = Container(
+      color: AppColors.primary.withOpacity(0.08),
+      child: Center(
+        child: Icon(
+          Icons.pets_rounded,
+          color: AppColors.primary.withOpacity(0.75),
+          size: 38.sp,
+        ),
+      ),
+    );
+
+    if (path == null || path.isEmpty) {
+      return placeholder;
+    }
+
+    if (path.startsWith('http')) {
+      return Image.network(
+        path,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => placeholder,
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+
+          return Container(
+            color: Colors.grey.shade100,
+            child: const Center(
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: AppColors.primary,
+              ),
+            ),
+          );
+        },
+      );
+    }
+
+    if (path.startsWith('assets')) {
+      return Image.asset(
+        path,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => placeholder,
+      );
+    }
+
+    return Image.file(
+      File(path),
+      fit: BoxFit.cover,
+      errorBuilder: (_, __, ___) => placeholder,
     );
   }
-  if (path.startsWith('http')) {
-    return Image.network(path, height: 60.r, width: 60.r, fit: BoxFit.cover);
-  } else if (path.startsWith('assets')) {
-    return Image.asset(path, height: 60.r, width: 60.r, fit: BoxFit.cover);
-  } else {
-    return Image.file(File(path), height: 60.r, width: 60.r, fit: BoxFit.cover);
-  }
-}
 }

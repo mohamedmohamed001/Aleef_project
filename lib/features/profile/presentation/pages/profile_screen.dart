@@ -1,20 +1,18 @@
 import 'package:aleef/core/services/secure_storage_service.dart';
 import 'package:aleef/core/theme/app_colors.dart';
 import 'package:aleef/core/theme/app_text_styles.dart';
-import 'package:aleef/features/pets/data/models/pet_model.dart';
 import 'package:aleef/features/pets/presentation/manager/pets_provider.dart';
-import 'package:aleef/features/pets/services/pets_service.dart';
 import 'package:aleef/features/pets/presentation/pages/add_pet_screen.dart';
-import 'package:aleef/providers/user_provider.dart';
+import 'package:aleef/features/pets/services/pets_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
-import '../../models/account_setting_item.dart';
+
 import '../widgets/my_pets_card.dart';
 import '../widgets/profile_header.dart';
 import '../widgets/profile_options_card.dart';
 import '../widgets/profile_stats.dart';
-import 'edit_profile.dart';
+import '../../models/account_setting_item.dart';
 
 class ProfileTab extends StatefulWidget {
   const ProfileTab({super.key});
@@ -40,74 +38,131 @@ class ProfileTabState extends State<ProfileTab> {
     }
   }
 
-  Future<void> _openEditProfile() async {
-    final result = await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const EditProfile()),
-    );
+  Future<void> _getPets() async {
+    final storage = SecureStorageService();
+    final token = await storage.getToken();
 
-    if (!mounted) return;
+    if (!mounted || token == null || token.isEmpty) return;
 
-    if (result == true) {
-      setState(() {});
-
-      await scrollToTop();
-
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Profile updated successfully'),
-          backgroundColor: Colors.green,
-          duration: const Duration(seconds: 2),
-          behavior: SnackBarBehavior.floating,
-          margin: EdgeInsets.all(10.r),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12.r),
-          ),
-        ),
-      );
-    }
+    await context.read<PetsProvider>().getAllPets(token);
   }
 
-  void _openAddPetForm() async {
+  Future<void> _openAddPetForm() async {
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => AddPetScreen(service: PetsService()),
       ),
     );
-    if (result != null && mounted) {
-      final storage = SecureStorageService();
-      String? token = await storage.getToken();
-      if (token != null) {
-        Provider.of<PetsProvider>(context, listen: false).getAllPets(token);
-      }
+
+    if (!mounted) return;
+
+    if (result != null) {
+      await _getPets();
     }
+  }
+
+  Future<void> _deletePet({
+    required String petId,
+    required PetsProvider petsProvider,
+  }) async {
+    final storage = SecureStorageService();
+    final token = await storage.getToken();
+
+    if (token == null || token.isEmpty) return;
+
+    await petsProvider.deletePet(petId, token);
+  }
+
+  void _showDeletePetDialog({
+    required String petId,
+    required String petName,
+    required PetsProvider petsProvider,
+  }) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(22.r),
+          ),
+          title: Text(
+            "Delete Pet",
+            style: AppTextStyles.black16Bold.copyWith(
+              fontSize: 18.sp,
+            ),
+          ),
+          content: Text(
+            "Are you sure you want to remove $petName?",
+            style: AppTextStyles.body14Regular.copyWith(
+              height: 1.4,
+            ),
+          ),
+          actionsPadding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 14.h),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text(
+                "Cancel",
+                style: TextStyle(
+                  color: Colors.grey.shade600,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.error,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12.r),
+                ),
+              ),
+              onPressed: () async {
+                Navigator.pop(dialogContext);
+
+                try {
+                  await _deletePet(
+                    petId: petId,
+                    petsProvider: petsProvider,
+                  );
+                } catch (_) {
+                  if (!mounted) return;
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: const Text("Failed to delete pet"),
+                      backgroundColor: AppColors.error,
+                      behavior: SnackBarBehavior.floating,
+                      margin: EdgeInsets.all(12.r),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14.r),
+                      ),
+                    ),
+                  );
+                }
+              },
+              child: const Text(
+                "Delete",
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
   void initState() {
     super.initState();
 
-    // Using addPostFrameCallback to ensure context is ready
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final storage = SecureStorageService();
-      final String? token = await storage.getToken();
+      await _getPets();
 
-      // Check if the widget is still in the tree and token is not null
-      if (mounted && token != null) {
-        // Use listen: false because we are outside the build method
-        Provider.of<PetsProvider>(context, listen: false).getAllPets(token);
-      }
-
-      // Safety check for the scroll controller
       if (mounted && _scrollController.hasClients) {
-        _scrollController.animateTo(
-          0,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
+        _scrollController.jumpTo(0);
       }
     });
   }
@@ -121,157 +176,340 @@ class ProfileTabState extends State<ProfileTab> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SingleChildScrollView(
-        controller: _scrollController,
-        child: Column(
-          children: [
-            const ProfileHeader(),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 24.w),
-              child: Column(
-                children: [
-                  const ProfileStats(),
-                  SizedBox(height: 24.h),
+      backgroundColor: AppColors.scaffoldBackground,
+      body: RefreshIndicator(
+        color: AppColors.primary,
+        onRefresh: _getPets,
+        child: SingleChildScrollView(
+          controller: _scrollController,
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Column(
+            children: [
+              const ProfileHeader(),
 
-                  Row(
-                    children: [
-                      Text(
-                        "My Pets",
-                        style: AppTextStyles.black16Bold.copyWith(fontSize: 20),
-                      ),
-                      const Spacer(),
-                      GestureDetector(
-                        onTap: _openAddPetForm,
-
-                        child: Text(
-                          "+Add Pet",
-                          style: TextStyle(
-                            color: AppColors.primary,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  SizedBox(height: 10.h),
-                  Consumer<PetsProvider>(
-                    builder: (context, petsProvider, child) {
-                      if (petsProvider.isLoading) {
-                        return Padding(
-                          padding: EdgeInsets.symmetric(vertical: 20.h),
-                          child: const Center(
-                            child: CircularProgressIndicator(
-                              color: AppColors.primary,
-                            ),
-                          ),
-                        );
-                      }
-
-                      final petList = petsProvider.allPets;
-
-                      if (petList.isEmpty) {
-                        return Padding(
-                          padding: EdgeInsets.symmetric(vertical: 20.h),
-                          child: const Center(child: Text("No pets found")),
-                        );
-                      }
-
-                      return GridView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: petList.length,
-                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          mainAxisSpacing: 10.h,
-                          crossAxisSpacing: 10.w,
-                          childAspectRatio: 0.85,
-                        ),
-                        itemBuilder: (context, index) {
-                          final currentPet = petList[index];
-                          return GestureDetector(
-                            onLongPress: () {
-                              showDialog(
-                                context: context,
-                                builder: (context) => AlertDialog(
-                                  title: const Text("Delete Pet"),
-                                  content: const Text(
-                                    "Are you sure you want to remove this pet?",
-                                  ),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () => Navigator.pop(context),
-                                      child: const Text("Cancel"),
-                                    ),
-                                    TextButton(
-                                      onPressed: () async {
-                                        final SecureStorage =
-                                            SecureStorageService();
-                                        String? token =
-                                            await SecureStorage.getToken();
-                                        if (token != null) {
-                                          await petsProvider.deletePet(
-                                            currentPet.id,
-                                            token,
-                                          );
-                                        }
-                                        if (context.mounted) {
-                                          Navigator.pop(context);
-                                        }
-                                      },
-                                      child: const Text(
-                                        "Delete",
-                                        style: TextStyle(color: Colors.red),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            },
-                            child: MyPetsCard(pet: currentPet),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20.w),
+                child: Column(
+                  children: [
+                    Transform.translate(
+                      offset: Offset(0, -24.h),
+                      child: Consumer<PetsProvider>(
+                        builder: (context, petsProvider, _) {
+                          return ProfileStats(
+                            petsCount: petsProvider.allPets.length,
+                            ordersCount: 2,
+                            visitsCount: 2,
                           );
                         },
-                      );
-                    },
-                  ),
-                  SizedBox(height: 24.h),
-
-                  const ProfileOptionsCard(),
-
-                  SizedBox(height: 24.h),
-
-                  Align(
-                    alignment: AlignmentDirectional.centerStart,
-                    child: Text(
-                      "Account Settings",
-                      style: AppTextStyles.titleLarge.copyWith(fontSize: 18),
+                      ),
                     ),
-                  ),
 
-                  SizedBox(height: 24.h),
+                    SizedBox(height: 2.h),
 
-                  InkWell(
-                    borderRadius: BorderRadius.circular(16.r),
-                    onTap: _openEditProfile,
-                    child: const AccountSettingItem(),
-                  ),
+                    _SectionHeader(
+                      title: "My Pets",
+                      actionText: "+ Add Pet",
+                      onTap: _openAddPetForm,
+                    ),
 
-                  SizedBox(height: 24.h),
+                    SizedBox(height: 14.h),
 
-                  const Text(
-                    "ALEEF v1.0.0 · Pet Healthcare Platform",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 13, color: Colors.black54),
-                  ),
+                    Consumer<PetsProvider>(
+                      builder: (context, petsProvider, child) {
+                        if (petsProvider.isLoading &&
+                            petsProvider.allPets.isEmpty) {
+                          return const _PetsGridSkeleton();
+                        }
 
-                  SizedBox(height: 24.h),
-                ],
+                        final petList = petsProvider.allPets;
+
+                        if (petList.isEmpty) {
+                          return _EmptyPetsState(
+                            onAddPet: _openAddPetForm,
+                          );
+                        }
+
+                        return GridView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          padding: EdgeInsets.zero,
+                          itemCount: petList.length,
+                          gridDelegate:
+                          SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            mainAxisSpacing: 14.h,
+                            crossAxisSpacing: 14.w,
+                            childAspectRatio: .82,
+                          ),
+                          itemBuilder: (context, index) {
+                            final currentPet = petList[index];
+
+                            return GestureDetector(
+                              onLongPress: () {
+                                _showDeletePetDialog(
+                                  petId: currentPet.id,
+                                  petName: currentPet.name,
+                                  petsProvider: petsProvider,
+                                );
+                              },
+                              child: MyPetsCard(pet: currentPet),
+                            );
+                          },
+                        );
+                      },
+                    ),
+
+                    SizedBox(height: 26.h),
+
+                    const ProfileOptionsCard(),
+
+                    SizedBox(height: 26.h),
+
+                    Align(
+                      alignment: AlignmentDirectional.centerStart,
+                      child: Text(
+                        "Account Settings",
+                        style: AppTextStyles.titleLarge.copyWith(
+                          fontSize: 18.sp,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+
+                    SizedBox(height: 14.h),
+
+                    const AccountSettingItem(),
+
+                    SizedBox(height: 24.h),
+
+                    Text(
+                      "ALEEF v1.0.0 · Pet Healthcare Platform",
+                      textAlign: TextAlign.center,
+                      style: AppTextStyles.hint14Regular.copyWith(
+                        fontSize: 12.sp,
+                        color: Colors.black45,
+                      ),
+                    ),
+
+                    SizedBox(height: 120.h),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
+    );
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  final String title;
+  final String actionText;
+  final VoidCallback onTap;
+
+  const _SectionHeader({
+    required this.title,
+    required this.actionText,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Text(
+          title,
+          style: AppTextStyles.black16Bold.copyWith(
+            fontSize: 20.sp,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const Spacer(),
+        InkWell(
+          borderRadius: BorderRadius.circular(20.r),
+          onTap: onTap,
+          child: Container(
+            padding: EdgeInsets.symmetric(
+              horizontal: 12.w,
+              vertical: 7.h,
+            ),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(0.09),
+              borderRadius: BorderRadius.circular(20.r),
+              border: Border.all(
+                color: AppColors.primary.withOpacity(0.12),
+              ),
+            ),
+            child: Text(
+              actionText,
+              style: TextStyle(
+                color: AppColors.primary,
+                fontSize: 12.5.sp,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _EmptyPetsState extends StatelessWidget {
+  final VoidCallback onAddPet;
+
+  const _EmptyPetsState({
+    required this.onAddPet,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(
+        horizontal: 20.w,
+        vertical: 24.h,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(28.r),
+        border: Border.all(
+          color: AppColors.primary.withOpacity(0.08),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.035),
+            blurRadius: 18.r,
+            offset: Offset(0, 8.h),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Container(
+            height: 70.r,
+            width: 70.r,
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(0.09),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.pets_rounded,
+              color: AppColors.primary,
+              size: 34.sp,
+            ),
+          ),
+          SizedBox(height: 14.h),
+          Text(
+            "No pets yet",
+            style: AppTextStyles.black16Bold.copyWith(
+              fontSize: 18.sp,
+            ),
+          ),
+          SizedBox(height: 6.h),
+          Text(
+            "Add your first pet and keep all health details in one place.",
+            textAlign: TextAlign.center,
+            style: AppTextStyles.body14Regular.copyWith(
+              fontSize: 13.sp,
+              height: 1.4,
+            ),
+          ),
+          SizedBox(height: 18.h),
+          ElevatedButton.icon(
+            onPressed: onAddPet,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              elevation: 0,
+              padding: EdgeInsets.symmetric(
+                horizontal: 18.w,
+                vertical: 11.h,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(18.r),
+              ),
+            ),
+            icon: Icon(
+              Icons.add_rounded,
+              color: Colors.white,
+              size: 19.sp,
+            ),
+            label: Text(
+              "Add Pet",
+              style: AppTextStyles.button16SemiBold.copyWith(
+                fontSize: 13.sp,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PetsGridSkeleton extends StatelessWidget {
+  const _PetsGridSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: EdgeInsets.zero,
+      itemCount: 4,
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        mainAxisSpacing: 14.h,
+        crossAxisSpacing: 14.w,
+        childAspectRatio: .82,
+      ),
+      itemBuilder: (context, index) {
+        return Container(
+          padding: EdgeInsets.all(12.r),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(26.r),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.035),
+                blurRadius: 18.r,
+                offset: Offset(0, 8.h),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade200,
+                    borderRadius: BorderRadius.circular(22.r),
+                  ),
+                ),
+              ),
+              SizedBox(height: 12.h),
+              Container(
+                height: 12.h,
+                width: 80.w,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade200,
+                  borderRadius: BorderRadius.circular(12.r),
+                ),
+              ),
+              SizedBox(height: 8.h),
+              Container(
+                height: 10.h,
+                width: 110.w,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade200,
+                  borderRadius: BorderRadius.circular(12.r),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

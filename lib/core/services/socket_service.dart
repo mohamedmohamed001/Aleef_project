@@ -1,33 +1,26 @@
 import 'package:socket_io_client/socket_io_client.dart' as io;
 
 class SocketService {
-  io.Socket? socket;
+  io.Socket? _socket;
 
-  bool get isConnected => socket?.connected ?? false;
+  io.Socket? get socket => _socket;
+
+  bool get isConnected => _socket?.connected ?? false;
 
   void connect({
     required String baseUrl,
     required String token,
     required String userId,
   }) {
-    /// لو فيه socket already connected أو حتى شغال/بيحاول يتصل
-    if (socket != null) {
-      if (socket!.connected) {
-        print("✅ Socket already connected");
+    if (_socket != null) {
+      if (_socket!.connected) {
         return;
       }
 
-      print("♻️ Disposing old socket before reconnect");
-      socket!.off('connect');
-      socket!.off('disconnect');
-      socket!.off('connect_error');
-      socket!.off('error');
-      socket!.disconnect();
-      socket!.dispose();
-      socket = null;
+      disconnect();
     }
 
-    socket = io.io(
+    _socket = io.io(
       baseUrl,
       io.OptionBuilder()
           .setTransports(['websocket'])
@@ -42,56 +35,65 @@ class SocketService {
           .build(),
     );
 
-    socket!.connect();
-
-    socket!.onConnect((_) {
-      print("✅ Socket connected");
-      print("Socket ID: ${socket!.id}");
-    });
-
-    socket!.onDisconnect((data) {
-      print("❌ Socket disconnected: $data");
-    });
-
-    socket!.onConnectError((data) {
-      print("🚨 Socket connect error: $data");
-    });
-
-    socket!.onError((data) {
-      print("🚨 Socket error: $data");
-    });
+    _bindDefaultListeners();
+    _socket!.connect();
   }
 
   void emit(String event, dynamic data) {
-    if (socket != null && socket!.connected) {
-      print("📤 EMIT => $event | data: $data");
-      socket!.emit(event, data);
-    } else {
-      print("⚠️ Socket not connected. Can't emit event: $event");
+    if (!isConnected) {
+      return;
     }
+
+    _socket?.emit(event, data);
   }
 
-  void on(String event, Function(dynamic) handler) {
-    print("👂 LISTEN => $event");
-    socket?.off(event);
-    socket?.on(event, handler);
+  void listen(String event, void Function(dynamic data) handler) {
+    _socket?.off(event);
+    _socket?.on(event, handler);
+  }
+
+  void listenMany(String event, void Function(dynamic data) handler) {
+    _socket?.on(event, handler);
   }
 
   void off(String event) {
-    print("🛑 OFF => $event");
-    socket?.off(event);
+    _socket?.off(event);
+  }
+
+  void offAllCustomEvents() {
+    _socket?.clearListeners();
+    _bindDefaultListeners();
   }
 
   void disconnect() {
-    if (socket != null) {
-      print("🔌 Disconnecting socket");
-      socket!.off('connect');
-      socket!.off('disconnect');
-      socket!.off('connect_error');
-      socket!.off('error');
-      socket!.disconnect();
-      socket!.dispose();
-      socket = null;
-    }
+    if (_socket == null) return;
+
+    _socket!
+      ..off('connect')
+      ..off('disconnect')
+      ..off('connect_error')
+      ..off('error')
+      ..disconnect()
+      ..dispose();
+
+    _socket = null;
+  }
+
+  void _bindDefaultListeners() {
+    _socket?.onConnect((_) {
+      // Socket connected.
+    });
+
+    _socket?.onDisconnect((_) {
+      // Socket disconnected.
+    });
+
+    _socket?.onConnectError((_) {
+      // Socket connect error.
+    });
+
+    _socket?.onError((_) {
+      // Socket error.
+    });
   }
 }

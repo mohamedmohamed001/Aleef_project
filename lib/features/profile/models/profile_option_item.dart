@@ -1,3 +1,4 @@
+import 'package:aleef/core/theme/app_colors.dart';
 import 'package:aleef/core/theme/app_text_styles.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -8,7 +9,7 @@ class ProfileOptionItem extends StatelessWidget {
   final Color iconColor;
   final Color bgColor;
   final VoidCallback? onTap;
-  final Widget? trailing; // 🔥 إضافة مهمة
+  final Widget? trailing;
 
   const ProfileOptionItem({
     super.key,
@@ -24,48 +25,59 @@ class ProfileOptionItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: Colors.transparent,
+      borderRadius: BorderRadius.circular(18.r),
       child: InkWell(
         borderRadius: BorderRadius.circular(18.r),
         onTap: onTap,
         child: Padding(
-          padding: EdgeInsets.symmetric(vertical: 4.h),
+          padding: EdgeInsets.symmetric(
+            horizontal: 2.w,
+            vertical: 6.h,
+          ),
           child: Row(
             children: [
-              /// 🔹 Icon Container
               Container(
                 height: 48.r,
                 width: 48.r,
                 decoration: BoxDecoration(
                   color: bgColor,
-                  borderRadius: BorderRadius.circular(14.r),
+                  borderRadius: BorderRadius.circular(16.r),
                 ),
                 child: Icon(
                   icon,
                   color: iconColor,
-                  size: 24,
+                  size: 23.sp,
                 ),
               ),
 
               SizedBox(width: 14.w),
 
-              /// 🔹 Title
               Expanded(
                 child: Text(
                   title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: AppTextStyles.black16Bold.copyWith(
-                    fontSize: 15,
+                    fontSize: 15.sp,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
                   ),
                 ),
               ),
 
-              /// 🔹 Trailing أو Arrow
               trailing ??
-                  Icon(
-                    Icons.chevron_right,
-                    color: Colors.grey.shade400,
-                    size: 24,
+                  Container(
+                    height: 30.r,
+                    width: 30.r,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.chevron_right_rounded,
+                      color: Colors.grey.shade500,
+                      size: 22.sp,
+                    ),
                   ),
             ],
           ),

@@ -30,6 +30,8 @@ dependencies:
   firebase_messaging: ^14.7.10
   firebase_core: ^2.30.0
   lucide_icons_flutter: ^3.1.13
+  cached_network_image: ^3.4.1
+  file_picker: ^8.1.7
 
 dev_dependencies:
   flutter_test:
@@ -48,3 +50,6 @@ flutter:
     - assets/images/svgs/
     - assets/sounds/
     - assets/images/chat_bot.png
+    - lib/features/store/presentation/pages/
+    - lib/features/onboarding/presentation/pages/
+    - lib/features/auth/data/data_sources/

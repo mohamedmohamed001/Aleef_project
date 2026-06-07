@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../../../core/theme/app_colors.dart';
 
@@ -76,37 +77,37 @@ class _CustomTextFormFieldState extends State<CustomTextFormField> {
   @override
   Widget build(BuildContext context) {
     final BorderRadius borderRadius =
-        widget.borderRadius ?? BorderRadius.circular(16);
+        widget.borderRadius ?? BorderRadius.circular(16.r);
 
     final enabledBorder = OutlineInputBorder(
       borderRadius: borderRadius,
       borderSide: BorderSide(
         color: AppColors.border.withValues(alpha: 0.9),
-        width: 1.2,
+        width: 1.2.w,
       ),
     );
 
     final focusedBorder = OutlineInputBorder(
       borderRadius: borderRadius,
-      borderSide: const BorderSide(
+      borderSide: BorderSide(
         color: AppColors.primary,
-        width: 1.5,
+        width: 1.5.w,
       ),
     );
 
     final errorBorder = OutlineInputBorder(
       borderRadius: borderRadius,
-      borderSide: const BorderSide(
+      borderSide: BorderSide(
         color: AppColors.error,
-        width: 1.2,
+        width: 1.2.w,
       ),
     );
 
     final focusedErrorBorder = OutlineInputBorder(
       borderRadius: borderRadius,
-      borderSide: const BorderSide(
+      borderSide: BorderSide(
         color: AppColors.error,
-        width: 1.5,
+        width: 1.5.w,
       ),
     );
 
@@ -126,18 +127,33 @@ class _CustomTextFormFieldState extends State<CustomTextFormField> {
       onTap: widget.onTap,
       readOnly: widget.readOnly,
       enabled: widget.enabled,
+      style: TextStyle(fontSize: 14.sp),
       decoration: InputDecoration(
         filled: widget.color != null,
         fillColor: widget.color,
         hintText: widget.hintText,
         labelText: widget.labelText,
+        hintStyle: TextStyle(
+          fontSize: 14.sp,
+          color: AppColors.hint,
+        ),
+        labelStyle: TextStyle(
+          fontSize: 14.sp,
+          color: AppColors.hint,
+        ),
         alignLabelWithHint: _isMultiline,
-        prefixIcon: widget.iconPrefix != null ? Icon(widget.iconPrefix) : null,
+        prefixIcon: widget.iconPrefix != null
+            ? Icon(
+          widget.iconPrefix,
+          size: 22.sp,
+        )
+            : null,
         suffixIcon: widget.isPassword
             ? IconButton(
           icon: Icon(
             _obscureText ? Icons.visibility_off : Icons.visibility,
             color: AppColors.hint,
+            size: 22.sp,
           ),
           onPressed: () {
             setState(() {
@@ -148,8 +164,8 @@ class _CustomTextFormFieldState extends State<CustomTextFormField> {
             : widget.iconSuffix,
         contentPadding: widget.contentPadding ??
             EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: _isMultiline ? 14 : 12,
+              horizontal: 16.w,
+              vertical: _isMultiline ? 14.h : 12.h,
             ),
         enabledBorder: enabledBorder,
         focusedBorder: focusedBorder,

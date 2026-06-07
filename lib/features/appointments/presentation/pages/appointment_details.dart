@@ -9,6 +9,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/services/secure_storage_service.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../chat/presentation/pages/chat_details.dart';
 import '../widgets/appointment_time_line.dart';
 
 class AppointmentDetails extends StatefulWidget {
@@ -185,10 +186,18 @@ class _AppointmentDetailsState extends State<AppointmentDetails> {
                 AppointmentTimeLine(appointment: appointment),
                 SizedBox(height: 16.h),
                 ElevatedButton(
-                  onPressed: appointment.status == "cancelled" ||
-                      appointment.status == "pending"
+                  onPressed: appointment.status !="confirmed"
                       ? null
-                      : () {},
+                      : () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ChatDetails(
+                          chatId: appointment.chatId ?? '',
+                        ),
+                      ),
+                    );
+                  },
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [

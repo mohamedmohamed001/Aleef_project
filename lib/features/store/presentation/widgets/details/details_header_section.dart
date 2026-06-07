@@ -30,7 +30,7 @@ class _DetailsHeaderSectionState extends State<DetailsHeaderSection> {
     return Stack(
       children: [
         /// 🖼️ Image Background
-        Container(
+        SizedBox(
           width: double.infinity,
           height: 340.h,
           child: Column(
@@ -117,6 +117,7 @@ class _DetailsHeaderSectionState extends State<DetailsHeaderSection> {
                 ),
 
                 SizedBox(width: 10.w),
+                Spacer(),
 
                 widget.discount != "0"
                     ? Container(
@@ -133,7 +134,7 @@ class _DetailsHeaderSectionState extends State<DetailsHeaderSection> {
                           style: TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.w600,
-                            fontSize: 12,
+                            fontSize: 16,
                           ),
                         ),
                       )

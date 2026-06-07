@@ -1,3 +1,18 @@
+String capitalizeEachWord(String text) {
+  final trimmedText = text.trim();
+
+  if (trimmedText.isEmpty) return trimmedText;
+
+  return trimmedText
+      .split(RegExp(r'\s+'))
+      .map((word) {
+    if (word.isEmpty) return word;
+
+    return word[0].toUpperCase() + word.substring(1).toLowerCase();
+  })
+      .join(' ');
+}
+
 class PetModel {
   final String id;
   final String name;
@@ -36,7 +51,9 @@ class PetModel {
 
     return PetModel(
       id: petData['_id'] ?? petData['id'] ?? json['_id'] ?? json['id'] ?? '',
-      name: petData['name'] ?? json['name'] ?? '',
+      name: capitalizeEachWord(
+        (petData['name'] ?? json['name'] ?? '').toString(),
+      ),
       type: petData['type'] ?? json['type'] ?? '',
       breed: petData['breed'] ?? json['breed'] ?? '',
       gender: petData['gender'] ?? json['gender'] ?? '',
@@ -44,24 +61,30 @@ class PetModel {
       weight: (petData['weight'] ?? json['weight'] ?? '0').toString(),
       age: (petData['age'] ?? json['age'] ?? '0').toString(),
       profilePic: petData['profilePic'] ?? json['profilePic'] ?? '',
-      medicalRecords: (petData['medicalRecords'] as List? ?? json['medicalRecords'] as List?)
-              ?.map((item) => MedicalRecord.fromJson(item))
-              .toList() ??
+      medicalRecords:
+      (petData['medicalRecords'] as List? ?? json['medicalRecords'] as List?)
+          ?.map((item) => MedicalRecord.fromJson(item))
+          .toList() ??
           [],
-      upcomingVaccinations: (petData['upcommingVaccinations'] as List? ?? json['upcommingVaccinations'] as List?)
-              ?.map((item) => Vaccination.fromJson(item))
-              .toList() ??
+      upcomingVaccinations:
+      (petData['upcommingVaccinations'] as List? ??
+          json['upcommingVaccinations'] as List?)
+          ?.map((item) => Vaccination.fromJson(item))
+          .toList() ??
           [],
-      overdueVaccinations: (petData['overdueVaccinations'] as List? ?? json['overdueVaccinations'] as List?)
-              ?.map((item) => Vaccination.fromJson(item))
-              .toList() ??
+      overdueVaccinations:
+      (petData['overdueVaccinations'] as List? ??
+          json['overdueVaccinations'] as List?)
+          ?.map((item) => Vaccination.fromJson(item))
+          .toList() ??
           [],
-      completedVaccinations: (petData['completedVaccinations'] as List? ?? json['completedVaccinations'] as List?)
-              ?.map((item) => Vaccination.fromJson(item))
-              .toList() ??
+      completedVaccinations:
+      (petData['completedVaccinations'] as List? ??
+          json['completedVaccinations'] as List?)
+          ?.map((item) => Vaccination.fromJson(item))
+          .toList() ??
           [],
     );
-
   }
 }
 

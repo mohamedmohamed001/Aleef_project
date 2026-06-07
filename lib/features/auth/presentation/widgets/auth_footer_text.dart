@@ -1,5 +1,6 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class AuthFooterText extends StatelessWidget {
   final String normalText;
@@ -21,12 +22,15 @@ class AuthFooterText extends StatelessWidget {
       alignment: Alignment.center,
       child: RichText(
         text: TextSpan(
-          style: theme.textTheme.bodyMedium,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            fontSize: 14.sp,
+          ),
           children: [
             TextSpan(text: normalText),
             TextSpan(
               text: actionText,
               style: theme.textTheme.labelMedium!.copyWith(
+                fontSize: 14.sp,
                 color: theme.colorScheme.primary,
                 decoration: TextDecoration.underline,
                 decorationColor: theme.colorScheme.primary,

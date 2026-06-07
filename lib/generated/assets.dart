@@ -44,6 +44,9 @@ class $AssetsImagesGen {
   final AssetGenImage backGroundLogin = const AssetGenImage(
     'assets/images/backGroundLogin.png',
   );
+  final AssetGenImage blankProfilePhoto = const AssetGenImage(
+    'assets/images/blank_profile_photo.png',
+  );
   final AssetGenImage cat = const AssetGenImage('assets/images/cat.png');
   final AssetGenImage cat3d = const AssetGenImage('assets/images/cat_3d.png');
   final AssetGenImage chatBot = const AssetGenImage(
@@ -60,6 +63,9 @@ class $AssetsImagesGen {
   final AssetGenImage paw2 = const AssetGenImage('assets/images/paw2.png');
   final AssetGenImage petHeader = const AssetGenImage(
     'assets/images/pet_header.png',
+  );
+  final AssetGenImage profile = const AssetGenImage(
+    'assets/images/profile.jpg',
   );
   final AssetGenImage profilePhoto = const AssetGenImage(
     'assets/images/profile_photo.jpg',
@@ -93,7 +99,9 @@ class $AssetsLibGen {
 class $AssetsFeaturesGen {
   const $AssetsFeaturesGen();
 
+  final $AssetsOnboardingGen onboarding = const $AssetsOnboardingGen();
   final $AssetsProfileGen profile = const $AssetsProfileGen();
+  final $AssetsStoreGen store = const $AssetsStoreGen();
 }
 
 class $AssetsProfileGen {
@@ -125,6 +133,56 @@ class $AssetsEditProfileGen {
       'lib/features/profile/presentation/widgets/edit_profile/edit_profile_save_button.dart';
   final String editProfileTextField =
       'lib/features/profile/presentation/widgets/edit_profile/edit_profile_text_field.dart';
+}
+
+class $AssetsStoreGen {
+  const $AssetsStoreGen();
+
+  final $AssetsPresentationGen presentation = const $AssetsPresentationGen();
+}
+
+class $AssetsPresentationGen {
+  const $AssetsPresentationGen();
+
+  final $AssetsPagesGen pages = const $AssetsPagesGen();
+}
+
+class $AssetsPagesGen {
+  const $AssetsPagesGen();
+
+  final String cartScreen =
+      'lib/features/store/presentation/pages/cart_screen.dart';
+  final String checkoutScreen =
+      'lib/features/store/presentation/pages/checkout_screen.dart';
+  final String detailsScreen =
+      'lib/features/store/presentation/pages/details_screen.dart';
+  final String myOrdersScreen =
+      'lib/features/store/presentation/pages/my_orders_screen.dart';
+  final String orderSuccessView =
+      'lib/features/store/presentation/pages/order_success_view.dart';
+  final String storeTab =
+      'lib/features/store/presentation/pages/store_tab.dart';
+}
+
+class $AssetsOnboardingGen {
+  const $AssetsOnboardingGen();
+
+  final $AssetsPresentationGen presentation = const $AssetsPresentationGen();
+}
+
+class $AssetsPresentationGen {
+  const $AssetsPresentationGen();
+
+  final $AssetsPagesGen pages = const $AssetsPagesGen();
+}
+
+class $AssetsPagesGen {
+  const $AssetsPagesGen();
+
+  final String onboardingScreen =
+      'lib/features/onboarding/presentation/pages/onboarding_screen.dart';
+  final String welcomeScreen =
+      'lib/features/onboarding/presentation/pages/welcome_screen.dart';
 }
 
 class AssetGenImage {
