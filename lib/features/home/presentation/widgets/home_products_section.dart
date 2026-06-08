@@ -200,7 +200,7 @@ class _HomeProductCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: const Color(0xFF101828),
-                    fontSize: 12.5.sp,
+                    fontSize: 11.sp,
                     fontWeight: FontWeight.w900,
                     height: 1.15,
                   ),
@@ -217,7 +217,7 @@ class _HomeProductCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           color: AppColors.primary,
-                          fontSize: 13.sp,
+                          fontSize: 11.sp,
                           fontWeight: FontWeight.w900,
                         ),
                       ),

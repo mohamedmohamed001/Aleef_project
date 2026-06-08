@@ -99,6 +99,7 @@ class $AssetsLibGen {
 class $AssetsFeaturesGen {
   const $AssetsFeaturesGen();
 
+  final $AssetsDoctorGen doctor = const $AssetsDoctorGen();
   final $AssetsOnboardingGen onboarding = const $AssetsOnboardingGen();
   final $AssetsProfileGen profile = const $AssetsProfileGen();
   final $AssetsStoreGen store = const $AssetsStoreGen();
@@ -183,6 +184,31 @@ class $AssetsPagesGen {
       'lib/features/onboarding/presentation/pages/onboarding_screen.dart';
   final String welcomeScreen =
       'lib/features/onboarding/presentation/pages/welcome_screen.dart';
+}
+
+class $AssetsDoctorGen {
+  const $AssetsDoctorGen();
+
+  final $AssetsHomeGen home = const $AssetsHomeGen();
+}
+
+class $AssetsHomeGen {
+  const $AssetsHomeGen();
+
+  final $AssetsDataGen data = const $AssetsDataGen();
+}
+
+class $AssetsDataGen {
+  const $AssetsDataGen();
+
+  final $AssetsModelsGen models = const $AssetsModelsGen();
+}
+
+class $AssetsModelsGen {
+  const $AssetsModelsGen();
+
+  final String appointmentRequestModel =
+      'lib/features/doctor/home/data/models/appointment_request_model.dart';
 }
 
 class AssetGenImage {

@@ -37,7 +37,8 @@ class AuthApiService {
           user: user,
           tokenValue: data['token'],
         );
-
+        await storage.deleteDoctor();
+        await storage.deleteDoctorToken();
         return true;
       } else {
         return false;

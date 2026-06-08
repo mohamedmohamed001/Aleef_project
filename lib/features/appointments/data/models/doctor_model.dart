@@ -2,7 +2,7 @@ class DoctorModel {
   final String? id;
   final String? name;
   final String? specialization;
-  final double? rating;
+  final String? rating;
   final int? reviewsCount;
   final String? location;
   final String? phone;
@@ -14,6 +14,7 @@ class DoctorModel {
   final int? appointmentFee;
 
   DoctorModel({
+    this.id,
     this.name,
     this.specialization,
     this.rating,
@@ -24,25 +25,43 @@ class DoctorModel {
     this.address,
     this.profilePic,
     this.ratingsCount,
-    this.id,
-    this.about, this.appointmentFee,
+    this.about,
+    this.appointmentFee,
   });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'specialization': specialization,
+      'rating': rating,
+      'reviewsCount': reviewsCount,
+      'location': location,
+      'phone': phone,
+      'city': city,
+      'address': address,
+      'profilePic': profilePic,
+      'ratingsCount': ratingsCount,
+      'about': about,
+      'appointmentFee': appointmentFee,
+    };
+  }
 
   factory DoctorModel.fromJson(Map<String, dynamic> json) {
     return DoctorModel(
-      name: json['name'],
-      specialization: json['specialization'],
-      rating: (json['rating'] as num?)?.toDouble(),
-      reviewsCount: json['reviewsCount'] as int?,
-      location: json['location'],
-      phone: json['phone'],
-      city: json['city'],
-      address: json['address'],
-      profilePic: json['profilePic'],
+      id: json['id']?.toString(),
+      name: json['name']?.toString(),
+      specialization: json['specialization']?.toString(),
+      rating: json['rating']?.toString(),
+      reviewsCount: (json['ratingCount'] as num?)?.toInt(),
+      location: json['location']?.toString(),
+      phone: json['phone']?.toString(),
+      city: json['city']?.toString(),
+      address: json['address']?.toString(),
+      profilePic: json['profilePic']?.toString(),
       ratingsCount: (json['ratingsCount'] as num?)?.toDouble(),
-      id: json['id'],
-      about: json['about'],
-      appointmentFee: json['appointmentFee'],
+      about: json['about']?.toString(),
+      appointmentFee: (json['appointmentFee'] as num?)?.toInt(),
     );
   }
 }

@@ -35,13 +35,13 @@ class PreviousAppointmentModel {
     final doctor = json["doctor"] as Map<String, dynamic>?;
 
     return PreviousAppointmentModel(
-      id: json["_id"] ?? "",
+      id: json["id"] ?? "",
 
-      petId: pet?["_id"] ?? "",
+      petId: pet?["id"] ?? "",
       petName: pet?["name"] ?? "",
       petProfilePic: pet?["profilePic"] ?? "",
 
-      doctorId: doctor?["_id"] ?? "",
+      doctorId: doctor?["id"] ?? "",
       doctorName: doctor?["name"] ?? "",
       doctorSpecialization: doctor?["specialization"] ?? "",
       doctorProfilePic: doctor?["profilePic"] ?? "",

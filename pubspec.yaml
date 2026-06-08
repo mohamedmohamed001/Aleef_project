@@ -52,4 +52,4 @@ flutter:
     - assets/images/chat_bot.png
     - lib/features/store/presentation/pages/
     - lib/features/onboarding/presentation/pages/
-    - lib/features/auth/data/data_sources/
+    - lib/features/doctor/home/data/models/

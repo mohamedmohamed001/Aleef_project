@@ -50,7 +50,7 @@ class PetModel {
         : json;
 
     return PetModel(
-      id: petData['_id'] ?? petData['id'] ?? json['_id'] ?? json['id'] ?? '',
+      id: petData['id'] ?? petData['id'] ?? json['id'] ?? json['id'] ?? '',
       name: capitalizeEachWord(
         (petData['name'] ?? json['name'] ?? '').toString(),
       ),
@@ -105,7 +105,7 @@ class MedicalRecord {
 
   factory MedicalRecord.fromJson(Map<String, dynamic> json) {
     return MedicalRecord(
-      id: json['_id'] ?? '',
+      id: json['id'] ?? '',
       condition: json['condition'] ?? '',
       title: json['title'] ?? '',
       description: json['description'] ?? '',
@@ -137,7 +137,7 @@ class Vaccination {
 
   factory Vaccination.fromJson(Map<String, dynamic> json) {
     return Vaccination(
-      id: json['_id'] ?? '',
+      id: json['id'] ?? '',
       parentVaccineId: json['parentVaccineId'] ?? '',
       vaccineName: json['vaccineName'] ?? '',
       type: json['type'],

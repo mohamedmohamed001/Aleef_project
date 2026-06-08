@@ -85,7 +85,7 @@ class _DoctorLoginScreenState extends State<DoctorLoginScreen> {
 
       Navigator.pushNamedAndRemoveUntil(
         context,
-        AppRoutes.mainLayout,
+        AppRoutes.doctorMainLayout,
             (route) => false,
       );
     } else {

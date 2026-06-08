@@ -71,7 +71,7 @@ class AppointmentTimeLine extends StatelessWidget {
               child: VerticalDivider(
                 width: 2.w,
                 color:
-                    appointment.status.toString() == "confirmed" ?
+                    appointment.status.toString() == "accepted" ?
                 AppColors.primary: Colors.grey,
                 thickness: 4.h,
               ),
@@ -83,7 +83,7 @@ class AppointmentTimeLine extends StatelessWidget {
                 width: 40.w,
                 height: 40.h,
                 decoration: BoxDecoration(
-                  color: appointment.status.toString() == "confirmed" ?
+                  color: appointment.status.toString() == "accepted" ?
                   AppColors.primary: Colors.grey,
                   shape: BoxShape.circle,
                 ),
@@ -100,7 +100,7 @@ class AppointmentTimeLine extends StatelessWidget {
                   Text(
                     "Doctor Accepted",
                     style: AppTextStyles.black16Bold.copyWith(
-                      color: appointment.status.toString() == "confirmed" ?
+                      color: appointment.status.toString() == "accepted" ?
                       AppColors.primary: Colors.grey,
                     ),
                   ),
@@ -116,7 +116,7 @@ class AppointmentTimeLine extends StatelessWidget {
               padding: EdgeInsets.symmetric(horizontal: 18.w),
               child: VerticalDivider(
                 width: 2.w,
-                color: appointment.status.toString() == "confirmed" ?
+                color: appointment.status.toString() == "accepted" ?
                 AppColors.primary: Colors.grey,
                 thickness: 4.h,
               ),
@@ -128,7 +128,7 @@ class AppointmentTimeLine extends StatelessWidget {
                 width: 40.w,
                 height: 40.h,
                 decoration: BoxDecoration(
-                  color: appointment.status.toString() == "confirmed" ?
+                  color: appointment.status.toString() == "accepted" ?
                   AppColors.primary: Colors.grey,
                   shape: BoxShape.circle,
                 ),
@@ -145,7 +145,7 @@ class AppointmentTimeLine extends StatelessWidget {
                   Text(
                     "Chat Available",
                     style: AppTextStyles.black16Bold.copyWith(
-                      color: appointment.status.toString() == "confirmed" ?
+                      color: appointment.status.toString() == "accepted" ?
                       AppColors.primary: Colors.grey,
                     ),
                   ),
@@ -161,7 +161,7 @@ class AppointmentTimeLine extends StatelessWidget {
               padding: EdgeInsets.symmetric(horizontal: 18.w),
               child: VerticalDivider(
                 width: 2.w,
-                color: appointment.status.toString() == "confirmed" ?
+                color: appointment.status.toString() == "accepted" ?
                 AppColors.primary: Colors.grey,
                 thickness: 4.h,
               ),
@@ -177,7 +177,7 @@ class AppointmentTimeLine extends StatelessWidget {
                 ),
                 child: Icon(
                   Icons.check_circle,
-                  color: appointment.status.toString() == "confirmed" ?
+                  color: appointment.status.toString() == "accepted" ?
                   AppColors.primary: Colors.grey,
                   size: 20.sp,
                 ),

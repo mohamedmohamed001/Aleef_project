@@ -19,7 +19,7 @@ class ChatbotProvider extends ChangeNotifier {
 
   bool _isListeningToMessages = false;
 
-  static const String botId = '000000000000000000000000';
+  static const String botId = '00000000-0000-0000-0000-000000000000';
 
   // ================= INIT CHATBOT =================
 
@@ -175,7 +175,7 @@ class ChatbotProvider extends ChangeNotifier {
       final bool isBot = senderId == botId;
 
       return MessageModel.fromJson({
-        '_id': map['_id'] ?? DateTime.now().millisecondsSinceEpoch.toString(),
+        'id': map['id'] ?? DateTime.now().millisecondsSinceEpoch.toString(),
         'chatId': map['chatId'] ?? chatId ?? '',
         'sender': map['sender'],
         'senderModel': isBot ? 'Bot' : 'User',
@@ -194,7 +194,7 @@ class ChatbotProvider extends ChangeNotifier {
     if (sender is String) return sender;
 
     if (sender is Map) {
-      return sender['_id']?.toString() ?? sender['id']?.toString();
+      return sender['id']?.toString() ?? sender['id']?.toString();
     }
 
     return sender.toString();

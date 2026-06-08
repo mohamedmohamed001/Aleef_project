@@ -61,7 +61,7 @@ class ProductCategoryModel {
 
   factory ProductCategoryModel.fromJson(Map<String, dynamic> json) {
     return ProductCategoryModel(
-      id: json['_id'] ?? '',
+      id: json['id'] ?? '',
       name: json['name'] ?? '',
     );
   }

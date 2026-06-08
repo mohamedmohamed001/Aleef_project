@@ -21,7 +21,7 @@ class ReviewModel {
 
   factory ReviewModel.fromJson(Map<String, dynamic> json) {
     return ReviewModel(
-      id: json['_id'] ?? '',
+      id: json['id'] ?? '',
       doctorId: json['doctor'] ?? '',
       user: UserModel.fromJson(json['user'] ?? {}),
       rate: (json['rate'] ?? 0) as int,

@@ -32,7 +32,7 @@ class AppointmentModel {
 
   factory AppointmentModel.fromJson(Map<String, dynamic> json) {
     return AppointmentModel(
-      id: json['_id'],
+      id: json['id'],
       pet: json['pet'] != null ? PetModel.fromJson(json['pet']) : null,
       owner: json['owner']?.toString(),
       doctor: json['doctor'] != null

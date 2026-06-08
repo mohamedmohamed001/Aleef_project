@@ -16,7 +16,7 @@ class DoctorInfoCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final doctorName = doctor.name ?? 'Unknown Doctor';
     final specialization = doctor.specialization ?? 'Veterinarian';
-    final rating = doctor.rating?.toStringAsFixed(1) ?? '0.0';
+    final rating = doctor.rating?? '0.0';
     final city = doctor.city ?? doctor.location ?? 'Unknown location';
 
     return Positioned(

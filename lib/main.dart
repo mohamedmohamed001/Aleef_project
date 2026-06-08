@@ -7,17 +7,17 @@ import 'package:aleef/features/auth/presentation/pages/doctor_register_screen.da
 import 'package:aleef/features/auth/presentation/pages/register_screen.dart';
 import 'package:aleef/features/auth/presentation/pages/verfication_otp_screen.dart';
 import 'package:aleef/features/auth/presentation/providers/doctor_register_provider.dart';
+import 'package:aleef/features/doctor/home/presentation/manager/doctor_appointment_provider.dart';
 import 'package:aleef/features/doctor/main_layout/doctor_main_layout.dart';
 import 'package:aleef/features/pets/presentation/manager/pets_provider.dart';
-import 'package:aleef/features/store/presentation/pages/details_screen.dart';
 import 'package:aleef/features/store/presentation/pages/cart_screen.dart';
+import 'package:aleef/features/store/presentation/pages/details_screen.dart';
 import 'package:aleef/features/store/presentation/pages/my_orders_screen.dart';
-import 'package:aleef/features/store/presentation/pages/store_tab.dart';
 import 'package:aleef/providers/bottom_nav_provider.dart';
+import 'package:aleef/providers/doctor_provider.dart';
 import 'package:aleef/providers/user_provider.dart';
 import 'package:device_preview/device_preview.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
@@ -45,7 +45,7 @@ import 'features/profile/presentation/pages/edit_profile.dart';
 import 'features/store/services/store_provider.dart';
 import 'firebase_options.dart';
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
@@ -59,10 +59,12 @@ void main() async {
         ChangeNotifierProvider(create: (_) => BottomNavProvider()),
         ChangeNotifierProvider(create: (_) => StoreProvider()),
         ChangeNotifierProvider(create: (_) => UserProvider()),
+        ChangeNotifierProvider(create: (_) => DoctorProvider()),
         ChangeNotifierProvider(create: (_) => PetsProvider()),
         ChangeNotifierProvider(create: (_) => ChatProvider()),
         ChangeNotifierProvider(create: (_) => ChatbotProvider()),
         ChangeNotifierProvider(create: (_) => AppointmentProvider()),
+        ChangeNotifierProvider(create: (_) => DoctorAppointmentsProvider()),
         ChangeNotifierProvider(
           create: (_) => DoctorRegisterProvider(DoctorAuthApiService()),
         ),
@@ -86,10 +88,9 @@ class MyApp extends StatelessWidget {
           useInheritedMediaQuery: true,
           locale: DevicePreview.locale(context),
           builder: DevicePreview.appBuilder,
-
           debugShowCheckedModeBanner: false,
           theme: AppTheme.lightTheme,
-          home: const DoctorMainLayout(),
+          home: const LoginScreen(),
           routes: {
             AppRoutes.register: (context) => const RegisterScreen(),
             AppRoutes.login: (context) => const LoginScreen(),
@@ -104,25 +105,30 @@ class MyApp extends StatelessWidget {
             AppRoutes.chatBotScreen: (context) => const ChatbotScreen(),
             AppRoutes.previousAppointmentScreen: (context) =>
                 const PreviousAppointmentScreen(),
-            AppRoutes.doctorLogin: (context) => const DoctorLoginScreen(),
 
-            // pets
+            // Doctor
+            AppRoutes.doctorLogin: (context) => const DoctorLoginScreen(),
+            AppRoutes.doctorRegister: (context) => DoctorRegisterScreen(),
+            AppRoutes.doctorPendingReview: (context) =>
+                const DoctorPendingReviewScreen(),
+            AppRoutes.doctorMainLayout: (context) => const DoctorMainLayout(),
+
+            // Pets
             AppRoutes.addPet: (context) => AddPetScreen(service: PetsService()),
 
-            // store
+            // Store
             AppRoutes.detailsProduct: (context) =>
                 const ProductDetails(productId: ''),
             AppRoutes.cart: (context) => const CartScreen(),
             AppRoutes.order: (context) => const MyOrdersScreen(),
 
-            // appointments
+            // Appointments
             AppRoutes.appointmentDetails: (context) =>
                 const AppointmentDetails(appointmentId: ''),
             AppRoutes.bookAppointment: (context) =>
                 const BookAppointmentScreen(doctorId: ''),
-            AppRoutes.doctorRegister: (context) => DoctorRegisterScreen(),
+
             AppRoutes.onboarding: (context) => const OnboardingScreen(),
-            AppRoutes.doctorPendingReview: (context) => const DoctorPendingReviewScreen()
           },
         );
       },

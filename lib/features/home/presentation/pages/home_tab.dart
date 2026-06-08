@@ -93,25 +93,45 @@ class _HomeTabState extends State<HomeTab> {
   }
 
   Future<void> fetchCurrentAppointment() async {
-    if (mounted) {
-      setState(() {
-        isAppointmentLoading = true;
-      });
-    }
-
-    final response = await AppointmentApi().getActiveAppointment();
-
     if (!mounted) return;
 
-    if (response["status"] == "success" && response["data"] != null) {
+    setState(() {
+      isAppointmentLoading = true;
+    });
+
+    try {
+      final response = await AppointmentApi().getActiveAppointment();
+
+      debugPrint('Active appointment response: $response');
+
+      if (!mounted) return;
+
+      if (response['status'] == 'success') {
+        setState(() {
+          appointment = (response['data'] != null
+              ? AppointmentModel.fromJson(
+            response['data'] as Map<String, dynamic>,
+          )
+              : null)!;
+
+          isAppointmentLoading = false;
+        });
+      } else if (response['status'] == 'unauthorized') {
+        await _logoutAndGoLogin();
+      } else {
+        setState(() {
+          appointment = AppointmentModel();
+          isAppointmentLoading = false;
+        });
+      }
+    } catch (e, stackTrace) {
+      debugPrint('fetchCurrentAppointment error: $e');
+      debugPrint('stack: $stackTrace');
+
+      if (!mounted) return;
+
       setState(() {
-        appointment = AppointmentModel.fromJson(response["data"]);
-        isAppointmentLoading = false;
-      });
-    } else if (response["status"] == "unauthorized") {
-      await _logoutAndGoLogin();
-    } else {
-      setState(() {
+        appointment = AppointmentModel();
         isAppointmentLoading = false;
       });
     }

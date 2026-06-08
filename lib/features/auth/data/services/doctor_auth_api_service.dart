@@ -1,10 +1,18 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:aleef/core/constants/api_constant.dart';
+import 'package:aleef/features/appointments/data/models/doctor_model.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/cupertino.dart';
+
+import '../../../../core/services/secure_storage_service.dart';
+import '../../../../core/services/service_locator.dart';
+import '../../../../core/services/session_service.dart';
 
 class DoctorAuthApiService {
   final Dio _dio;
   final baseUrl = ApiConstant.baseUrl;
+
   DoctorAuthApiService([Dio? dio]) : _dio = dio ?? Dio();
 
   Future<bool> registerDoctor({
@@ -73,17 +81,12 @@ class DoctorAuthApiService {
       return false;
     }
   }
-  Future<bool> verifyEmail({
-    required String email,
-    required String otp,
-  }) async {
+
+  Future<bool> verifyEmail({required String email, required String otp}) async {
     try {
       final response = await _dio.post(
         '$baseUrl/doctors/verify-email',
-        data: {
-          'email': email,
-          'otp': otp,
-        },
+        data: {'email': email, 'otp': otp},
       );
 
       return response.statusCode == 200;
@@ -91,27 +94,40 @@ class DoctorAuthApiService {
       return false;
     }
   }
-  Future<Map<String, dynamic>?> login(
-      String email,
-      String password,
-      ) async {
+
+  Future<bool?> login(String email, String password) async {
     try {
       final response = await _dio.post(
         '$baseUrl/doctors/login',
-        data: {
-          'email': email,
-          'password': password,
-        },
+        data: {'email': email, 'password': password},
       );
 
-      print('Doctor login response: ${response.data}');
+      debugPrint('Doctor login response: ${response.data}');
 
-      return response.data;
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = Map<String, dynamic>.from(response.data);
+
+        final storage = getIt<SecureStorageService>();
+        final session = getIt<SessionService>();
+
+        final token = data['token'] as String;
+
+        final doctor = DoctorModel.fromJson(
+          Map<String, dynamic>.from(data['doctor']),
+        );
+
+        await storage.saveDoctorToken(token);
+        await storage.saveDoctor(doctor);
+
+        session.setDoctorSession(doctor: doctor, doctorTokenValue: token);
+
+        return true;
+      }
+
+      return false;
     } catch (e) {
-      print('Doctor login error: $e');
+      debugPrint('Doctor login error: $e');
       return null;
     }
   }
-
-
 }

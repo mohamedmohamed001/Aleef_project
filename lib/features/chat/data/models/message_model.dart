@@ -96,7 +96,7 @@ class MessageModel {
     final directChatId = json['chatId'];
 
     if (directChatId is Map<String, dynamic>) {
-      return _readString(directChatId, ['_id', 'id']);
+      return _readString(directChatId, ['id', 'id']);
     }
 
     if (directChatId != null && directChatId.toString().trim().isNotEmpty) {

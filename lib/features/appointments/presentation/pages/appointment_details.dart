@@ -186,7 +186,7 @@ class _AppointmentDetailsState extends State<AppointmentDetails> {
                 AppointmentTimeLine(appointment: appointment),
                 SizedBox(height: 16.h),
                 ElevatedButton(
-                  onPressed: appointment.status !="confirmed"
+                  onPressed: appointment.status !="accepted"
                       ? null
                       : () {
                     Navigator.push(
