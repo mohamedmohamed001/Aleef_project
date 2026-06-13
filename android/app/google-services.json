@@ -12,7 +12,20 @@
           "package_name": "com.example.aleef"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "927616168656-ucm7g7b5if0e16rsl9ka1m9an9f0b3bn.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.aleef",
+            "certificate_hash": "08acc6d4d475ccf0946cd4b4a8a3bcd20c5b94d5"
+          }
+        },
+        {
+          "client_id": "927616168656-skc6ratb3f46i3tfan3a2s1megpch5oc.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyDQTAQojJCNn2KyfUy2vssuqfG6bUusrdU"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "927616168656-skc6ratb3f46i3tfan3a2s1megpch5oc.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }
