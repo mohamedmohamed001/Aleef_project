@@ -1,8 +1,9 @@
 import 'package:aleef/core/services/socket_service.dart';
+import 'package:aleef/features/chat/presentation/pages/chat_tab.dart';
+import 'package:aleef/features/doctor/home/presentation/pages/confirmed_appointments_screen.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
-import '../../chat/presentation/pages/chat_tab.dart';
 import '../Performance/presentation/pages/doctor_performance_tab.dart';
 import '../home/presentation/pages/doctor_home_tab.dart';
 import '../profile/presentation/pages/doctor_profile_tab.dart';
@@ -19,8 +20,9 @@ class _DoctorMainLayoutState extends State<DoctorMainLayout> {
 
   final List<Widget> screens = const [
     DoctorHomeTab(),
-    ChatTab(),
     DoctorPerformanceTab(),
+    ChatTab(),
+    ConfirmedAppointmentsScreen(),
     DoctorProfileTab(),
   ];
 
@@ -42,10 +44,7 @@ class _DoctorMainLayoutState extends State<DoctorMainLayout> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: currentIndex,
-        children: screens,
-      ),
+      body: IndexedStack(index: currentIndex, children: screens),
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: ClipRRect(
@@ -65,14 +64,19 @@ class _DoctorMainLayoutState extends State<DoctorMainLayout> {
                 label: 'Home',
               ),
               BottomNavigationBarItem(
-                icon: Icon(Icons.chat_bubble_outline_rounded),
-                activeIcon: Icon(Icons.chat_bubble_rounded),
-                label: 'Chat',
-              ),
-              BottomNavigationBarItem(
                 icon: Icon(Icons.show_chart_rounded),
                 activeIcon: Icon(Icons.show_chart_rounded),
                 label: 'Performance',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.chat_bubble_outline_rounded),
+                activeIcon: Icon(Icons.chat_bubble_rounded),
+                label: 'Chats',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.calendar_today_outlined),
+                activeIcon: Icon(Icons.calendar_today),
+                label: 'Appointments',
               ),
               BottomNavigationBarItem(
                 icon: Icon(Icons.person_outline),

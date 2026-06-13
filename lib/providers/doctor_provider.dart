@@ -30,10 +30,7 @@ class DoctorProvider with ChangeNotifier {
 
       doctor = storedDoctor;
 
-      _session.setDoctorSession(
-        doctor: storedDoctor,
-        doctorTokenValue: token,
-      );
+      _session.setDoctorSession(doctor: storedDoctor, doctorTokenValue: token);
     } catch (e) {
       errorMessage = 'Failed to load doctor profile';
     } finally {
