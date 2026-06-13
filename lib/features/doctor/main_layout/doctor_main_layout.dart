@@ -1,3 +1,4 @@
+import 'package:aleef/features/doctor/home/presentation/pages/confirmed_appointments_screen.dart';
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../Performance/presentation/pages/doctor_performance_tab.dart';
@@ -17,8 +18,9 @@ class _DoctorMainLayoutState extends State<DoctorMainLayout> {
 
   final List<Widget> screens = const [
     DoctorHomeTab(),
-    DoctorChatsTab(),
     DoctorPerformanceTab(),
+     DoctorChatsTab(),
+    ConfirmedAppointmentsScreen(),
     DoctorProfileTab(),
   ];
 
@@ -31,10 +33,7 @@ class _DoctorMainLayoutState extends State<DoctorMainLayout> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: currentIndex,
-        children: screens,
-      ),
+      body: IndexedStack(index: currentIndex, children: screens),
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: ClipRRect(
@@ -56,16 +55,20 @@ class _DoctorMainLayoutState extends State<DoctorMainLayout> {
               BottomNavigationBarItem(
                 icon: Icon(Icons.calendar_today_outlined),
                 activeIcon: Icon(Icons.calendar_today),
-                label: 'Appointments',
+                label: 'Performance',
               ),
               BottomNavigationBarItem(
                 icon: Icon(Icons.show_chart_rounded),
                 activeIcon: Icon(Icons.show_chart_rounded),
-                label: 'Performance',
+                label: 'Chats',
               ),
               BottomNavigationBarItem(
                 icon: Icon(Icons.person_outline),
                 activeIcon: Icon(Icons.person),
+                label: 'Appointments',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.chat_bubble_outline),
                 label: 'Profile',
               ),
             ],

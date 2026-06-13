@@ -7,7 +7,10 @@ import 'package:aleef/features/auth/presentation/pages/doctor_register_screen.da
 import 'package:aleef/features/auth/presentation/pages/register_screen.dart';
 import 'package:aleef/features/auth/presentation/pages/verfication_otp_screen.dart';
 import 'package:aleef/features/auth/presentation/providers/doctor_register_provider.dart';
+import 'package:aleef/features/doctor/home/presentation/manager/appointment_management_provider.dart';
 import 'package:aleef/features/doctor/home/presentation/manager/doctor_appointment_provider.dart';
+import 'package:aleef/features/doctor/home/presentation/manager/doctor_confirmed_appointments_provider.dart';
+import 'package:aleef/features/doctor/home/presentation/manager/doctor_profile_provider.dart';
 import 'package:aleef/features/doctor/main_layout/doctor_main_layout.dart';
 import 'package:aleef/features/pets/presentation/manager/pets_provider.dart';
 import 'package:aleef/features/store/presentation/pages/cart_screen.dart';
@@ -60,10 +63,13 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => StoreProvider()),
         ChangeNotifierProvider(create: (_) => UserProvider()),
         ChangeNotifierProvider(create: (_) => DoctorProvider()),
+        ChangeNotifierProvider(create: (_) => DoctorProfileProvider()),
         ChangeNotifierProvider(create: (_) => PetsProvider()),
         ChangeNotifierProvider(create: (_) => ChatProvider()),
         ChangeNotifierProvider(create: (_) => ChatbotProvider()),
         ChangeNotifierProvider(create: (_) => AppointmentProvider()),
+        ChangeNotifierProvider(create: (_) => AppointmentManagementProvider()),
+        ChangeNotifierProvider(create: (_) => DoctorConfirmedAppointmentsProvider()),
         ChangeNotifierProvider(create: (_) => DoctorAppointmentsProvider()),
         ChangeNotifierProvider(
           create: (_) => DoctorRegisterProvider(DoctorAuthApiService()),
@@ -90,7 +96,7 @@ class MyApp extends StatelessWidget {
           builder: DevicePreview.appBuilder,
           debugShowCheckedModeBanner: false,
           theme: AppTheme.lightTheme,
-          home: const LoginScreen(),
+          home: const AppStartupScreen(),
           routes: {
             AppRoutes.register: (context) => const RegisterScreen(),
             AppRoutes.login: (context) => const LoginScreen(),
