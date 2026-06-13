@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 import 'package:aleef/core/constants/api_constant.dart';
 import 'package:aleef/features/appointments/data/models/doctor_model.dart';

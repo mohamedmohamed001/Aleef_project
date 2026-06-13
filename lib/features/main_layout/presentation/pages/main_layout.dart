@@ -1,6 +1,3 @@
-import 'package:aleef/core/constants/api_constant.dart';
-import 'package:aleef/core/services/secure_storage_service.dart';
-import 'package:aleef/core/services/service_locator.dart';
 import 'package:aleef/core/services/socket_service.dart';
 import 'package:aleef/core/theme/app_colors.dart';
 import 'package:aleef/features/appointments/presentation/pages/appointments_screen.dart';
@@ -28,26 +25,10 @@ class _MainLayoutState extends State<MainLayout> {
   @override
   void initState() {
     super.initState();
-    _connectSocket();
-  }
 
-  Future<void> _connectSocket() async {
-    final storage = getIt<SecureStorageService>();
-    final socketService = getIt<SocketService>();
-
-    final token = await storage.getToken();
-    final user = await storage.getUser();
-
-    if (token == null || token.isEmpty || user == null || user.id.isEmpty) {
-      debugPrint("⚠️ Socket connection skipped: token/user missing");
-      return;
-    }
-
-    socketService.connect(
-      baseUrl: ApiConstant.socketUrl,
-      token: token,
-      userId: user.id,
-    );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      SocketService().connectCurrentSession();
+    });
   }
 
   @override
@@ -66,9 +47,7 @@ class _MainLayoutState extends State<MainLayout> {
     return Scaffold(
       extendBody: true,
       backgroundColor: const Color(0xFFF8FAFA),
-
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-
       floatingActionButton: selectedIndex == 0
           ? null
           : Padding(
@@ -86,12 +65,10 @@ class _MainLayoutState extends State<MainLayout> {
           ),
         ),
       ),
-
       body: IndexedStack(
         index: selectedIndex,
         children: tabs,
       ),
-
       bottomNavigationBar: BottomNavBar(
         selectedIndex: selectedIndex,
         onItemSelected: (index) {

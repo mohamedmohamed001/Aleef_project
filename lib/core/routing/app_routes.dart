@@ -30,6 +30,7 @@ static const String doctorRegister='/doctorRegister';
       '/doctorPendingReview';
   static const doctorLogin = '/doctorLogin';
   static const doctorMainLayout = '/doctorMainLayout';
+  static const String appointmentUserDetails = '/appointmentUserDetails';
 
 //on boarding
   static const String onboarding = '/onboarding';

@@ -8,7 +8,6 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:aleef/features/store/services/store_provider.dart';
 import '../../../../core/constants/api_constant.dart';
 import '../../../../core/theme/app_colors.dart';
-import 'my_orders_screen.dart';
 
 class CheckoutScreen extends StatefulWidget {
   const CheckoutScreen({super.key});

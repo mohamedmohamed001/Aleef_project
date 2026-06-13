@@ -8,6 +8,7 @@ import 'package:aleef/features/auth/presentation/pages/register_screen.dart';
 import 'package:aleef/features/auth/presentation/pages/verfication_otp_screen.dart';
 import 'package:aleef/features/auth/presentation/providers/doctor_register_provider.dart';
 import 'package:aleef/features/doctor/home/presentation/manager/doctor_appointment_provider.dart';
+import 'package:aleef/features/doctor/home/presentation/pages/appointment_details_screen.dart';
 import 'package:aleef/features/doctor/main_layout/doctor_main_layout.dart';
 import 'package:aleef/features/pets/presentation/manager/pets_provider.dart';
 import 'package:aleef/features/store/presentation/pages/cart_screen.dart';
@@ -36,6 +37,7 @@ import 'features/auth/presentation/pages/login_screen.dart';
 import 'features/auth/presentation/providers/verify_provider.dart';
 import 'features/chat/presentation/pages/chat_details.dart';
 import 'features/chat/presentation/provider/chat_provider.dart';
+import 'features/doctor/Performance/presentation/manager/doctor_performance_provider.dart';
 import 'features/home/presentation/pages/home_tab.dart';
 import 'features/main_layout/presentation/pages/main_layout.dart';
 import 'features/onboarding/presentation/pages/onboarding_screen.dart';
@@ -68,6 +70,7 @@ Future<void> main() async {
         ChangeNotifierProvider(
           create: (_) => DoctorRegisterProvider(DoctorAuthApiService()),
         ),
+        ChangeNotifierProvider(create: (_) => DoctorPerformanceProvider()),
       ],
       child: const MyApp(),
     ),
@@ -123,8 +126,25 @@ class MyApp extends StatelessWidget {
             AppRoutes.order: (context) => const MyOrdersScreen(),
 
             // Appointments
-            AppRoutes.appointmentDetails: (context) =>
-                const AppointmentDetails(appointmentId: ''),
+            AppRoutes.appointmentUserDetails: (context) {
+              final args = ModalRoute.of(context)!.settings.arguments;
+
+              String appointmentId = '';
+              bool showActions = true;
+
+              if (args is String) {
+                appointmentId = args;
+              } else if (args is Map) {
+                appointmentId = args['appointmentId'] as String;
+                showActions = args['showActions'] as bool? ?? true;
+              }
+
+              return AppointmentDetailsScreen(
+                appointmentId: appointmentId,
+                showActions: showActions,
+              );
+            },
+
             AppRoutes.bookAppointment: (context) =>
                 const BookAppointmentScreen(doctorId: ''),
 

@@ -1,7 +1,9 @@
+import 'package:aleef/core/services/socket_service.dart';
 import 'package:flutter/material.dart';
+
 import '../../../core/theme/app_colors.dart';
+import '../../chat/presentation/pages/chat_tab.dart';
 import '../Performance/presentation/pages/doctor_performance_tab.dart';
-import '../chats/presentation/pages/doctor_chats_screen.dart';
 import '../home/presentation/pages/doctor_home_tab.dart';
 import '../profile/presentation/pages/doctor_profile_tab.dart';
 
@@ -17,10 +19,19 @@ class _DoctorMainLayoutState extends State<DoctorMainLayout> {
 
   final List<Widget> screens = const [
     DoctorHomeTab(),
-    DoctorChatsTab(),
+    ChatTab(),
     DoctorPerformanceTab(),
     DoctorProfileTab(),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      SocketService().connectCurrentSession();
+    });
+  }
 
   void onTabTapped(int index) {
     setState(() {
@@ -54,9 +65,9 @@ class _DoctorMainLayoutState extends State<DoctorMainLayout> {
                 label: 'Home',
               ),
               BottomNavigationBarItem(
-                icon: Icon(Icons.calendar_today_outlined),
-                activeIcon: Icon(Icons.calendar_today),
-                label: 'Appointments',
+                icon: Icon(Icons.chat_bubble_outline_rounded),
+                activeIcon: Icon(Icons.chat_bubble_rounded),
+                label: 'Chat',
               ),
               BottomNavigationBarItem(
                 icon: Icon(Icons.show_chart_rounded),

@@ -153,4 +153,60 @@ class DoctorAppointmentsApiService {
       };
     }
   }
+  Future<Map<String, dynamic>> getAppointmentDetails({
+    required String appointmentId,
+  }) async {
+    try {
+      final token = await _storage.getDoctorToken();
+
+      if (token == null || token.isEmpty) {
+        return {
+          'status': 'unauthorized',
+          'message': 'Doctor token not found',
+        };
+      }
+      print('DOCTOR TOKEN: $token');
+      print('APPOINTMENT ID: $appointmentId');
+      final response = await _dio.get(
+        '/appointments/$appointmentId',
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+          },
+        ),
+      );
+
+      return {
+        'status': 'success',
+        'data': response.data,
+      };
+    } on DioException catch (e) {
+      final statusCode = e.response?.statusCode;
+      final responseData = e.response?.data;
+      print('DETAILS STATUS: ${e.response?.statusCode}');
+      print('DETAILS DATA: ${e.response?.data}');
+      print('DETAILS TOKEN: ${await _storage.getDoctorToken()}');
+
+      if (statusCode == 401 || statusCode == 403) {
+        return {
+          'status': 'unauthorized',
+          'message': responseData is Map<String, dynamic>
+              ? responseData['message'] ?? 'Unauthorized'
+              : 'Unauthorized',
+        };
+      }
+
+      return {
+        'status': 'error',
+        'message': responseData is Map<String, dynamic>
+            ? responseData['message'] ?? 'Failed to load appointment details'
+            : 'Failed to load appointment details',
+      };
+    } catch (e) {
+      return {
+        'status': 'error',
+        'message': 'Unexpected error: $e',
+      };
+    }
+  }
 }

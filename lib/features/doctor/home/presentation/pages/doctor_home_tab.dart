@@ -5,8 +5,11 @@ import 'package:aleef/features/doctor/home/presentation/widgets/doctor_home_head
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
+import '../../../../../core/routing/app_routes.dart';
 import '../../../../../providers/doctor_provider.dart';
 import '../manager/doctor_appointment_provider.dart';
+import '../skeletons/appointment_request_card_skeleton.dart';
+
 class DoctorHomeTab extends StatefulWidget {
   const DoctorHomeTab({super.key});
 
@@ -24,9 +27,7 @@ class _DoctorHomeTabState extends State<DoctorHomeTab> {
 
       if (!mounted) return;
 
-      await context
-          .read<DoctorAppointmentsProvider>()
-          .getAppointmentRequests();
+      await context.read<DoctorAppointmentsProvider>().getAppointmentRequests();
     });
   }
 
@@ -62,77 +63,82 @@ class _DoctorHomeTabState extends State<DoctorHomeTab> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _RequestsHeader(
-                          requestsCount: provider.requestsCount,
-                        ),
+                        _RequestsHeader(requestsCount: provider.requestsCount),
 
                         // SizedBox(height: 10.h),
-
                         if (provider.isLoading)
-                          const _LoadingState()
+                          const _DoctorHomeSkeleton()
                         else if (provider.errorMessage != null)
                           _ErrorState(
                             message: provider.errorMessage!,
                             onRetry: provider.getAppointmentRequests,
                           )
                         else if (provider.appointmentRequests.isEmpty)
-                            const _EmptyState()
-                          else
-                            ListView.separated(
-                              shrinkWrap: true,
-                              physics:
-                              const NeverScrollableScrollPhysics(),
-                              itemCount:
-                              provider.appointmentRequests.length,
-                              separatorBuilder: (context, index) {
-                                return SizedBox(height: 12.h);
-                              },
-                              itemBuilder: (context, index) {
-                                final appointment =
-                                provider.appointmentRequests[index];
+                          const _EmptyState()
+                        else
+                          ListView.separated(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: provider.appointmentRequests.length,
+                            separatorBuilder: (context, index) {
+                              return SizedBox(height: 12.h);
+                            },
+                            itemBuilder: (context, index) {
+                              final appointment =
+                                  provider.appointmentRequests[index];
 
-                                return AppointmentRequestCard(
-                                  petName: _capitalize(appointment.pet.name),
-                                  petImage: appointment.pet.profilePic ?? '',
-                                  petType: _capitalize(appointment.pet.type),
-                                  ownerName: _capitalizeWords(
-                                    appointment.owner.name,
-                                  ),
-                                  date: _formatDate(appointment.date),
-                                  time: appointment.time,
-                                  reason: appointment.reason,
-                                  isLoading: provider.isAppointmentLoading(
-                                    appointment.id,
-                                  ),
-                                  onAccept: () async {
-                                    final message = await provider.acceptAppointment(
-                                      appointment.id,
-                                    );
+                              return AppointmentRequestCard(
+                                petName: _capitalize(appointment.pet.name),
+                                petImage: appointment.pet.profilePic ?? '',
+                                petType: _capitalize(appointment.pet.type),
+                                ownerName: _capitalizeWords(
+                                  appointment.owner.name,
+                                ),
+                                date: _formatDate(appointment.date),
+                                time: appointment.time,
+                                reason: appointment.reason,
+                                isLoading: provider.isAppointmentLoading(
+                                  appointment.id,
+                                ),
+                                onAccept: () async {
+                                  final message = await provider
+                                      .acceptAppointment(appointment.id);
 
-                                    if (!context.mounted) return;
+                                  if (!context.mounted) return;
 
-                                    _showResultSnackBar(
-                                      context,
-                                      message: message ?? 'Appointment accepted successfully',
-                                      isError: message != null,
-                                    );
-                                  },
-                                  onDecline: () async {
-                                    final message = await provider.declineAppointment(
-                                      appointment.id,
-                                    );
+                                  _showResultSnackBar(
+                                    context,
+                                    message:
+                                        message ??
+                                        'Appointment accepted successfully',
+                                    isError: message != null,
+                                  );
+                                },
+                                onDecline: () async {
+                                  final message = await provider
+                                      .declineAppointment(appointment.id);
 
-                                    if (!context.mounted) return;
+                                  if (!context.mounted) return;
 
-                                    _showResultSnackBar(
-                                      context,
-                                      message: message ?? 'Appointment declined successfully',
-                                      isError: message != null,
-                                    );
-                                  },
-                                );
-                              },
-                            ),
+                                  _showResultSnackBar(
+                                    context,
+                                    message:
+                                        message ??
+                                        'Appointment declined successfully',
+                                    isError: message != null,
+                                  );
+                                },
+                                appointmentId: appointment.id,
+                                onTap: () {
+                                  Navigator.pushNamed(
+                                    context,
+                                    AppRoutes.appointmentUserDetails,
+                                    arguments: appointment.id,
+                                  );
+                                },
+                              );
+                            },
+                          ),
                       ],
                     ),
                   ),
@@ -285,14 +291,31 @@ String _capitalizeWords(String value) {
 }
 
 void _showResultSnackBar(
-    BuildContext context, {
-      required String message,
-      required bool isError,
-    }) {
+  BuildContext context, {
+  required String message,
+  required bool isError,
+}) {
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
       content: Text(message),
       backgroundColor: isError ? Colors.red : AppColors.primary,
     ),
   );
+}
+
+class _DoctorHomeSkeleton extends StatelessWidget {
+  const _DoctorHomeSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: List.generate(
+        4,
+        (index) => Padding(
+          padding: EdgeInsets.only(bottom: 12.h),
+          child: const AppointmentRequestCardSkeleton(),
+        ),
+      ),
+    );
+  }
 }

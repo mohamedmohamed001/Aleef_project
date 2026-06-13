@@ -1,8 +1,5 @@
-import 'dart:io';
 import 'package:aleef/core/constants/api_constant.dart';
 import 'package:dio/dio.dart';
-import 'package:flutter/material.dart';
-import 'package:aleef/features/pets/data/models/pet_model.dart';
 
 class PetsService {
   final Dio _dio = Dio();

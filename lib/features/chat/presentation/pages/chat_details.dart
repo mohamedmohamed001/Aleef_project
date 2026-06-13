@@ -12,6 +12,7 @@ import '../../../../core/routing/app_routes.dart';
 import '../../../../core/services/secure_storage_service.dart';
 import '../../../../core/services/service_locator.dart';
 import '../../../../core/services/session_service.dart';
+import '../../../../core/services/socket_service.dart';
 import '../../../../providers/user_provider.dart';
 import '../provider/chat_provider.dart';
 
@@ -44,7 +45,10 @@ class _ChatDetailsState extends State<ChatDetails> {
     super.initState();
 
     _messageController.addListener(_onMessageChanged);
-    _loadChatDetails();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadChatDetails();
+    });
   }
 
   void _onMessageChanged() {
@@ -52,28 +56,29 @@ class _ChatDetailsState extends State<ChatDetails> {
   }
 
   Future<void> _loadChatDetails() async {
-    Future.microtask(() async {
-      _chatProvider = context.read<ChatProvider>();
+    _chatProvider = context.read<ChatProvider>();
 
-      await _initSession();
+    await _initSession();
 
-      final isAuthorized = await _chatProvider!.getChatMessages(widget.chatId);
+    if (!mounted) return;
 
-      if (!mounted) return;
+    final isAuthorized = await _chatProvider!.getChatMessages(widget.chatId);
 
-      if (!isAuthorized) {
-        await _logoutAndGoLogin();
-        return;
-      }
+    if (!mounted) return;
 
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _scrollToBottom(animated: false);
-      });
+    if (!isAuthorized) {
+      await _logoutAndGoLogin();
+      return;
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _scrollToBottom(animated: false);
     });
   }
 
   Future<void> _initSession() async {
     final storage = getIt<SecureStorageService>();
+
     final user = await storage.getUser();
     final token = await storage.getToken();
 
@@ -83,14 +88,31 @@ class _ChatDetailsState extends State<ChatDetails> {
 
       if (mounted) {
         context.read<UserProvider>().setUser(user);
+        setState(() {});
       }
+
+      return;
     }
 
-    if (mounted) setState(() {});
+    final doctor = await storage.getDoctor();
+    final doctorToken = await storage.getDoctorToken();
+
+    if (doctor != null && doctorToken != null && doctorToken.isNotEmpty) {
+      session.setDoctorSession(
+        doctor: doctor,
+        doctorTokenValue: doctorToken,
+      );
+
+      currentUserId = doctor.id;
+
+      if (mounted) {
+        setState(() {});
+      }
+    }
   }
 
   Future<void> _logoutAndGoLogin() async {
-    final storage = SecureStorageService();
+    final storage = getIt<SecureStorageService>();
 
     await storage.deleteToken();
     await storage.deleteUser();
@@ -105,20 +127,18 @@ class _ChatDetailsState extends State<ChatDetails> {
   }
 
   void _handleSend() {
-    final provider = _chatProvider;
+    final provider = _chatProvider ?? context.read<ChatProvider>();
     final content = _messageController.text.trim();
-    final receiverId = provider?.selectedChatUser?.id ?? '';
 
-    if (provider == null) return;
     if (content.isEmpty) return;
+    if (widget.chatId.trim().isEmpty) return;
     if (currentUserId == null || currentUserId!.isEmpty) return;
-    if (receiverId.isEmpty) return;
 
     provider.sendMessage(
       content: content,
       currentUserId: currentUserId!,
       chatId: widget.chatId,
-      receiverId: receiverId,
+      receiverId: provider.selectedChatUser?.id ?? '',
     );
 
     _messageController.clear();
@@ -166,17 +186,26 @@ class _ChatDetailsState extends State<ChatDetails> {
 
   @override
   void dispose() {
-    _chatProvider?.clearChatDetails();
+    _chatProvider?.clearChatDetails(notify: false);
+    SocketService().leaveChat(widget.chatId);
     _messageController.removeListener(_onMessageChanged);
     _messageController.dispose();
+    SocketService().off('receive_message');
+    SocketService().off('error_message');
     _scrollController.dispose();
+
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<ChatProvider>();
-    final bool canSend = _messageController.text.trim().isNotEmpty;
+
+    final bool canSend = _messageController.text.trim().isNotEmpty &&
+        currentUserId != null &&
+        currentUserId!.isNotEmpty &&
+        widget.chatId.trim().isNotEmpty &&
+        !provider.isMessagesLoading;
 
     _handleAutoScroll(provider);
 
@@ -229,7 +258,7 @@ class _ChatDetailsBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (provider.isLoading) {
+    if (provider.isMessagesLoading) {
       return const MessagesLoadingView();
     }
 
@@ -257,8 +286,8 @@ class _ChatDetailsBody extends StatelessWidget {
       itemBuilder: (context, index) {
         final message = provider.messages[index];
 
-        final bool isMe = currentUserId != null &&
-            message.senderId == currentUserId;
+        final bool isMe =
+            currentUserId != null && message.senderId == currentUserId;
 
         final bool showTopSpace = index == 0 ||
             provider.messages[index - 1].senderId != message.senderId;

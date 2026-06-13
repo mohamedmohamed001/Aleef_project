@@ -16,7 +16,6 @@ import '../widgets/auth_primary_button.dart';
 import '../widgets/auth_scaffold.dart';
 import '../widgets/auth_snackbar.dart';
 import '../widgets/auth_trust_note.dart';
-import '../../data/services/auth_api_service.dart';
 import '../../data/services/doctor_auth_api_service.dart';
 
 class VerificationOtpScreen extends StatefulWidget {

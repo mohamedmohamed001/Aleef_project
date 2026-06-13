@@ -88,8 +88,8 @@ class ChatProvider extends ChangeNotifier {
           selectedChatUser = UserModel.fromJson(response['user']);
         }
 
-        joinChat(chatId);
         listenToIncomingMessages(chatId);
+        joinChat(chatId);
 
         return true;
       }
@@ -113,7 +113,10 @@ class ChatProvider extends ChangeNotifier {
   void joinChat(String chatId) {
     if (chatId.trim().isEmpty) return;
 
-    _socketService.emit('join_chat', chatId);
+    debugPrint('🚪 Join chat requested: $chatId');
+    debugPrint('🔌 Socket connected: ${_socketService.isConnected}');
+
+    _socketService.emitWhenConnected('join_chat', chatId);
   }
 
   // ================= RECEIVE MESSAGE =================
@@ -123,6 +126,8 @@ class ChatProvider extends ChangeNotifier {
     _socketService.off('error_message');
 
     _socketService.listen('receive_message', (data) {
+      debugPrint('📥 receive_message: $data');
+
       final newMessage = _messageFromSocket(data);
       if (newMessage == null) return;
 
@@ -140,6 +145,8 @@ class ChatProvider extends ChangeNotifier {
     });
 
     _socketService.listen('error_message', (data) {
+      debugPrint('❌ error_message: $data');
+
       if (data is Map) {
         errorMessage = data['errMessage']?.toString() ??
             data['message']?.toString() ??
@@ -162,6 +169,8 @@ class ChatProvider extends ChangeNotifier {
     _socketService.off('chat_updated');
 
     _socketService.listen('chat_updated', (data) {
+      debugPrint('🔄 chat_updated: $data');
+
       final updatedChat = _chatFromSocketUpdate(data);
       if (updatedChat == null) return;
 
@@ -190,7 +199,13 @@ class ChatProvider extends ChangeNotifier {
     final text = content.trim();
     if (text.isEmpty || chatId.trim().isEmpty) return;
 
-    _socketService.emit('send_message', {
+    debugPrint('💬 Send message requested');
+    debugPrint('chatId: $chatId');
+    debugPrint('currentUserId: $currentUserId');
+    debugPrint('receiverId: $receiverId');
+    debugPrint('socket connected: ${_socketService.isConnected}');
+
+    _socketService.emitWhenConnected('send_message', {
       'chatId': chatId,
       'message': text,
     });
@@ -211,7 +226,7 @@ class ChatProvider extends ChangeNotifier {
 
   // ================= CLEAR DETAILS =================
 
-  void clearChatDetails() {
+  void clearChatDetails({bool notify = true}) {
     messages = [];
     selectedChatUser = null;
     currentChatId = null;
@@ -220,7 +235,9 @@ class ChatProvider extends ChangeNotifier {
     _socketService.off('receive_message');
     _socketService.off('error_message');
 
-    notifyListeners();
+    if (notify) {
+      notifyListeners();
+    }
   }
 
   // ================= CLEAR ALL =================
@@ -253,7 +270,8 @@ class ChatProvider extends ChangeNotifier {
 
       final map = Map<String, dynamic>.from(data);
       return MessageModel.fromJson(map);
-    } catch (_) {
+    } catch (e) {
+      debugPrint('❌ Message socket parse error: $e');
       return null;
     }
   }
@@ -264,7 +282,7 @@ class ChatProvider extends ChangeNotifier {
 
       final map = Map<String, dynamic>.from(data);
 
-      final chatId = _readString(map, ['id', 'id', 'chatId']);
+      final chatId = _readString(map, ['id', '_id', 'chatId']);
       if (chatId.isEmpty) return null;
 
       final existingIndex = chats.indexWhere((chat) => chat.id == chatId);
@@ -295,7 +313,8 @@ class ChatProvider extends ChangeNotifier {
         unreadCount: unreadCount,
         updatedAt: _readDate(map['updatedAt']) ?? lastMessage.createdAt,
       );
-    } catch (_) {
+    } catch (e) {
+      debugPrint('❌ Chat update socket parse error: $e');
       return null;
     }
   }
@@ -306,7 +325,6 @@ class ChatProvider extends ChangeNotifier {
     if (message.chatId.isEmpty) return;
 
     final index = chats.indexWhere((chat) => chat.id == message.chatId);
-
     if (index == -1) return;
 
     final oldChat = chats[index];

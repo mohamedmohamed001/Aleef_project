@@ -17,18 +17,26 @@ class AppointmentTabSkeleton extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _headerSkeleton(),
+
             SizedBox(height: 16.h),
 
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 16.w),
-              child: _box(height: 230.h, radius: 24.r),
+              child: _appointmentCardSkeleton(),
             ),
 
             SizedBox(height: 24.h),
 
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 16.w),
-              child: _box(width: 190.w, height: 24.h, radius: 8.r),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _box(width: 190.w, height: 24.h, radius: 8.r),
+                  SizedBox(height: 8.h),
+                  _box(width: 140.w, height: 12.h, radius: 8.r),
+                ],
+              ),
             ),
 
             SizedBox(height: 12.h),
@@ -44,7 +52,7 @@ class AppointmentTabSkeleton extends StatelessWidget {
               padding: EdgeInsets.symmetric(horizontal: 16.w),
               child: Column(
                 children: List.generate(
-                  4,
+                  3,
                       (index) => Padding(
                     padding: EdgeInsets.only(bottom: 12.h),
                     child: _doctorCardSkeleton(),
@@ -59,24 +67,76 @@ class AppointmentTabSkeleton extends StatelessWidget {
   }
 
   Widget _headerSkeleton() {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(16.w, 42.h, 16.w, 28.h),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _box(width: 130.w, height: 22.h, radius: 8.r),
+                SizedBox(height: 12.h),
+                _box(width: 145.w, height: 14.h, radius: 8.r),
+              ],
+            ),
+          ),
+
+          _box(width: 44.w, height: 44.w, radius: 22.r),
+
+          SizedBox(width: 10.w),
+
+          _box(width: 82.w, height: 44.h, radius: 22.r),
+        ],
+      ),
+    );
+  }
+
+  Widget _appointmentCardSkeleton() {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.fromLTRB(20.w, 20.h, 20.w, 24.h),
+      padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(28.r),
-          bottomRight: Radius.circular(28.r),
-        ),
+        borderRadius: BorderRadius.circular(24.r),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _box(width: 160.w, height: 26.h, radius: 8.r),
-          SizedBox(height: 10.h),
-          _box(width: 240.w, height: 14.h, radius: 8.r),
+          Row(
+            children: [
+              _box(width: 58.w, height: 58.w, radius: 16.r),
+              SizedBox(width: 12.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _box(width: 150.w, height: 16.h, radius: 8.r),
+                    SizedBox(height: 8.h),
+                    _box(width: 110.w, height: 13.h, radius: 8.r),
+                  ],
+                ),
+              ),
+              _box(width: 78.w, height: 28.h, radius: 30.r),
+            ],
+          ),
+
           SizedBox(height: 18.h),
-          _box(height: 44.h, radius: 16.r),
+
+          _box(height: 13.h, width: 230.w, radius: 8.r),
+          SizedBox(height: 10.h),
+          _box(height: 13.h, width: 180.w, radius: 8.r),
+
+          SizedBox(height: 18.h),
+
+          Row(
+            children: [
+              Expanded(child: _box(height: 42.h, radius: 14.r)),
+              SizedBox(width: 12.w),
+              Expanded(child: _box(height: 42.h, radius: 14.r)),
+            ],
+          ),
         ],
       ),
     );
@@ -91,17 +151,21 @@ class AppointmentTabSkeleton extends StatelessWidget {
       ),
       child: Row(
         children: [
-          _box(width: 64.w, height: 64.w, radius: 18.r),
-          SizedBox(width: 12.w),
+          _box(width: 70.w, height: 70.w, radius: 20.r),
+
+          SizedBox(width: 14.w),
+
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _box(width: 150.w, height: 16.h, radius: 8.r),
+                _box(width: 130.w, height: 16.h, radius: 8.r),
                 SizedBox(height: 8.h),
-                _box(width: 100.w, height: 13.h, radius: 8.r),
+                _box(width: 95.w, height: 13.h, radius: 8.r),
                 SizedBox(height: 10.h),
-                _box(width: 180.w, height: 12.h, radius: 8.r),
+                _box(width: 165.w, height: 12.h, radius: 8.r),
+                SizedBox(height: 12.h),
+                _box(width: 92.w, height: 32.h, radius: 12.r),
               ],
             ),
           ),

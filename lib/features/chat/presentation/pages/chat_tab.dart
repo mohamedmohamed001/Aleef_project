@@ -15,7 +15,6 @@ import '../widgets/chat_section_title.dart';
 import '../widgets/chat_tab_header.dart';
 import 'chat_details.dart';
 
-import 'chat_details.dart';
 
 class ChatTab extends StatefulWidget {
   const ChatTab({super.key});

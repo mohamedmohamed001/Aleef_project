@@ -1,4 +1,3 @@
-import 'package:aleef/core/theme/app_colors.dart';
 import 'package:aleef/core/theme/app_text_styles.dart';
 import 'package:aleef/features/appointments/data/models/review_model.dart';
 import 'package:flutter/material.dart';

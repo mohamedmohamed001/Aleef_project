@@ -6,7 +6,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/services/secure_storage_service.dart';
 import '../../../../core/theme/app_text_styles.dart';
-import '../../../../core/utils/sound_helper.dart';
 import '../../data/models/doctor_model.dart';
 import '../../data/models/scheduled_day_model.dart';
 import '../../services/appointment_api.dart';

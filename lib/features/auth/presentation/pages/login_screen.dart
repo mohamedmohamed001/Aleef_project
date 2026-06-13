@@ -15,6 +15,7 @@ import '../widgets/auth_primary_button.dart';
 import '../widgets/auth_scaffold.dart';
 import '../widgets/auth_snackbar.dart';
 import '../widgets/custom_text_form.dart';
+import '../widgets/google_signIn_button.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -64,7 +65,9 @@ class _LoginScreenState extends State<LoginScreen> {
     if (success == true) {
       final fcmToken = await FcmService.initAndGetToken();
       debugPrint("✅ Token after login: $fcmToken");
-
+      if (fcmToken != null) {
+        await _authApiService.addFcmToken(fcmToken);
+      }
       if (!mounted) return;
 
       context.read<BottomNavProvider>().changeTab(0);
@@ -78,6 +81,45 @@ class _LoginScreenState extends State<LoginScreen> {
       showAuthSnackBar(
         context,
         message: "Login failed",
+      );
+    }
+  }
+  Future<void> _handleGoogleLogin() async {
+    if (isLoading) return;
+
+    FocusScope.of(context).unfocus();
+
+    setState(() {
+      isLoading = true;
+    });
+
+    final success = await _authApiService.loginWithGoogle();
+
+    if (!mounted) return;
+
+    setState(() {
+      isLoading = false;
+    });
+
+    if (success == true) {
+      final fcmToken = await FcmService.initAndGetToken();
+      debugPrint("✅ Token after google login: $fcmToken");
+      if (fcmToken != null) {
+        await _authApiService.addFcmToken(fcmToken);
+      }
+      if (!mounted) return;
+
+      context.read<BottomNavProvider>().changeTab(0);
+
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        AppRoutes.mainLayout,
+            (route) => false,
+      );
+    } else {
+      showAuthSnackBar(
+        context,
+        message: "Google login failed",
       );
     }
   }
@@ -181,9 +223,14 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
 
             SizedBox(height: 16.h),
+
+            GoogleSignInButton(
+              onPressed: _handleGoogleLogin,
+            ),
           ],
         ),
       ),
     );
   }
 }
+

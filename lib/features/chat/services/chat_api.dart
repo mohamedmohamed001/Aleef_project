@@ -132,10 +132,11 @@ class ChatApi {
 
   Future<Options> _authOptions() async {
     final token = await _storage.getToken();
+    final doctorToken= await _storage.getDoctorToken();
 
     return Options(
       headers: {
-        'Authorization': 'Bearer ${token ?? ''}',
+        'Authorization': 'Bearer ${token ?? doctorToken ?? ''}',
       },
     );
   }

@@ -55,6 +55,9 @@ class $AssetsImagesGen {
   final AssetGenImage discountCard = const AssetGenImage(
     'assets/images/discountCard.png',
   );
+  final AssetGenImage google2 = const AssetGenImage(
+    'assets/images/google2.png',
+  );
   final AssetGenImage logo = const AssetGenImage('assets/images/logo.png');
   final AssetGenImage logoNative = const AssetGenImage(
     'assets/images/logo_native.png',
@@ -207,6 +210,8 @@ class $AssetsDataGen {
 class $AssetsModelsGen {
   const $AssetsModelsGen();
 
+  final String appointmentDetailsModel =
+      'lib/features/doctor/home/data/models/appointment_details_model.dart';
   final String appointmentRequestModel =
       'lib/features/doctor/home/data/models/appointment_request_model.dart';
 }

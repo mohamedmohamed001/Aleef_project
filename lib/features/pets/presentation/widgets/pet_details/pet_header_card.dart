@@ -67,18 +67,4 @@ class PetHeaderCard extends StatelessWidget {
     }
   }
 
-  Widget _buildStatItem(String label, String value) {
-    return Column(
-      children: [
-        Text(label, style: AppTextStyles.body14Regular),
-        SizedBox(height: 4.h),
-        Text(
-          value,
-          style: AppTextStyles.title16SemiBold.copyWith(
-            color: AppColors.primary,
-          ),
-        ),
-      ],
-    );
-  }
 }

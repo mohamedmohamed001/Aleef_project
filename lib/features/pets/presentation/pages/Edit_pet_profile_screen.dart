@@ -36,7 +36,7 @@ class _EditPetProfileScreenState extends State<EditPetProfileScreen> {
     _typeController = TextEditingController(text: widget.pet.type);
     _genderController = TextEditingController(text: widget.pet.gender);
     _ageController = TextEditingController(
-      text: widget.pet.age != null ? widget.pet.age.toString() : "",
+      text: widget.pet.age.toString(),
     );
     _weightController = TextEditingController(text: widget.pet.weight.toString());
     _imageController = TextEditingController(text: widget.pet.profilePic);

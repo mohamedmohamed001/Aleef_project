@@ -14,7 +14,7 @@ class PreviousAppointmentCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final statusColor = _getStatusColor(appointment.status);
+    final _ = _getStatusColor(appointment.status);
 
     return Container(
       width: double.infinity,
