@@ -1,4 +1,3 @@
-import 'package:aleef/core/theme/app_text_styles.dart';
 import 'package:aleef/features/store/presentation/models/product_model.dart';
 import 'package:aleef/features/store/services/store_provider.dart';
 import 'package:flutter/material.dart';
@@ -7,10 +6,11 @@ import 'package:provider/provider.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../services/api_store.dart';
-import '../widgets/details/details_action_buttons.dart';
 import '../widgets/details/details_header_section.dart';
-import '../widgets/details/details_rating_row.dart';
-import '../widgets/details/quantity_selector.dart';
+import '../widgets/details/product_details_bottom_bar.dart';
+import '../widgets/details/product_details_description_card.dart';
+import '../widgets/details/product_details_info_card.dart';
+import '../widgets/details/product_details_quantity_card.dart';
 
 class ProductDetails extends StatefulWidget {
   final String productId;
@@ -33,8 +33,8 @@ class _ProductDetailsState extends State<ProductDetails> {
 
   double get unitPrice {
     return double.tryParse(
-      product!.finalPrice.toString().replaceAll('\$', ''),
-    ) ??
+          product!.finalPrice.toString().replaceAll('\$', ''),
+        ) ??
         0.0;
   }
 
@@ -53,39 +53,6 @@ class _ProductDetailsState extends State<ProductDetails> {
     return availableStock < 0 ? 0 : availableStock;
   }
 
-  void incrementQuantity() {
-    if (product == null) return;
-
-    final storeProvider = Provider.of<StoreProvider>(context, listen: false);
-    final availableStock = _getAvailableStock(storeProvider);
-
-    if (availableStock <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("This product is out of stock"),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
-    if (quantity < availableStock) {
-      setState(() => quantity++);
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Only $availableStock item(s) left"),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
-  }
-
-  void decrementQuantity() {
-    if (quantity == 1) return;
-    setState(() => quantity--);
-  }
-
   @override
   void initState() {
     super.initState();
@@ -95,35 +62,114 @@ class _ProductDetailsState extends State<ProductDetails> {
   Future<void> fetchProductDetails() async {
     try {
       final response = await ApiStore().getAllProductsDetails(widget.productId);
-      if (mounted) {
-        setState(() {
-          product = response;
-          isLoading = false;
-        });
-      }
+
+      if (!mounted) return;
+
+      setState(() {
+        product = response;
+        isLoading = false;
+      });
     } catch (e) {
-      if (mounted) {
-        setState(() {
-          isLoading = false;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.toString()),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      if (!mounted) return;
+
+      setState(() => isLoading = false);
+      _showSnack(e.toString(), Colors.red);
     }
+  }
+
+  void incrementQuantity() {
+    if (product == null) return;
+
+    final storeProvider = Provider.of<StoreProvider>(context, listen: false);
+    final availableStock = _getAvailableStock(storeProvider);
+
+    if (availableStock <= 0) {
+      _showSnack("This product is out of stock", Colors.red);
+      return;
+    }
+
+    if (quantity < availableStock) {
+      setState(() => quantity++);
+    } else {
+      _showSnack("Only $availableStock item(s) left", Colors.red);
+    }
+  }
+
+  void decrementQuantity() {
+    if (quantity == 1) return;
+    setState(() => quantity--);
+  }
+
+  void _showSnack(String message, Color color) {
+    ScaffoldMessenger.of(context).clearSnackBars();
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: TextStyle(
+            fontSize: 13.sp,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        backgroundColor: color,
+        behavior: SnackBarBehavior.floating,
+        margin: EdgeInsets.fromLTRB(
+          16.w,
+          0,
+          16.w,
+          90.h,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14.r),
+        ),
+        duration: const Duration(milliseconds: 1100),
+      ),
+    );
+  }
+
+  void _addToCart() {
+    if (product == null) return;
+
+    final storeProvider = Provider.of<StoreProvider>(context, listen: false);
+    final availableStock = _getAvailableStock(storeProvider);
+
+    if (availableStock <= 0) {
+      _showSnack("This product is out of stock", Colors.red);
+      return;
+    }
+
+    if (quantity > availableStock) {
+      _showSnack("Only $availableStock item(s) left", Colors.red);
+      return;
+    }
+
+    final bool added = storeProvider.addToCart(product!, quantity);
+
+    if (!added) {
+      _showSnack("Cannot add more than available stock", Colors.red);
+      return;
+    }
+
+    setState(() => quantity = 1);
+    _showSnack("${product!.title} added to cart!", AppColors.primary);
   }
 
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return Scaffold(
+        backgroundColor: const Color(0xFFF4F7F8),
+        body: Center(
+          child: CircularProgressIndicator(color: AppColors.primary),
+        ),
+      );
     }
 
     if (product == null) {
-      return const Scaffold(body: Center(child: Text('Product not found')));
+      return const Scaffold(
+        body: Center(child: Text('Product not found')),
+      );
     }
 
     final storeProvider = Provider.of<StoreProvider>(context);
@@ -136,10 +182,16 @@ class _ProductDetailsState extends State<ProductDetails> {
     }
 
     return Scaffold(
-      backgroundColor: AppColors.white,
+      backgroundColor: const Color(0xFFF4F7F8),
+      bottomNavigationBar: ProductDetailsBottomBar(
+        onAddToCart: _addToCart,
+        onBuyNow: () {},
+      ),
       body: SafeArea(
+        bottom: false,
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
+          padding: EdgeInsets.only(bottom: 10.h),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -148,190 +200,28 @@ class _ProductDetailsState extends State<ProductDetails> {
                 onBackPressed: () => Navigator.pop(context),
                 discount: product!.discount.toString(),
               ),
-              Padding(
-                padding: EdgeInsets.all(20.r),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    availableStock > 5
-                        ? Text(
-                      "in stock",
-                      style: TextStyle(
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13.sp,
+              ProductDetailsInfoCard(
+                product: product!,
+                availableStock: availableStock,
+              ),
+              Transform.translate(
+                offset: Offset(0, -10.h),
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16.w),
+                  child: Column(
+                    children: [
+                      ProductDetailsDescriptionCard(
+                        description: product!.description,
                       ),
-                    )
-                        : availableStock > 0
-                        ? Text(
-                      "only $availableStock left",
-                      style: TextStyle(
-                        color: AppColors.warning,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13.sp,
+                      SizedBox(height: 16.h),
+                      ProductDetailsQuantityCard(
+                        quantity: quantity,
+                        totalPrice: totalPrice,
+                        onIncrement: incrementQuantity,
+                        onDecrement: decrementQuantity,
                       ),
-                    )
-                        : Text(
-                      "out of stock",
-                      style: AppTextStyles.title16SemiBold.copyWith(
-                        color: Colors.red,
-                        fontSize: 13.sp,
-                      ),
-                    ),
-                    SizedBox(height: 10.h),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            product!.title,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: AppTextStyles.titleLarge.copyWith(
-                              fontSize: 22.sp,
-                            ),
-                          ),
-                        ),
-                        SizedBox(width: 12.w),
-                        Text(
-                          'EGP ${product!.finalPrice.toStringAsFixed(2)}',
-                          style: TextStyle(
-                            fontSize: 20.sp,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.primary,
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 20.h),
-                    Row(
-                      children: [
-                        DetailsRatingRow(
-                          avgRate: product!.averageRate,
-                          ratingQuantity: product!.ratingsQuantity,
-                        ),
-                        const Spacer(),
-                        product!.discount != 0
-                            ? Text(
-                          product!.originalPrice.toString(),
-                          style: TextStyle(
-                            color: AppColors.hint,
-                            fontSize: 18.sp,
-                            decoration: TextDecoration.lineThrough,
-                          ),
-                        )
-                            : Container(),
-                      ],
-                    ),
-                    SizedBox(height: 28.h),
-                    Text(
-                      'Description',
-                      style: AppTextStyles.black16Bold.copyWith(
-                        fontSize: 17.sp,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    SizedBox(height: 10.h),
-                    Text(
-                      product!.description,
-                      style: AppTextStyles.body14Regular.copyWith(height: 1.5),
-                    ),
-                    SizedBox(height: 28.h),
-                    Text('Quantity', style: AppTextStyles.black16Bold),
-                    SizedBox(height: 12.h),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        QuantitySelector(
-                          quantity: quantity,
-                          onIncrement: incrementQuantity,
-                          onDecrement: decrementQuantity,
-                        ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text(
-                              'Total',
-                              style: TextStyle(
-                                color: AppColors.hint,
-                                fontSize: 13.sp,
-                              ),
-                            ),
-                            Text(
-                              "EGP $totalPrice",
-                              style: TextStyle(
-                                fontSize: 20.sp,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.primary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 36.h),
-                    DetailsActionButtons(
-                      onAddToCart: () {
-                        if (product == null) return;
-
-                        final storeProvider = Provider.of<StoreProvider>(
-                          context,
-                          listen: false,
-                        );
-
-                        final availableStock =
-                        _getAvailableStock(storeProvider);
-
-                        if (availableStock <= 0) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text("This product is out of stock"),
-                              backgroundColor: Colors.red,
-                            ),
-                          );
-                          return;
-                        }
-
-                        if (quantity > availableStock) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                "Only $availableStock item(s) left",
-                              ),
-                              backgroundColor: Colors.red,
-                            ),
-                          );
-                          return;
-                        }
-
-                        final bool added = storeProvider.addToCart(
-                          product!,
-                          quantity,
-                        );
-
-                        if (!added) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                "Cannot add more than available stock",
-                              ),
-                              backgroundColor: Colors.red,
-                            ),
-                          );
-                          return;
-                        }
-
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text("${product!.title} added to cart!"),
-                            duration: const Duration(seconds: 2),
-                            backgroundColor: AppColors.primary,
-                          ),
-                        );
-                      },
-                      onBuyNow: () {},
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ],

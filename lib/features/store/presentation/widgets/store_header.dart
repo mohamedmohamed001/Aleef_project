@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import 'package:aleef/features/store/services/store_provider.dart';
+
 import '../../../../core/theme/app_colors.dart';
 import 'icon_with_badge.dart';
 
@@ -10,50 +11,66 @@ class StoreHeader extends StatelessWidget implements PreferredSizeWidget {
   const StoreHeader({super.key});
 
   @override
-  Size get preferredSize => Size.fromHeight(100.h);
+  Size get preferredSize => Size.fromHeight(92.h);
 
   @override
   Widget build(BuildContext context) {
     return AppBar(
+      automaticallyImplyLeading: false,
       backgroundColor: AppColors.white,
       elevation: 0,
-      toolbarHeight: 100.h,
-      centerTitle: false,
-      titleSpacing: 16.w,
-
-      /// 👇 نخلي العنوان ينزل تحت شوية
+      toolbarHeight: 92.h,
+      titleSpacing: 18.w,
       title: Padding(
         padding: EdgeInsets.only(top: 10.h),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
           children: [
-            Text(
-              'Pet Shop',
-              style: TextStyle(
-                color: AppColors.textPrimary,
-                fontWeight: FontWeight.bold,
-                fontSize: 24,
+            Container(
+              width: 4.w,
+              height: 42.h,
+              decoration: BoxDecoration(
+                color: AppColors.primary,
+                borderRadius: BorderRadius.circular(20.r),
               ),
             ),
 
-            SizedBox(height: 6.h),
+            SizedBox(width: 12.w),
 
-            Text(
-              'Premium products for your pets',
-              style: TextStyle(color: const Color(0xFF949494), fontSize: 13),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Pet Shop',
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 24.sp,
+                      height: 1,
+                    ),
+                  ),
+                  SizedBox(height: 7.h),
+                  Text(
+                    'Everything your pet needs',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: const Color(0xFF9A9A9A),
+                      fontSize: 12.5.sp,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
       ),
-
-      /// 👇 نزبط المسافة بين الأيقونات
       actions: [
-        SizedBox(width: 4.w),
-
-        const IconWithBadge(
-          icon: Icons.notifications_none_outlined,
+        IconWithBadge(
+          icon: Icons.notifications_none_rounded,
           count: '3',
-          badgeColor: Color(0xFFE57373),
+          badgeColor: const Color(0xFFE57373),
         ),
 
         SizedBox(width: 8.w),
@@ -62,7 +79,7 @@ class StoreHeader extends StatelessWidget implements PreferredSizeWidget {
           onTap: () {
             Navigator.pushNamed(context, AppRoutes.order);
           },
-          icon: Icons.inventory_2_outlined,
+          icon: Icons.receipt_long_rounded,
           count: '',
           badgeColor: Colors.transparent,
         ),
@@ -73,12 +90,12 @@ class StoreHeader extends StatelessWidget implements PreferredSizeWidget {
           onTap: () {
             Navigator.pushNamed(context, AppRoutes.cart);
           },
-          icon: Icons.shopping_cart_outlined,
+          icon: Icons.shopping_bag_outlined,
           count: context.watch<StoreProvider>().cartItems.length.toString(),
-          badgeColor: const Color(0xFF5DB1A3),
+          badgeColor: AppColors.primary,
         ),
 
-        SizedBox(width: 12.w),
+        SizedBox(width: 14.w),
       ],
     );
   }

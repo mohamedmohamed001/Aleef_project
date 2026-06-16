@@ -19,125 +19,176 @@ class AppointmentsHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.fromLTRB(16.w, 20.h, 16.w, 18.h),
+      padding: EdgeInsets.fromLTRB(16.w, 18.h, 16.w, 16.h),
       color: const Color(0xFFF7F8FA),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
-            child: Padding(
-              padding: EdgeInsets.only(top: 6.h),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Appointments",
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTextStyles.title16SemiBold.copyWith(
-                      fontSize: 20.sp,
-                      fontWeight: FontWeight.w800,
-                      color: const Color(0xFF0F172A),
-                    ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Appointments",
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.title16SemiBold.copyWith(
+                    fontSize: 24.sp,
+                    fontWeight: FontWeight.w900,
+                    color: const Color(0xFF101828),
+                    height: 1,
                   ),
-                  SizedBox(height: 8.h),
-                  Text(
-                    "Manage your vet visits",
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTextStyles.body14Regular.copyWith(
-                      fontSize: 14.sp,
-                      color: const Color(0xFF667085),
+                ),
+                SizedBox(height: 7.h),
+                Row(
+                  children: [
+                    Container(
+                      width: 6.r,
+                      height: 6.r,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        shape: BoxShape.circle,
+                      ),
                     ),
-                  ),
-                ],
-              ),
+                    SizedBox(width: 7.w),
+                    Expanded(
+                      child: Text(
+                        "Manage your vet visits easily",
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTextStyles.body14Regular.copyWith(
+                          fontSize: 12.5.sp,
+                          color: const Color(0xFF667085),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
 
           SizedBox(width: 12.w),
 
-          InkWell(
+          _CircleActionButton(
             onTap: onNotificationTap,
-            borderRadius: BorderRadius.circular(18.r),
+            icon: Icons.notifications_none_rounded,
+            notificationCount: notificationCount,
+          ),
+
+          SizedBox(width: 9.w),
+
+          InkWell(
+            onTap: onPreviousTap,
+            borderRadius: BorderRadius.circular(15.r),
             child: Container(
-              width: 36.r,
-              height: 36.r,
+              height: 38.h,
+              padding: EdgeInsets.symmetric(horizontal: 13.w),
               decoration: BoxDecoration(
-                color: const Color(0xFFEFF4F4),
-                borderRadius: BorderRadius.circular(18.r),
+                color: AppColors.primary.withOpacity(0.10),
+                borderRadius: BorderRadius.circular(15.r),
+                border: Border.all(
+                  color: AppColors.primary.withOpacity(0.10),
+                ),
               ),
-              child: Stack(
-                clipBehavior: Clip.none,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Center(
-                    child: Icon(
-                      Icons.notifications_none_rounded,
+                  Icon(
+                    Icons.history_rounded,
+                    color: AppColors.primary,
+                    size: 17.sp,
+                  ),
+                  SizedBox(width: 5.w),
+                  Text(
+                    "Previous",
+                    style: AppTextStyles.title16SemiBold.copyWith(
                       color: AppColors.primary,
-                      size: 24.sp,
+                      fontSize: 12.5.sp,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
-                  if (notificationCount > 0)
-                    Positioned(
-                      top: -8.h,
-                      right: -6.w,
-                      child: Container(
-                        constraints: BoxConstraints(
-                          minWidth: 20.r,
-                          minHeight: 20.r,
-                        ),
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 4.w,
-                          vertical: 2.h,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFF3B30),
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: const Color(0xFFF7F8FA),
-                            width: 2.w,
-                          ),
-                        ),
-                        alignment: Alignment.center,
-                        child: Text(
-                          '$notificationCount',
-                          style: AppTextStyles.title16SemiBold.copyWith(
-                            color: Colors.white,
-                            fontSize: 11.sp,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      ),
-                    ),
                 ],
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
 
-          SizedBox(width: 10.w),
+class _CircleActionButton extends StatelessWidget {
+  final VoidCallback? onTap;
+  final IconData icon;
+  final int notificationCount;
 
-          InkWell(
-            onTap: onPreviousTap,
-            borderRadius: BorderRadius.circular(18.r),
-            child: Container(
-              height: 41.h,
-              padding: EdgeInsets.symmetric(horizontal: 16.w),
-              decoration: BoxDecoration(
-                color: const Color(0xFFEFF4F4),
-                borderRadius: BorderRadius.circular(18.r),
-              ),
-              alignment: Alignment.center,
-              child: Text(
-                "Previous",
-                style: AppTextStyles.title16SemiBold.copyWith(
-                  color: AppColors.primary,
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.w700,
-                ),
+  const _CircleActionButton({
+    required this.onTap,
+    required this.icon,
+    required this.notificationCount,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(15.r),
+      child: Container(
+        width: 38.r,
+        height: 38.r,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(15.r),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 10.r,
+              offset: Offset(0, 4.h),
+            ),
+          ],
+        ),
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Center(
+              child: Icon(
+                icon,
+                color: AppColors.primary,
+                size: 22.sp,
               ),
             ),
-          ),
-        ],
+            if (notificationCount > 0)
+              Positioned(
+                top: -5.h,
+                right: -5.w,
+                child: Container(
+                  constraints: BoxConstraints(
+                    minWidth: 18.r,
+                    minHeight: 18.r,
+                  ),
+                  padding: EdgeInsets.symmetric(horizontal: 4.w),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFF4D4F),
+                    borderRadius: BorderRadius.circular(99.r),
+                    border: Border.all(
+                      color: const Color(0xFFF7F8FA),
+                      width: 2.w,
+                    ),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    notificationCount > 9 ? '9+' : '$notificationCount',
+                    style: AppTextStyles.title16SemiBold.copyWith(
+                      color: Colors.white,
+                      fontSize: 9.5.sp,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

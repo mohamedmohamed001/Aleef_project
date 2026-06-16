@@ -15,16 +15,26 @@ class AppointmentApi {
   final String baseUrl = ApiConstant.baseUrl;
   final storage = getIt<SecureStorageService>();
 
-  Future<Map<String, dynamic>> getAvailableDoctor() async {
-    final url = Uri.parse(
-      "${ApiConstant.baseUrl}/doctors/get-available-doctors",
-    );
-
+  Future<Map<String, dynamic>> getAvailableDoctor({
+    int page = 1,
+    int limit = 8,
+    String search = "",
+  }) async {
     final token = await storage.getToken();
+
+    final uri = Uri.parse(
+      "$baseUrl/doctors/get-available-doctors",
+    ).replace(
+      queryParameters: {
+        "page": page.toString(),
+        "limit": limit.toString(),
+        if (search.trim().isNotEmpty) "search": search.trim(),
+      },
+    );
 
     try {
       final response = await http.get(
-        url,
+        uri,
         headers: {
           "Content-Type": "application/json",
           "Authorization": "Bearer $token",
@@ -34,14 +44,20 @@ class AppointmentApi {
       final data = jsonDecode(response.body);
 
       if (response.statusCode == 200) {
-        return {"status": "success", "data": data["doctors"]};
-      } else if (response.statusCode == 401) {
+        return {
+          "status": "success",
+          "data": data["doctors"] ?? [],
+          "page": data["page"] ?? page,
+          "totalPages": data["totalPages"] ?? 1,
+          "totalDoctors": data["totalDoctors"] ?? 0,
+        };
+      } else if (response.statusCode == 401 || response.statusCode == 403) {
         return {"status": "unauthorized"};
       } else {
-        return {"status": "error"};
+        return {"status": "error", "message": data["message"]};
       }
     } catch (error) {
-      return {"status": "error"};
+      return {"status": "error", "message": error.toString()};
     }
   }
 
@@ -219,8 +235,6 @@ class AppointmentApi {
         };
       }
     } on DioException catch (e) {
-
-
       if (e.response?.statusCode == 401 || e.response?.statusCode == 403) {
         return {"status": "unauthorized"};
       }
@@ -254,7 +268,7 @@ class AppointmentApi {
         final appointments = data
             .map<PreviousAppointmentModel>(
               (e) => PreviousAppointmentModel.fromJson(e),
-        )
+            )
             .toList();
 
         return {"status": "success", "data": appointments};
@@ -266,4 +280,48 @@ class AppointmentApi {
     } catch (e) {
       return {"status": "error"};
     }
-  }}
+  }
+
+  Future<Map<String, dynamic>> cancelAppointment(String appointmentId, String reason,) async {
+    try {
+      final token = await storage.getToken();
+
+      final response = await dio.patch(
+        '$baseUrl/appointments/cancel-appointment-by-user/$appointmentId',
+        data: {
+          "reason": reason,
+        },
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
+
+      final data = response.data;
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return {"status": "success", "data": data};
+      } else if (response.statusCode == 401 || response.statusCode == 403) {
+        return {"status": "unauthorized"};
+      } else {
+        return {
+          "status": "error",
+          "message": data["message"] ?? "Something went wrong",
+        };
+      }
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 401 || e.response?.statusCode == 403) {
+        return {"status": "unauthorized"};
+      }
+
+      return {
+        "status": "error",
+        "message": e.response?.data?["message"] ?? "Something went wrong",
+      };
+    } catch (e) {
+      return {"status": "error", "message": "Network error, please try again"};
+    }
+  }
+}

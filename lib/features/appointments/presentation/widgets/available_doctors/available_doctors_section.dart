@@ -9,10 +9,16 @@ import 'doctor_search_field.dart';
 
 class AvailableDoctorsSection extends StatelessWidget {
   final List<DoctorModel> doctors;
+  final bool isLoadingMore;
+  final void Function(String search) onSearchChanged;
+  final bool isLoading;
 
   const AvailableDoctorsSection({
     super.key,
     required this.doctors,
+    required this.onSearchChanged,
+    required this.isLoading,
+    this.isLoadingMore = false,
   });
 
   @override
@@ -24,34 +30,110 @@ class AvailableDoctorsSection extends StatelessWidget {
         children: [
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 16.w),
-            child: const Text(
-              "Available Doctors",
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    "Available Doctors",
+                    style: TextStyle(
+                      fontSize: 21.sp,
+                      fontWeight: FontWeight.w900,
+                      color: const Color(0xFF101828),
+                    ),
+                  ),
+                ),
+                if (!isLoading)
+                  Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 10.w,
+                      vertical: 5.h,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEFF7F6),
+                      borderRadius: BorderRadius.circular(20.r),
+                    ),
+                    child: Text(
+                      "${doctors.length} found",
+                      style: TextStyle(
+                        fontSize: 11.5.sp,
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF267D77),
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
+
           SizedBox(height: 12.h),
 
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 16.w),
             child: DoctorSearchField(
-              onChanged: (search) {},
+              onChanged: onSearchChanged,
             ),
           ),
+
           SizedBox(height: 16.h),
 
-          if (doctors.isEmpty)
+          if (isLoading)
             Padding(
-              padding: EdgeInsets.symmetric(vertical: 24.h),
-              child: Center(
-                child: Text(
-                  "No doctors available",
-                  style: TextStyle(
-                    fontSize: 14.sp,
-                    color: Colors.grey,
+              padding: EdgeInsets.symmetric(vertical: 30.h),
+              child: const Center(
+                child: CircularProgressIndicator(),
+              ),
+            )
+          else if (doctors.isEmpty)
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+              child: Container(
+                width: double.infinity,
+                padding: EdgeInsets.symmetric(
+                  horizontal: 18.w,
+                  vertical: 28.h,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFA),
+                  borderRadius: BorderRadius.circular(22.r),
+                  border: Border.all(
+                    color: const Color(0xFFE6EEEE),
                   ),
+                ),
+                child: Column(
+                  children: [
+                    Container(
+                      width: 54.r,
+                      height: 54.r,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEFF7F6),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.medical_services_outlined,
+                        color: const Color(0xFF267D77),
+                        size: 27.sp,
+                      ),
+                    ),
+                    SizedBox(height: 12.h),
+                    Text(
+                      "No doctors available",
+                      style: TextStyle(
+                        fontSize: 15.sp,
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF101828),
+                      ),
+                    ),
+                    SizedBox(height: 5.h),
+                    Text(
+                      "Try changing your search keyword",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 12.5.sp,
+                        fontWeight: FontWeight.w500,
+                        color: const Color(0xFF667085),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             )
@@ -94,6 +176,14 @@ class AvailableDoctorsSection extends StatelessWidget {
                     },
                   );
                 },
+              ),
+            ),
+
+          if (isLoadingMore)
+            Padding(
+              padding: EdgeInsets.symmetric(vertical: 18.h),
+              child: const Center(
+                child: CircularProgressIndicator(),
               ),
             ),
         ],

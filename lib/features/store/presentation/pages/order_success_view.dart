@@ -58,13 +58,15 @@ class _OrderSuccessViewState extends State<OrderSuccessView>
   }
 
   void _goToShop() {
-    context.read<BottomNavProvider>().changeTab(3);
-
     Navigator.pushNamedAndRemoveUntil(
       context,
       AppRoutes.mainLayout,
           (route) => false,
     );
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<BottomNavProvider>().changeTab(2);
+    });
   }
 
   @override

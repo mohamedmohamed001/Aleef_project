@@ -34,10 +34,12 @@ class ProductModel {
       id: json['id'] ?? '',
       title: json['title'] ?? '',
       description: json['description'] ?? '',
-      originalPrice: (json['originalPrice'] ?? 0).toDouble(),
-      finalPrice: (json['finalPrice'] ?? 0).toDouble(),
-      discount: json['discount'] ?? 0,
-      categories: (json['category'] as List<dynamic>? ?? [])
+      originalPrice:
+      double.tryParse(json['originalPrice']?.toString() ?? '0') ?? 0,
+      finalPrice:
+      double.tryParse(json['finalPrice']?.toString() ?? '0') ?? 0,
+      discount: int.tryParse(json['discount']?.toString() ?? '0') ?? 0,
+      categories: (json['categories'] as List<dynamic>? ?? [])
           .map((e) => ProductCategoryModel.fromJson(e))
           .toList(),
       stock: int.tryParse(json['stock']?.toString() ?? '0') ?? 0,
@@ -46,7 +48,8 @@ class ProductModel {
       productImages: (json['productImages'] as List<dynamic>? ?? [])
           .map((e) => ProductImageModel.fromJson(e))
           .toList(),
-      averageRate: double.tryParse(json['averageRate']?.toString() ?? '0') ?? 0,
+      averageRate:
+      double.tryParse(json['averageRate']?.toString() ?? '0') ?? 0,
       ratingsQuantity:
       int.tryParse(json['ratingsQuantity']?.toString() ?? '0') ?? 0,
     );
@@ -57,7 +60,10 @@ class ProductCategoryModel {
   final String id;
   final String name;
 
-  const ProductCategoryModel({required this.id, required this.name});
+  const ProductCategoryModel({
+    required this.id,
+    required this.name,
+  });
 
   factory ProductCategoryModel.fromJson(Map<String, dynamic> json) {
     return ProductCategoryModel(

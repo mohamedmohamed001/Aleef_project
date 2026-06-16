@@ -9,19 +9,21 @@ class AppointmentDetailsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final hasNotes = appointment.notes != null &&
+        appointment.notes.toString().trim().isNotEmpty;
+
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.all(20.r),
+      padding: EdgeInsets.all(18.r),
       decoration: BoxDecoration(
-        border: Border.all(color: const Color(0xFFE8E8E8), width: 1),
-        color: const Color(0xFFF7F7F7),
-        borderRadius: BorderRadius.circular(28.r),
+        border: Border.all(color: const Color(0xFFE8E8E8)),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 12,
-            spreadRadius: 0,
-            offset: const Offset(0, 4),
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 14,
+            offset: const Offset(0, 5),
           ),
         ],
       ),
@@ -31,38 +33,36 @@ class AppointmentDetailsCard extends StatelessWidget {
             icon: Icons.calendar_today_outlined,
             iconColor: const Color(0xFF2E8B83),
             title: "Date",
-            value: appointment.date.toString().split(" ")[0],
+            value: appointment.date?.toString().split(" ")[0] ?? "-",
           ),
           _DetailItem(
             icon: Icons.access_time_outlined,
-            iconColor: Color(0xFF2E8B83),
+            iconColor: const Color(0xFF2E8B83),
             title: "Time",
-            value: appointment.time.toString(),
+            value: appointment.time?.toString() ?? "-",
           ),
           _DetailItem(
-            icon: Icons.pets,
-            iconColor: Color(0xFF555555),
+            icon: Icons.pets_outlined,
+            iconColor: const Color(0xFF555555),
             title: "Pet",
             value:
-                "${appointment.pet!.name.toString()} · ${appointment.pet!.type.toString()}",
+            "${appointment.pet?.name ?? "-"} · ${appointment.pet?.type ?? "-"}",
           ),
-           _DetailItem(
-            icon: Icons.assignment_outlined,
-            iconColor: Color(0xFFC08A3E),
-            title: "Reason",
-            value:appointment.reason.toString() ,
-          ),
-          appointment.notes != null?
           _DetailItem(
-            icon: Icons.edit_note_outlined,
-            iconColor: Color(0xFF6E9F6E),
-            title: "Notes",
-            value: appointment.notes.toString()  ,
-            isLast: true,
-          ):Container(
-            height: 0,
-            width: 0,
+            icon: Icons.assignment_outlined,
+            iconColor: const Color(0xFFC08A3E),
+            title: "Reason",
+            value: appointment.reason?.toString() ?? "-",
+            isLast: !hasNotes,
           ),
+          if (hasNotes)
+            _DetailItem(
+              icon: Icons.edit_note_outlined,
+              iconColor: const Color(0xFF6E9F6E),
+              title: "Notes",
+              value: appointment.notes.toString(),
+              isLast: true,
+            ),
         ],
       ),
     );
@@ -87,39 +87,39 @@ class _DetailItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(bottom: isLast ? 0 : 18.h),
+      padding: EdgeInsets.only(bottom: isLast ? 0 : 16.h),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 44.w,
-            height: 44.h,
+            width: 42.w,
+            height: 42.w,
             decoration: BoxDecoration(
-              color: const Color(0xFFEDEDED),
+              color: iconColor.withOpacity(0.10),
               borderRadius: BorderRadius.circular(14.r),
             ),
-            child: Icon(icon, color: iconColor, size: 22.sp),
+            child: Icon(icon, color: iconColor, size: 21.sp),
           ),
           SizedBox(width: 14.w),
           Expanded(
             child: Padding(
-              padding: EdgeInsets.only(top: 2.h),
+              padding: EdgeInsets.only(top: 1.h),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     title,
                     style: TextStyle(
-                      fontSize: 14.sp,
-                      color: const Color(0xFF7C8593),
-                      fontWeight: FontWeight.w400,
+                      fontSize: 13.sp,
+                      color: const Color(0xFF8A93A3),
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
-                  SizedBox(height: 2.h),
+                  SizedBox(height: 3.h),
                   Text(
                     value,
                     style: TextStyle(
-                      fontSize: 16.sp,
+                      fontSize: 15.sp,
                       color: const Color(0xFF1E2432),
                       fontWeight: FontWeight.w700,
                       height: 1.35,

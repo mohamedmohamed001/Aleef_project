@@ -1,5 +1,4 @@
 import 'package:aleef/core/routing/app_routes.dart';
-import 'package:aleef/features/appointments/presentation/pages/appointment_details.dart';
 import 'package:aleef/features/appointments/presentation/pages/book_appointment_screen.dart';
 import 'package:aleef/features/appointments/presentation/pages/previous_appointment_screen.dart';
 import 'package:aleef/features/auth/presentation/pages/choose_role_screen.dart';
@@ -25,9 +24,9 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
-
 import 'app_startup_screen.dart';
 import 'core/services/service_locator.dart';
+import 'core/services/session_service.dart';
 import 'core/theme/app_theme.dart';
 import 'features/ai_assistant/presentation/pages/chatbot_screen.dart';
 import 'features/ai_assistant/provider/chatbot_provider.dart';
@@ -49,12 +48,25 @@ import 'features/pets/services/pets_service.dart';
 import 'features/profile/presentation/pages/edit_profile.dart';
 import 'features/store/services/store_provider.dart';
 import 'firebase_options.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+// Notification Channel
+  const AndroidNotificationChannel channel = AndroidNotificationChannel(
+    'high_importance_channel',
+    'High Importance Notifications',
+    importance: Importance.high,
+  );
 
+  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+  FlutterLocalNotificationsPlugin();
+
+  await flutterLocalNotificationsPlugin
+      .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+      ?.createNotificationChannel(channel);
   setupServiceLocator();
 
   runApp(
@@ -71,7 +83,10 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => ChatbotProvider()),
         ChangeNotifierProvider(create: (_) => AppointmentProvider()),
         ChangeNotifierProvider(create: (_) => AppointmentManagementProvider()),
-        ChangeNotifierProvider(create: (_) => DoctorConfirmedAppointmentsProvider()),
+        ChangeNotifierProvider(
+          create: (_) => DoctorConfirmedAppointmentsProvider(),
+        ),
+        ChangeNotifierProvider(create: (_) => SessionService()),
         ChangeNotifierProvider(create: (_) => DoctorAppointmentsProvider()),
         ChangeNotifierProvider(
           create: (_) => DoctorRegisterProvider(DoctorAuthApiService()),
@@ -99,7 +114,7 @@ class MyApp extends StatelessWidget {
           builder: DevicePreview.appBuilder,
           debugShowCheckedModeBanner: false,
           theme: AppTheme.lightTheme,
-          home: const  LoginScreen(),
+          home: const AppStartupScreen(),
           routes: {
             AppRoutes.register: (context) => const RegisterScreen(),
             AppRoutes.login: (context) => const LoginScreen(),

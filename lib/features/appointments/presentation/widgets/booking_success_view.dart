@@ -41,18 +41,15 @@ class _BookingSuccessViewState extends State<BookingSuccessView>
   }
 
   void _goToAppointments() {
-    final bottomNav = context.read<BottomNavProvider>();
-    bottomNav.changeTab(1);
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      AppRoutes.mainLayout,
+          (route) => false,
+    );
 
-    // لو احنا مش جوا MainLayout، نعمل push
-    final currentRoute = ModalRoute.of(context)?.settings.name ?? '';
-    if (!currentRoute.contains(AppRoutes.mainLayout)) {
-      Navigator.pushNamedAndRemoveUntil(
-        context,
-        AppRoutes.mainLayout,
-            (route) => false,
-      );
-    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<BottomNavProvider>().changeTab(1);
+    });
   }
 
   @override
@@ -284,17 +281,6 @@ class _BookingSuccessViewState extends State<BookingSuccessView>
 
                               SizedBox(height: 12.h),
 
-                              TextButton(
-                                onPressed: () => Navigator.pop(context),
-                                child: Text(
-                                  "Back",
-                                  style: TextStyle(
-                                    fontSize: 15.sp,
-                                    fontWeight: FontWeight.w700,
-                                    color: primary,
-                                  ),
-                                ),
-                              ),
                             ],
                           ),
                         ),

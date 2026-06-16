@@ -27,7 +27,10 @@ class _DoctorDetailsBodyState extends State<DoctorDetailsBody> {
 
   @override
   Widget build(BuildContext context) {
-    final bool isLongText = widget.doctor.about!.length > 120;
+    final String about = widget.doctor.about?.trim() ?? "";
+    final bool hasAbout = about.isNotEmpty;
+    final bool hasReviews = widget.reviews.isNotEmpty;
+    final bool isLongText = about.length > 120;
 
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 20.w),
@@ -40,11 +43,12 @@ class _DoctorDetailsBodyState extends State<DoctorDetailsBody> {
           SizedBox(height: 12.h),
 
           DoctorInfoContainer(
-            child: Column(
+            child: hasAbout
+                ? Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  widget.doctor.about ?? "",
+                  about,
                   maxLines: isExpanded ? null : 3,
                   overflow: isExpanded
                       ? TextOverflow.visible
@@ -52,9 +56,9 @@ class _DoctorDetailsBodyState extends State<DoctorDetailsBody> {
                   style: TextStyle(
                     fontSize: 14.sp,
                     color: Colors.grey,
+                    height: 1.5,
                   ),
                 ),
-
                 if (isLongText) ...[
                   SizedBox(height: 8.h),
                   GestureDetector(
@@ -63,7 +67,7 @@ class _DoctorDetailsBodyState extends State<DoctorDetailsBody> {
                         isExpanded = !isExpanded;
                       });
                     },
-                    child:Align(
+                    child: Align(
                       alignment: Alignment.centerRight,
                       child: Text(
                         isExpanded ? "See less" : "See more",
@@ -78,6 +82,14 @@ class _DoctorDetailsBodyState extends State<DoctorDetailsBody> {
                   ),
                 ],
               ],
+            )
+                : Text(
+              "No information provided yet.",
+              style: TextStyle(
+                fontSize: 14.sp,
+                color: Colors.grey,
+                height: 1.5,
+              ),
             ),
           ),
 
@@ -93,16 +105,27 @@ class _DoctorDetailsBodyState extends State<DoctorDetailsBody> {
           const DoctorSectionTitle(title: "Reviews"),
           SizedBox(height: 12.h),
 
-          ListView.separated(
-            itemCount: widget.reviews.length,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            separatorBuilder: (_, __) => SizedBox(height: 12.h),
-            itemBuilder: (context, index) {
-              final review = widget.reviews[index];
-              return ReviewCard(review: review);
-            },
-          ),
+          if (hasReviews)
+            ListView.separated(
+              itemCount: widget.reviews.length,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              separatorBuilder: (_, __) => SizedBox(height: 12.h),
+              itemBuilder: (context, index) {
+                final review = widget.reviews[index];
+                return ReviewCard(review: review);
+              },
+            )
+          else
+            DoctorInfoContainer(
+              child: Text(
+                "No reviews yet.",
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  color: Colors.grey,
+                ),
+              ),
+            ),
 
           SizedBox(height: 24.h),
         ],

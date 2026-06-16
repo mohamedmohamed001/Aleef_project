@@ -7,8 +7,12 @@ class AppointmentProvider extends ChangeNotifier {
   final AppointmentApi appointmentApi = AppointmentApi();
 
   List<PreviousAppointmentModel> previousAppointments = [];
+
   bool isPreviousAppointmentsLoading = false;
+  bool isCancelAppointmentLoading = false;
+
   String? previousAppointmentsError;
+  String? cancelAppointmentError;
 
   Future<void> getPreviousAppointments() async {
     try {
@@ -23,7 +27,8 @@ class AppointmentProvider extends ChangeNotifier {
       } else if (response["status"] == "unauthorized") {
         previousAppointmentsError = "Unauthorized";
       } else {
-        previousAppointmentsError = "Something went wrong";
+        previousAppointmentsError =
+            response["message"] ?? "Something went wrong";
       }
     } catch (e) {
       previousAppointmentsError = "Check your internet connection";
@@ -31,5 +36,40 @@ class AppointmentProvider extends ChangeNotifier {
 
     isPreviousAppointmentsLoading = false;
     notifyListeners();
+  }
+
+  Future<bool> cancelAppointment({
+    required String appointmentId,
+    required String reason,
+  }) async {
+    try {
+      isCancelAppointmentLoading = true;
+      cancelAppointmentError = null;
+      notifyListeners();
+
+      final response = await appointmentApi.cancelAppointment(
+        appointmentId,
+        reason,
+      );
+
+      if (response["status"] == "success") {
+        isCancelAppointmentLoading = false;
+        notifyListeners();
+        return true;
+      }
+
+      if (response["status"] == "unauthorized") {
+        cancelAppointmentError = "Unauthorized";
+      } else {
+        cancelAppointmentError =
+            response["message"] ?? "Something went wrong";
+      }
+    } catch (e) {
+      cancelAppointmentError = "Check your internet connection";
+    }
+
+    isCancelAppointmentLoading = false;
+    notifyListeners();
+    return false;
   }
 }
