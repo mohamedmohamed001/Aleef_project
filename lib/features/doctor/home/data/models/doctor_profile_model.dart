@@ -7,8 +7,9 @@ class DoctorProfileModel {
   final String specialization;
   final String about;
   final String clinicName;
-  final String clinicAddress;
+  final String address;
   final String profilePic;
+  final int appointmentFee;
   final List<ScheduleItem> schedule;
 
   DoctorProfileModel({
@@ -20,30 +21,35 @@ class DoctorProfileModel {
     required this.specialization,
     required this.about,
     required this.clinicName,
-    required this.clinicAddress,
+    required this.address,
     required this.profilePic,
+    required this.appointmentFee,
     required this.schedule,
   });
 
   factory DoctorProfileModel.fromJson(Map<String, dynamic> json) {
-    // التعامل مع الـ wrapper الخاص بـ "doctor" الذي يأتي في الـ API
-    final data = json['doctor'] ?? json; 
-    
+    final data = json['doctor'] ?? json;
+
     return DoctorProfileModel(
-      id: data['_id'] ?? data['id'] ?? '',
-      name: data['name'] ?? '',
-      email: data['email'] ?? '',
-      phone: data['phone'] ?? '',
-      city: data['city'] ?? '',
-      specialization: data['specialization'] ?? '',
-      about: data['about'] ?? 'No bio available.',
-      clinicName: data['clinicName'] ?? data['clinic']?['name'] ?? '',
-      clinicAddress: data['clinicAddress'] ?? data['clinic']?['address'] ?? '',
-      profilePic: data['profilePic'] ?? '',
+      id: data['_id']?.toString() ?? data['id']?.toString() ?? '',
+      name: data['name']?.toString() ?? '',
+      email: data['email']?.toString() ?? '',
+      phone: data['phone']?.toString() ?? '',
+      city: data['city']?.toString() ?? '',
+      specialization: data['specialization']?.toString() ?? '',
+      about: data['about']?.toString() ?? 'No bio available.',
+      clinicName: data['clinicName']?.toString() ??
+          data['clinic']?['name']?.toString() ??
+          '',
+      address: data['address']?.toString() ??
+          data['clinic']?['address']?.toString() ??
+          '',
+      profilePic: data['profilePic']?.toString() ?? '',
+      appointmentFee: (data['appointmentFee'] as num?)?.toInt() ?? 0,
       schedule: data['schedule'] != null
           ? List<ScheduleItem>.from(
-              data['schedule'].map((x) => ScheduleItem.fromJson(x)),
-            )
+        data['schedule'].map((x) => ScheduleItem.fromJson(x)),
+      )
           : [],
     );
   }
@@ -58,8 +64,9 @@ class DoctorProfileModel {
       'specialization': specialization,
       'about': about,
       'clinicName': clinicName,
-      'address': clinicAddress,
+      'address': address,
       'profilePic': profilePic,
+      'appointmentFee': appointmentFee,
       'schedule': schedule.map((x) => x.toJson()).toList(),
     };
   }
@@ -92,7 +99,7 @@ class ScheduleItem {
 
   Map<String, dynamic> toJson() {
     return {
-      if (id != null) 'id': id, // إضافة الـ id في الإرسال
+      if (id != null) 'id': id,
       'day_of_week': dayOfWeek,
       'start_time': startTime,
       'end_time': endTime,

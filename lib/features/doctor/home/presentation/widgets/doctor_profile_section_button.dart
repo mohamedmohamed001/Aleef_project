@@ -8,6 +8,7 @@ class DoctorProfileSectionButton extends StatelessWidget {
   final VoidCallback onTap;
   final Color? textColor;
   final Color? iconColor;
+  final bool isLogout;
 
   const DoctorProfileSectionButton({
     super.key,
@@ -16,13 +17,14 @@ class DoctorProfileSectionButton extends StatelessWidget {
     required this.onTap,
     this.textColor,
     this.iconColor,
+    this.isLogout = false,
   });
 
-  // دالة عرض رسالة تأكيد الخروج
-  void _showLogoutDialog(BuildContext context) {
+  void _showLogoutDialog(BuildContext parentContext) {
     showDialog(
-      context: context,
-      builder: (BuildContext context) {
+      context: parentContext,
+      barrierDismissible: true,
+      builder: (dialogContext) {
         return AlertDialog(
           backgroundColor: Colors.white,
           shape: RoundedRectangleBorder(
@@ -30,32 +32,39 @@ class DoctorProfileSectionButton extends StatelessWidget {
           ),
           title: Text(
             'Logout',
-            style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: 18.sp,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           content: Text(
             'Are you sure you want to log out?',
-            style: TextStyle(fontSize: 14.sp),
+            style: TextStyle(
+              fontSize: 14.sp,
+              color: Colors.black87,
+            ),
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+              },
               child: const Text('Cancel'),
             ),
             ElevatedButton(
               onPressed: () {
-                // تنفيذ عملية الخروج والانتقال لصفحة الـ Login
+                Navigator.of(dialogContext).pop();
                 onTap();
-                Navigator.of(
-                  context,
-                ).pushNamedAndRemoveUntil('/login', (route) => false);
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.redAccent,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12.r),
+                ),
               ),
-              child: const Text(
-                'Logout',
-                style: TextStyle(color: Colors.white),
-              ),
+              child: const Text('Logout'),
             ),
           ],
         );
@@ -65,8 +74,8 @@ class DoctorProfileSectionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // تحديد ما إذا كان الزرار هو Logout لفتح الـ Dialog
-    final bool isLogout = text.toLowerCase() == 'logout';
+    final Color buttonColor = textColor ?? Colors.black87;
+    final Color buttonIconColor = iconColor ?? AppColors.primary;
 
     return Container(
       width: double.infinity,
@@ -76,9 +85,9 @@ class DoctorProfileSectionButton extends StatelessWidget {
         onPressed: isLogout ? () => _showLogoutDialog(context) : onTap,
         style: OutlinedButton.styleFrom(
           side: BorderSide(
-            color: (textColor == Colors.red
-                ? Colors.red[200]!
-                : AppColors.primary.withOpacity(0.5)),
+            color: isLogout
+                ? Colors.red.withOpacity(0.35)
+                : AppColors.primary.withOpacity(0.5),
             width: 1.5,
           ),
           shape: RoundedRectangleBorder(
@@ -88,12 +97,16 @@ class DoctorProfileSectionButton extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: iconColor ?? AppColors.primary, size: 20.sp),
+            Icon(
+              icon,
+              color: buttonIconColor,
+              size: 20.sp,
+            ),
             SizedBox(width: 10.w),
             Text(
               text,
               style: TextStyle(
-                color: textColor ?? Colors.black87,
+                color: buttonColor,
                 fontSize: 14.sp,
                 fontWeight: FontWeight.w600,
               ),

@@ -1,157 +1,29 @@
-import 'package:aleef/core/services/secure_storage_service.dart';
 import 'package:aleef/core/theme/app_colors.dart';
 import 'package:aleef/core/theme/app_text_styles.dart';
 import 'package:aleef/features/pets/presentation/manager/pets_provider.dart';
-import 'package:aleef/features/pets/presentation/pages/add_pet_screen.dart';
-import 'package:aleef/features/pets/services/pets_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 
+import '../../models/account_setting_item.dart';
+import '../manager/profile_provider.dart';
 import '../widgets/my_pets_card.dart';
 import '../widgets/profile_header.dart';
 import '../widgets/profile_options_card.dart';
 import '../widgets/profile_stats.dart';
-import '../../models/account_setting_item.dart';
 
 class ProfileTab extends StatefulWidget {
-  const ProfileTab({super.key});
+  final bool showBackButton;
+
+  const ProfileTab({super.key, this.showBackButton = false});
 
   @override
   State<ProfileTab> createState() => ProfileTabState();
 }
 
 class ProfileTabState extends State<ProfileTab> {
-  final ScrollController _scrollController = ScrollController();
-
   Future<void> scrollToTop({bool animated = true}) async {
-    if (!_scrollController.hasClients) return;
-
-    if (animated) {
-      await _scrollController.animateTo(
-        0,
-        duration: const Duration(milliseconds: 350),
-        curve: Curves.easeInOut,
-      );
-    } else {
-      _scrollController.jumpTo(0);
-    }
-  }
-
-  Future<void> _getPets() async {
-    final storage = SecureStorageService();
-    final token = await storage.getToken();
-
-    if (!mounted || token == null || token.isEmpty) return;
-
-    await context.read<PetsProvider>().getAllPets(token);
-  }
-
-  Future<void> _openAddPetForm() async {
-    final result = await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => AddPetScreen(service: PetsService()),
-      ),
-    );
-
-    if (!mounted) return;
-
-    if (result != null) {
-      await _getPets();
-    }
-  }
-
-  Future<void> _deletePet({
-    required String petId,
-    required PetsProvider petsProvider,
-  }) async {
-    final storage = SecureStorageService();
-    final token = await storage.getToken();
-
-    if (token == null || token.isEmpty) return;
-
-    await petsProvider.deletePet(petId, token);
-  }
-
-  void _showDeletePetDialog({
-    required String petId,
-    required String petName,
-    required PetsProvider petsProvider,
-  }) {
-    showDialog(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(22.r),
-          ),
-          title: Text(
-            "Delete Pet",
-            style: AppTextStyles.black16Bold.copyWith(
-              fontSize: 18.sp,
-            ),
-          ),
-          content: Text(
-            "Are you sure you want to remove $petName?",
-            style: AppTextStyles.body14Regular.copyWith(
-              height: 1.4,
-            ),
-          ),
-          actionsPadding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 14.h),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: Text(
-                "Cancel",
-                style: TextStyle(
-                  color: Colors.grey.shade600,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.error,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12.r),
-                ),
-              ),
-              onPressed: () async {
-                Navigator.pop(dialogContext);
-
-                try {
-                  await _deletePet(
-                    petId: petId,
-                    petsProvider: petsProvider,
-                  );
-                } catch (_) {
-                  if (!mounted) return;
-
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: const Text("Failed to delete pet"),
-                      backgroundColor: AppColors.error,
-                      behavior: SnackBarBehavior.floating,
-                      margin: EdgeInsets.all(12.r),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14.r),
-                      ),
-                    ),
-                  );
-                }
-              },
-              child: const Text(
-                "Delete",
-                style: TextStyle(color: Colors.white),
-              ),
-            ),
-          ],
-        );
-      },
-    );
+    await context.read<ProfileProvider>().scrollToTop(animated: animated);
   }
 
   @override
@@ -159,33 +31,42 @@ class ProfileTabState extends State<ProfileTab> {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      await _getPets();
+      if (!mounted) return;
 
-      if (mounted && _scrollController.hasClients) {
-        _scrollController.jumpTo(0);
-      }
+      final profileProvider = context.read<ProfileProvider>();
+
+      await profileProvider.init(context);
+      await profileProvider.getAppointmentsAndOrdersCount();
     });
   }
 
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
+  Future<void> _onRefresh() async {
+    final profileProvider = context.read<ProfileProvider>();
+
+    await Future.wait([
+      profileProvider.getPets(context),
+      profileProvider.getAppointmentsAndOrdersCount(),
+    ]);
   }
 
   @override
   Widget build(BuildContext context) {
+    final profileProvider = context.read<ProfileProvider>();
+
     return Scaffold(
       backgroundColor: AppColors.scaffoldBackground,
       body: RefreshIndicator(
         color: AppColors.primary,
-        onRefresh: _getPets,
+        onRefresh: _onRefresh,
         child: SingleChildScrollView(
-          controller: _scrollController,
+          controller: profileProvider.scrollController,
           physics: const AlwaysScrollableScrollPhysics(),
           child: Column(
             children: [
-              const ProfileHeader(),
+              ProfileHeader(
+                showBackButton: widget.showBackButton,
+                onBackTap: () => Navigator.pop(context),
+              ),
 
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 20.w),
@@ -193,12 +74,13 @@ class ProfileTabState extends State<ProfileTab> {
                   children: [
                     Transform.translate(
                       offset: Offset(0, -24.h),
-                      child: Consumer<PetsProvider>(
-                        builder: (context, petsProvider, _) {
+                      child: Consumer2<PetsProvider, ProfileProvider>(
+                        builder: (context, petsProvider, profileProvider, _) {
                           return ProfileStats(
                             petsCount: petsProvider.allPets.length,
-                            ordersCount: 2,
-                            visitsCount: 2,
+                            ordersCount: profileProvider.ordersCount,
+                            appointmentsCount:
+                                profileProvider.appointmentsCount,
                           );
                         },
                       ),
@@ -209,7 +91,9 @@ class ProfileTabState extends State<ProfileTab> {
                     _SectionHeader(
                       title: "My Pets",
                       actionText: "+ Add Pet",
-                      onTap: _openAddPetForm,
+                      onTap: () {
+                        profileProvider.openAddPetForm(context);
+                      },
                     ),
 
                     SizedBox(height: 14.h),
@@ -225,7 +109,9 @@ class ProfileTabState extends State<ProfileTab> {
 
                         if (petList.isEmpty) {
                           return _EmptyPetsState(
-                            onAddPet: _openAddPetForm,
+                            onAddPet: () {
+                              profileProvider.openAddPetForm(context);
+                            },
                           );
                         }
 
@@ -235,18 +121,19 @@ class ProfileTabState extends State<ProfileTab> {
                           padding: EdgeInsets.zero,
                           itemCount: petList.length,
                           gridDelegate:
-                          SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            mainAxisSpacing: 14.h,
-                            crossAxisSpacing: 14.w,
-                            childAspectRatio: .82,
-                          ),
+                              SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                mainAxisSpacing: 14.h,
+                                crossAxisSpacing: 14.w,
+                                childAspectRatio: .82,
+                              ),
                           itemBuilder: (context, index) {
                             final currentPet = petList[index];
 
                             return GestureDetector(
                               onLongPress: () {
-                                _showDeletePetDialog(
+                                profileProvider.showDeletePetDialog(
+                                  context: context,
                                   petId: currentPet.id,
                                   petName: currentPet.name,
                                   petsProvider: petsProvider,
@@ -330,16 +217,11 @@ class _SectionHeader extends StatelessWidget {
           borderRadius: BorderRadius.circular(20.r),
           onTap: onTap,
           child: Container(
-            padding: EdgeInsets.symmetric(
-              horizontal: 12.w,
-              vertical: 7.h,
-            ),
+            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 7.h),
             decoration: BoxDecoration(
               color: AppColors.primary.withOpacity(0.09),
               borderRadius: BorderRadius.circular(20.r),
-              border: Border.all(
-                color: AppColors.primary.withOpacity(0.12),
-              ),
+              border: Border.all(color: AppColors.primary.withOpacity(0.12)),
             ),
             child: Text(
               actionText,
@@ -359,24 +241,17 @@ class _SectionHeader extends StatelessWidget {
 class _EmptyPetsState extends StatelessWidget {
   final VoidCallback onAddPet;
 
-  const _EmptyPetsState({
-    required this.onAddPet,
-  });
+  const _EmptyPetsState({required this.onAddPet});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.symmetric(
-        horizontal: 20.w,
-        vertical: 24.h,
-      ),
+      padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 24.h),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(28.r),
-        border: Border.all(
-          color: AppColors.primary.withOpacity(0.08),
-        ),
+        border: Border.all(color: AppColors.primary.withOpacity(0.08)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.035),
@@ -403,9 +278,7 @@ class _EmptyPetsState extends StatelessWidget {
           SizedBox(height: 14.h),
           Text(
             "No pets yet",
-            style: AppTextStyles.black16Bold.copyWith(
-              fontSize: 18.sp,
-            ),
+            style: AppTextStyles.black16Bold.copyWith(fontSize: 18.sp),
           ),
           SizedBox(height: 6.h),
           Text(
@@ -422,24 +295,15 @@ class _EmptyPetsState extends StatelessWidget {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
               elevation: 0,
-              padding: EdgeInsets.symmetric(
-                horizontal: 18.w,
-                vertical: 11.h,
-              ),
+              padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 11.h),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(18.r),
               ),
             ),
-            icon: Icon(
-              Icons.add_rounded,
-              color: Colors.white,
-              size: 19.sp,
-            ),
+            icon: Icon(Icons.add_rounded, color: Colors.white, size: 19.sp),
             label: Text(
               "Add Pet",
-              style: AppTextStyles.button16SemiBold.copyWith(
-                fontSize: 13.sp,
-              ),
+              style: AppTextStyles.button16SemiBold.copyWith(fontSize: 13.sp),
             ),
           ),
         ],

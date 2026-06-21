@@ -112,7 +112,7 @@ class HomeProductsSection extends StatelessWidget {
             scrollDirection: Axis.horizontal,
             physics: const BouncingScrollPhysics(),
             itemCount: products.length,
-            separatorBuilder: (_, __) => SizedBox(width: 12.w),
+            separatorBuilder: (_, _) => SizedBox(width: 12.w),
             itemBuilder: (context, index) {
               final product = products[index];
 
@@ -183,7 +183,7 @@ class _HomeProductCard extends StatelessWidget {
                         : Image.network(
                       product.imageUrl,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Icon(
+                      errorBuilder: (_, _, _) => Icon(
                         Icons.shopping_bag_outlined,
                         color: AppColors.primary,
                         size: 34.sp,
@@ -257,8 +257,8 @@ class _HomeProductsLoading extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         physics: const NeverScrollableScrollPhysics(),
         itemCount: 3,
-        separatorBuilder: (_, __) => SizedBox(width: 12.w),
-        itemBuilder: (_, __) {
+        separatorBuilder: (_, _) => SizedBox(width: 12.w),
+        itemBuilder: (_, _) {
           return Container(
             width: 136.w,
             decoration: BoxDecoration(

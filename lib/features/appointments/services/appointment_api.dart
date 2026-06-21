@@ -1,132 +1,179 @@
-import 'dart:convert';
-
-import 'package:http/http.dart' as http;
+import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
 
 import '../../../core/constants/api_constant.dart';
+import '../../../core/exceptions/session_expired_exception.dart';
 import '../../../core/services/secure_storage_service.dart';
 import '../../../core/services/service_locator.dart';
-import 'package:dio/dio.dart';
-
 import '../data/models/previous_appointment_model.dart';
-
-final dio = Dio();
 
 class AppointmentApi {
   final String baseUrl = ApiConstant.baseUrl;
-  final storage = getIt<SecureStorageService>();
+  final SecureStorageService storage = getIt<SecureStorageService>();
+
+  final Dio _dio = Dio();
+
+  bool _isUnauthorized(int? statusCode) {
+    return statusCode == 401 || statusCode == 403;
+  }
+
+  Map<String, String> _headers(String? token) {
+    return {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer $token",
+    };
+  }
 
   Future<Map<String, dynamic>> getAvailableDoctor({
     int page = 1,
     int limit = 8,
     String search = "",
+    double? lat,
+    double? lng,
   }) async {
-    final token = await storage.getToken();
-
-    final uri = Uri.parse(
-      "$baseUrl/doctors/get-available-doctors",
-    ).replace(
-      queryParameters: {
-        "page": page.toString(),
-        "limit": limit.toString(),
-        if (search.trim().isNotEmpty) "search": search.trim(),
-      },
-    );
-
     try {
-      final response = await http.get(
-        uri,
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer $token",
+      final token = await storage.getToken();
+
+      final response = await _dio.get(
+        '$baseUrl/doctors/get-available-doctors',
+        queryParameters: {
+          "page": page,
+          "limit": limit,
+          if (search.trim().isNotEmpty) "search": search.trim(),
+          "user_lat": ?lat,
+          "user_lng": ?lng,
         },
+        options: Options(headers: _headers(token)),
       );
 
-      final data = jsonDecode(response.body);
+      debugPrint("GET AVAILABLE DOCTORS URI => ${response.realUri}");
+
+      if (_isUnauthorized(response.statusCode)) {
+        throw SessionExpiredException();
+      }
 
       if (response.statusCode == 200) {
         return {
           "status": "success",
-          "data": data["doctors"] ?? [],
-          "page": data["page"] ?? page,
-          "totalPages": data["totalPages"] ?? 1,
-          "totalDoctors": data["totalDoctors"] ?? 0,
+          "data": response.data["doctors"] ?? [],
+          "page": response.data["page"] ?? page,
+          "totalPages": response.data["totalPages"] ?? 1,
+          "totalDoctors": response.data["totalDoctors"] ?? 0,
         };
-      } else if (response.statusCode == 401 || response.statusCode == 403) {
-        return {"status": "unauthorized"};
-      } else {
-        return {"status": "error", "message": data["message"]};
       }
-    } catch (error) {
-      return {"status": "error", "message": error.toString()};
+
+      return {
+        "status": "error",
+        "message": response.data?["message"] ?? "Something went wrong",
+      };
+    } on DioException catch (e) {
+      if (_isUnauthorized(e.response?.statusCode)) {
+        throw SessionExpiredException();
+      }
+
+      return {
+        "status": "error",
+        "message": e.response?.data?["message"] ?? "Something went wrong",
+      };
+    } catch (e) {
+      if (e is SessionExpiredException) rethrow;
+
+      return {
+        "status": "error",
+        "message": "Network error, please try again",
+      };
     }
   }
 
   Future<Map<String, dynamic>> getActiveAppointment() async {
-    final token = await storage.getToken();
-    final response = await dio.get(
-      '$baseUrl/appointments/get-my-active-appointment',
-      options: Options(
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-      ),
-    );
-    final data = response.data["appointment"];
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      return {"status": "success", "data": data};
-    } else if (response.statusCode == 401 || response.statusCode == 403) {
-      return {"status": "unauthorized"};
-    } else {
-      return {"status": "error"};
+    try {
+      final token = await storage.getToken();
+
+      final response = await _dio.get(
+        '$baseUrl/appointments/get-my-active-appointment',
+        options: Options(headers: _headers(token)),
+      );
+
+      if (_isUnauthorized(response.statusCode)) {
+        throw SessionExpiredException();
+      }
+
+      return {
+        "status": "success",
+        "data": response.data["appointment"],
+      };
+    } on DioException catch (e) {
+      if (_isUnauthorized(e.response?.statusCode)) {
+        throw SessionExpiredException();
+      }
+
+      return {
+        "status": "error",
+        "message": e.response?.data?["message"] ?? "Something went wrong",
+      };
     }
   }
 
   Future<Map<String, dynamic>> getDoctorDetails(String doctorId) async {
-    final token = await storage.getToken();
-    final response = await dio.get(
-      '$baseUrl/doctors/$doctorId',
-      options: Options(
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-      ),
-    );
-    final data = response.data["doctorProfile"];
-    if (response.statusCode == 200 || response.statusCode == 201) {
+    try {
+      final token = await storage.getToken();
+
+      final response = await _dio.get(
+        '$baseUrl/doctors/$doctorId',
+        options: Options(headers: _headers(token)),
+      );
+
+      if (_isUnauthorized(response.statusCode)) {
+        throw SessionExpiredException();
+      }
+
+      final data = response.data["doctorProfile"];
+
       return {
         "status": "success",
-        "doctor": data["doctor"],
-        "reviews": data["reviews"],
+        "doctor": data?["doctor"],
+        "reviews": data?["reviews"] ?? [],
       };
-    } else if (response.statusCode == 401 || response.statusCode == 403) {
-      return {"status": "unauthorized"};
-    } else {
-      return {"status": "error"};
+    } on DioException catch (e) {
+      if (_isUnauthorized(e.response?.statusCode)) {
+        throw SessionExpiredException();
+      }
+
+      return {
+        "status": "error",
+        "message": e.response?.data?["message"] ?? "Something went wrong",
+      };
     }
   }
 
   Future<Map<String, dynamic>> getAppointmentDetails(
-    String appointmentId,
-  ) async {
-    final token = await storage.getToken();
-    final response = await dio.get(
-      "$baseUrl/appointments/$appointmentId",
-      options: Options(
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-      ),
-    );
-    final data = response.data["appointment"];
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      return {"status": "success", "data": data};
-    } else if (response.statusCode == 401 || response.statusCode == 403) {
-      return {"status": "unauthorized"};
-    } else {
-      return {"status": "error"};
+      String appointmentId,
+      ) async {
+    try {
+      final token = await storage.getToken();
+
+      final response = await _dio.get(
+        '$baseUrl/appointments/$appointmentId',
+        options: Options(headers: _headers(token)),
+      );
+
+      if (_isUnauthorized(response.statusCode)) {
+        throw SessionExpiredException();
+      }
+
+      return {
+        "status": "success",
+        "data": response.data["appointment"],
+      };
+    } on DioException catch (e) {
+      if (_isUnauthorized(e.response?.statusCode)) {
+        throw SessionExpiredException();
+      }
+
+      return {
+        "status": "error",
+        "message": e.response?.data?["message"] ?? "Something went wrong",
+      };
     }
   }
 
@@ -134,77 +181,119 @@ class AppointmentApi {
     try {
       final token = await storage.getToken();
 
-      final response = await dio.get(
+      final response = await _dio.get(
         '$baseUrl/doctors/$doctorId/schedual',
-        options: Options(
-          headers: {
-            'Authorization': 'Bearer $token',
-            'Content-Type': 'application/json',
-          },
-        ),
+        options: Options(headers: _headers(token)),
       );
 
-      final data = response.data;
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return {"status": "success", "data": data};
-      } else if (response.statusCode == 401 || response.statusCode == 403) {
-        return {"status": "unauthorized"};
-      } else {
-        return {"status": "error"};
+      if (_isUnauthorized(response.statusCode)) {
+        throw SessionExpiredException();
       }
+
+      return {
+        "status": "success",
+        "data": response.data,
+      };
     } on DioException catch (e) {
-      if (e.response?.statusCode == 401 || e.response?.statusCode == 403) {
-        return {"status": "unauthorized"};
+      if (_isUnauthorized(e.response?.statusCode)) {
+        throw SessionExpiredException();
       }
 
       return {
         "status": "error",
         "message": e.response?.data?["message"] ?? e.message,
       };
+    }
+  }
+
+  Future<Map<String, dynamic>> getDoctorSlotsByDate({
+    required String doctorId,
+    required String date,
+  }) async {
+    try {
+      final token = await storage.getToken();
+
+      final response = await _dio.get(
+        '$baseUrl/doctors/$doctorId/slots',
+        queryParameters: {
+          "date": date,
+        },
+        options: Options(headers: _headers(token)),
+      );
+
+      debugPrint("GET DOCTOR SLOTS RESPONSE => ${response.data}");
+
+      if (_isUnauthorized(response.statusCode)) {
+        throw SessionExpiredException();
+      }
+
+      return {
+        "status": "success",
+        "date": response.data["slots"]?["date"],
+        "slots": List<String>.from(
+          response.data["slots"]?["slots"] ?? [],
+        ),
+      };
+    } on DioException catch (e) {
+      if (_isUnauthorized(e.response?.statusCode)) {
+        throw SessionExpiredException();
+      }
+
+      return {
+        "status": "error",
+        "message": e.response?.data?["message"] ?? "Something went wrong",
+      };
     } catch (e) {
-      return {"status": "error", "message": e.toString()};
+      if (e is SessionExpiredException) rethrow;
+
+      return {
+        "status": "error",
+        "message": "Network error, please try again",
+      };
     }
   }
 
   Future<Map<String, dynamic>> getPets() async {
-    final token = await storage.getToken();
-    final response = await dio.get(
-      '$baseUrl/pets/get-my-pets',
-      options: Options(
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-      ),
-    );
     try {
-      final data = response.data["pets"];
+      final token = await storage.getToken();
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return {"status": "success", "data": data};
-      } else if (response.statusCode == 401 || response.statusCode == 403) {
-        return {"status": "unauthorized"};
-      } else {
-        return {"status": "error"};
+      final response = await _dio.get(
+        '$baseUrl/pets/get-my-pets',
+        options: Options(headers: _headers(token)),
+      );
+
+      if (_isUnauthorized(response.statusCode)) {
+        throw SessionExpiredException();
       }
-    } catch (e) {
-      return {"status": "error"};
+
+      return {
+        "status": "success",
+        "data": response.data["pets"] ?? [],
+      };
+    } on DioException catch (e) {
+      if (_isUnauthorized(e.response?.statusCode)) {
+        throw SessionExpiredException();
+      }
+
+      return {
+        "status": "error",
+        "message": e.response?.data?["message"] ?? "Something went wrong",
+      };
     }
   }
 
   Future<Map<String, dynamic>> bookAppointment(
-    String pet,
-    String doctor,
-    String date,
-    String time,
-    String reason,
-    String? notes,
-  ) async {
+      String pet,
+      String doctor,
+      String date,
+      String time,
+      String reason,
+      String? notes,
+      ) async {
     try {
       final token = await storage.getToken();
 
-      final response = await dio.post(
+      final response = await _dio.post(
         '$baseUrl/appointments',
         data: {
           "pet": pet,
@@ -214,29 +303,20 @@ class AppointmentApi {
           "reason": reason,
           "notes": notes ?? "",
         },
-        options: Options(
-          headers: {
-            'Authorization': 'Bearer $token',
-            'Content-Type': 'application/json',
-          },
-        ),
+        options: Options(headers: _headers(token)),
       );
 
-      final data = response.data;
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return {"status": "success", "data": data};
-      } else if (response.statusCode == 401 || response.statusCode == 403) {
-        return {"status": "unauthorized"};
-      } else {
-        return {
-          "status": "error",
-          "message": data["message"] ?? "Something went wrong",
-        };
+      if (_isUnauthorized(response.statusCode)) {
+        throw SessionExpiredException();
       }
+
+      return {
+        "status": "success",
+        "data": response.data,
+      };
     } on DioException catch (e) {
-      if (e.response?.statusCode == 401 || e.response?.statusCode == 403) {
-        return {"status": "unauthorized"};
+      if (_isUnauthorized(e.response?.statusCode)) {
+        throw SessionExpiredException();
       }
 
       return {
@@ -244,7 +324,12 @@ class AppointmentApi {
         "message": e.response?.data?["message"] ?? "Something went wrong",
       };
     } catch (e) {
-      return {"status": "error", "message": "Network error, please try again"};
+      if (e is SessionExpiredException) rethrow;
+
+      return {
+        "status": "error",
+        "message": "Network error, please try again",
+      };
     }
   }
 
@@ -252,68 +337,30 @@ class AppointmentApi {
     try {
       final token = await storage.getToken();
 
-      final response = await dio.get(
+      final response = await _dio.get(
         '$baseUrl/appointments/get-my-previous-appointments',
-        options: Options(
-          headers: {
-            'Authorization': 'Bearer $token',
-            'Content-Type': 'application/json',
-          },
-        ),
+        options: Options(headers: _headers(token)),
       );
+
+      if (_isUnauthorized(response.statusCode)) {
+        throw SessionExpiredException();
+      }
 
       final List data = response.data["appointments"] ?? [];
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        final appointments = data
-            .map<PreviousAppointmentModel>(
-              (e) => PreviousAppointmentModel.fromJson(e),
-            )
-            .toList();
+      final appointments = data
+          .map<PreviousAppointmentModel>(
+            (e) => PreviousAppointmentModel.fromJson(e),
+      )
+          .toList();
 
-        return {"status": "success", "data": appointments};
-      } else if (response.statusCode == 401 || response.statusCode == 403) {
-        return {"status": "unauthorized"};
-      } else {
-        return {"status": "error"};
-      }
-    } catch (e) {
-      return {"status": "error"};
-    }
-  }
-
-  Future<Map<String, dynamic>> cancelAppointment(String appointmentId, String reason,) async {
-    try {
-      final token = await storage.getToken();
-
-      final response = await dio.patch(
-        '$baseUrl/appointments/cancel-appointment-by-user/$appointmentId',
-        data: {
-          "reason": reason,
-        },
-        options: Options(
-          headers: {
-            'Authorization': 'Bearer $token',
-            'Content-Type': 'application/json',
-          },
-        ),
-      );
-
-      final data = response.data;
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return {"status": "success", "data": data};
-      } else if (response.statusCode == 401 || response.statusCode == 403) {
-        return {"status": "unauthorized"};
-      } else {
-        return {
-          "status": "error",
-          "message": data["message"] ?? "Something went wrong",
-        };
-      }
+      return {
+        "status": "success",
+        "data": appointments,
+      };
     } on DioException catch (e) {
-      if (e.response?.statusCode == 401 || e.response?.statusCode == 403) {
-        return {"status": "unauthorized"};
+      if (_isUnauthorized(e.response?.statusCode)) {
+        throw SessionExpiredException();
       }
 
       return {
@@ -321,7 +368,151 @@ class AppointmentApi {
         "message": e.response?.data?["message"] ?? "Something went wrong",
       };
     } catch (e) {
-      return {"status": "error", "message": "Network error, please try again"};
+      if (e is SessionExpiredException) rethrow;
+
+      return {
+        "status": "error",
+        "message": "Something went wrong",
+      };
+    }
+  }
+
+  Future<Map<String, dynamic>> cancelAppointment(
+      String appointmentId,
+      String reason,
+      ) async {
+    try {
+      final token = await storage.getToken();
+
+      final response = await _dio.patch(
+        '$baseUrl/appointments/cancel-appointment-by-user/$appointmentId',
+        data: {
+          "reason": reason,
+        },
+        options: Options(headers: _headers(token)),
+      );
+
+      if (_isUnauthorized(response.statusCode)) {
+        throw SessionExpiredException();
+      }
+
+      return {
+        "status": "success",
+        "data": response.data,
+      };
+    } on DioException catch (e) {
+      if (_isUnauthorized(e.response?.statusCode)) {
+        throw SessionExpiredException();
+      }
+
+      return {
+        "status": "error",
+        "message": e.response?.data?["message"] ?? "Something went wrong",
+      };
+    } catch (e) {
+      if (e is SessionExpiredException) rethrow;
+
+      return {
+        "status": "error",
+        "message": "Network error, please try again",
+      };
+    }
+  }
+
+  Future<Map<String, dynamic>> checkPendingReview() async {
+    try {
+      final token = await storage.getToken();
+
+      final response = await _dio.get(
+        '$baseUrl/appointments/check-pending-review',
+        options: Options(headers: _headers(token)),
+      );
+
+      if (_isUnauthorized(response.statusCode)) {
+        throw SessionExpiredException();
+      }
+
+      return {
+        "status": "success",
+        "data": response.data["pendingReview"],
+      };
+    } on DioException catch (e) {
+      if (_isUnauthorized(e.response?.statusCode)) {
+        throw SessionExpiredException();
+      }
+
+      return {
+        "status": "error",
+        "message": e.response?.data?["message"] ?? "Something went wrong",
+      };
+    }
+  }
+
+  Future<Map<String, dynamic>> addReview({
+    required String appointmentId,
+    required int rate,
+    required String comment,
+  }) async {
+    try {
+      final token = await storage.getToken();
+
+      final response = await _dio.post(
+        '$baseUrl/appointments/add-review/$appointmentId',
+        data: {
+          "rate": rate,
+          "comment": comment,
+        },
+        options: Options(headers: _headers(token)),
+      );
+
+      if (_isUnauthorized(response.statusCode)) {
+        throw SessionExpiredException();
+      }
+
+      return {
+        "status": "success",
+        "data": response.data,
+      };
+    } on DioException catch (e) {
+      if (_isUnauthorized(e.response?.statusCode)) {
+        throw SessionExpiredException();
+      }
+
+      return {
+        "status": "error",
+        "message": e.response?.data?["message"] ?? "Something went wrong",
+      };
+    }
+  }
+
+  Future<Map<String, dynamic>> skipReview({
+    required String appointmentId,
+  }) async {
+    try {
+      final token = await storage.getToken();
+
+      final response = await _dio.post(
+        '$baseUrl/appointments/skip-review/$appointmentId',
+        options: Options(headers: _headers(token)),
+      );
+
+      if (_isUnauthorized(response.statusCode)) {
+        throw SessionExpiredException();
+      }
+
+      return {
+        "status": "success",
+        "data": response.data,
+      };
+    } on DioException catch (e) {
+      if (_isUnauthorized(e.response?.statusCode)) {
+        throw SessionExpiredException();
+      }
+
+      return {
+        "status": "error",
+        "message": e.response?.data?["message"] ?? "Something went wrong",
+      };
     }
   }
 }

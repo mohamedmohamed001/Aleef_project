@@ -1,81 +1,137 @@
 import 'dart:io';
+
+import 'package:aleef/features/doctor/home/data/models/confirmed_appointment_model.dart';
+import 'package:aleef/features/doctor/home/data/services/active_appointments_api_service.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
-import 'package:aleef/features/doctor/home/data/models/confirmed_appointment_model.dart';
-import 'package:aleef/features/doctor/home/data/services/active_appointments_api_service.dart';
 
 class DoctorConfirmedAppointmentsProvider extends ChangeNotifier {
-  // حقن السيرفيس بدلاً من إنشاء Dio مباشرة
   final ActiveAppointmentsApiService _apiService =
-      GetIt.I<ActiveAppointmentsApiService>();
+  GetIt.I<ActiveAppointmentsApiService>();
 
   List<ConfirmedAppointmentModel> _appointments = [];
+
   bool _isLoading = false;
+  bool _isEndingAppointment = false;
+
+  String _lastSelectedDate = 'All Appointments';
 
   List<ConfirmedAppointmentModel> get appointments => _appointments;
   bool get isLoading => _isLoading;
+  bool get isEndingAppointment => _isEndingAppointment;
 
-  // جلب المواعيد
   Future<void> getAppointmentsByDate(String date) async {
+    _lastSelectedDate = date;
+
     _isLoading = true;
     notifyListeners();
 
-    Map<String, dynamic> result;
+    try {
+      final Map<String, dynamic> result;
 
-    // استخدام المنطق الصحيح بناءً على الاختيار
-    if (date == "All Appointments") {
-      result = await _apiService.getAllAppointments();
-    } else {
-      result = await _apiService.getActiveAppointments(date: date);
-    }
-    print("API Response:${result['data']}");
+      if (date == "All Appointments") {
+        result = await _apiService.getAllAppointments();
+      } else {
+        result = await _apiService.getActiveAppointments(date: date);
+      }
 
-    if (result['status'] == 'success') {
-      _appointments = (result['data']['appointments'] as List)
-          .map((e) => ConfirmedAppointmentModel.fromJson(e))
-          .toList();
-    } else {
+      debugPrint("CONFIRMED APPOINTMENTS API RESPONSE => ${result['data']}");
+
+      if (result['status'] == 'success') {
+        final data = result['data'];
+
+        final appointmentsList = data is Map<String, dynamic>
+            ? data['appointments'] as List? ?? []
+            : [];
+
+        _appointments = appointmentsList
+            .map(
+              (e) => ConfirmedAppointmentModel.fromJson(
+            Map<String, dynamic>.from(e),
+          ),
+        )
+            .toList();
+      } else {
+        _appointments = [];
+        debugPrint("Confirmed appointments error: ${result['message']}");
+      }
+    } catch (e) {
       _appointments = [];
-      debugPrint("Error: ${result['message']}");
+      debugPrint("Confirmed appointments exception: $e");
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
+  }
 
-    _isLoading = false;
+  Future<void> refreshCurrentAppointments() async {
+    await getAppointmentsByDate(_lastSelectedDate);
+  }
+
+  Future<bool> endAppointment(
+      String appointmentId,
+      Map<String, dynamic> data,
+      File? file,
+      ) async {
+    if (_isEndingAppointment) return false;
+
+    _isEndingAppointment = true;
+    notifyListeners();
+
+    try {
+      final formData = FormData.fromMap(data);
+
+      if (file != null) {
+        formData.files.add(
+          MapEntry(
+            "attachments",
+            await MultipartFile.fromFile(
+              file.path,
+              filename: file.path.split('/').last,
+            ),
+          ),
+        );
+      }
+
+      final result = await _apiService.endAppointment(
+        appointmentId: appointmentId,
+        formData: formData,
+      );
+
+      final success = result['status'] == 'success';
+
+      if (success) {
+        _appointments.removeWhere(
+              (appointment) => appointment.id == appointmentId,
+        );
+
+        notifyListeners();
+
+        refreshCurrentAppointments();
+      }
+
+      return success;
+    } catch (e) {
+      debugPrint("End appointment exception: $e");
+      return false;
+    } finally {
+      _isEndingAppointment = false;
+      notifyListeners();
+    }
+  }
+
+  void removeAppointmentLocally(String appointmentId) {
+    _appointments.removeWhere(
+          (appointment) => appointment.id == appointmentId,
+    );
     notifyListeners();
   }
 
-  // إنهاء الموعد
-  Future<bool> endAppointment(
-    String appointmentId,
-    Map<String, dynamic> data,
-    File? file,
-  ) async {
-    _isLoading = true;
-    notifyListeners();
-
-    // تجهيز الـ FormData هنا في البروفايدر
-    FormData formData = FormData.fromMap(data);
-    if (file != null) {
-      formData.files.add(
-        MapEntry(
-          "attachments",
-          await MultipartFile.fromFile(
-            file.path,
-            filename: file.path.split('/').last,
-          ),
-        ),
-      );
-    }
-
-    // استدعاء السيرفيس
-    final result = await _apiService.endAppointment(
-      appointmentId: appointmentId,
-      formData: formData,
-    );
-
+  void clearConfirmedAppointments() {
+    _appointments = [];
     _isLoading = false;
+    _isEndingAppointment = false;
     notifyListeners();
-
-    return result['status'] == 'success';
   }
 }

@@ -1,5 +1,6 @@
 import 'package:aleef/core/routing/app_routes.dart';
 import 'package:aleef/core/services/secure_storage_service.dart';
+import 'package:aleef/core/services/session_service.dart';
 import 'package:aleef/core/theme/app_colors.dart';
 import 'package:aleef/features/ai_assistant/presentation/widgets/chatbot_card.dart';
 import 'package:flutter/material.dart';
@@ -15,21 +16,55 @@ import '../widgets/chat_section_title.dart';
 import '../widgets/chat_tab_header.dart';
 import 'chat_details.dart';
 
+enum ChatTabMode {
+  user,
+  doctor,
+}
 
 class ChatTab extends StatefulWidget {
-  const ChatTab({super.key});
+  final ChatTabMode mode;
+
+  const ChatTab({
+    super.key,
+    this.mode = ChatTabMode.user,
+  });
+
+  bool get isDoctor => mode == ChatTabMode.doctor;
+  bool get isUser => mode == ChatTabMode.user;
 
   @override
   State<ChatTab> createState() => _ChatTabState();
 }
 
-class _ChatTabState extends State<ChatTab> {
+class _ChatTabState extends State<ChatTab> with WidgetsBindingObserver {
   bool _didLoadChats = false;
 
   @override
   void initState() {
     super.initState();
+
+    WidgetsBinding.instance.addObserver(this);
     _loadChatsOnce();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed) return;
+    if (!mounted) return;
+
+    final provider = context.read<ChatProvider>();
+
+    provider.listenToChatUpdates();
+
+    if (provider.currentChatId != null && provider.currentChatId!.isNotEmpty) {
+      provider.restoreOpenedChat(provider.currentChatId!);
+    }
   }
 
   void _loadChatsOnce() {
@@ -52,6 +87,20 @@ class _ChatTabState extends State<ChatTab> {
   }
 
   Future<void> _logoutAndGoLogin() async {
+    if (widget.isDoctor) {
+      context.read<SessionService>().clearDoctorSession();
+
+      if (!mounted) return;
+
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        AppRoutes.doctorLogin,
+            (_) => false,
+      );
+
+      return;
+    }
+
     final storage = SecureStorageService();
 
     await storage.deleteToken();
@@ -84,6 +133,26 @@ class _ChatTabState extends State<ChatTab> {
     );
   }
 
+  String get _sectionTitle {
+    if (widget.isDoctor) {
+      return 'User chats';
+    }
+
+    return 'Doctors chats';
+  }
+
+  String get _sectionSubtitle {
+    if (widget.isDoctor) {
+      return 'Continue your conversations with pet owners.';
+    }
+
+    return 'Continue your conversations with trusted doctors.';
+  }
+
+  EdgeInsets get _listPadding {
+    return EdgeInsets.fromLTRB(18.w, 0, 18.w, 100.h);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -107,18 +176,19 @@ class _ChatTabState extends State<ChatTab> {
                         children: [
                           const ChatTabHeader(),
 
-                          SizedBox(height: 18.h),
-
-                          ChatBotCard(
-                            onTap: _openChatbot,
-                          ),
-
-                          SizedBox(height: 20.h),
+                          if (widget.isUser) ...[
+                            SizedBox(height: 18.h),
+                            ChatBotCard(
+                              onTap: _openChatbot,
+                            ),
+                            SizedBox(height: 20.h),
+                          ] else ...[
+                            SizedBox(height: 20.h),
+                          ],
 
                           ChatSectionTitle(
-                            title: 'Doctors chats',
-                            subtitle:
-                            'Continue your conversations with trusted doctors.',
+                            title: _sectionTitle,
+                            subtitle: _sectionSubtitle,
                             count: provider.chats.length,
                             isLoading: provider.isChatsLoading,
                           ),
@@ -143,16 +213,23 @@ class _ChatTabState extends State<ChatTab> {
                       ),
                     )
                   else if (provider.chats.isEmpty)
-                      const SliverFillRemaining(
+                      SliverFillRemaining(
                         hasScrollBody: false,
-                        child: ChatEmptyState(),
+                        child: ChatEmptyState(
+                          title: widget.isDoctor
+                              ? 'No user chats yet'
+                              : 'No doctor chats yet',
+                          subtitle: widget.isDoctor
+                              ? 'When pet owners message you, their chats will appear here.'
+                              : 'When you start chatting with doctors, your conversations will appear here.',
+                        ),
                       )
                     else
                       SliverPadding(
-                        padding: EdgeInsets.fromLTRB(18.w, 0, 18.w, 100.h),
+                        padding: _listPadding,
                         sliver: SliverList.separated(
                           itemCount: provider.chats.length,
-                          separatorBuilder: (_, __) => SizedBox(height: 12.h),
+                          separatorBuilder: (_, _) => SizedBox(height: 12.h),
                           itemBuilder: (context, index) {
                             final chat = provider.chats[index];
 

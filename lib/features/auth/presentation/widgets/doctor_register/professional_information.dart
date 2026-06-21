@@ -60,7 +60,7 @@ class _ProfessionalInformationState extends State<ProfessionalInformation> {
         ),
         SizedBox(height: 8.h),
         DropdownButtonFormField<String>(
-          value: selectedSpecialization,
+          initialValue: selectedSpecialization,
           isExpanded: true,
           icon: Icon(
             Icons.keyboard_arrow_down_rounded,

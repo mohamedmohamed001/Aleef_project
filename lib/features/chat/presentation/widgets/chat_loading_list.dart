@@ -9,7 +9,7 @@ class ChatLoadingList extends StatelessWidget {
   Widget build(BuildContext context) {
     return SliverList.separated(
       itemCount: 5,
-      separatorBuilder: (_, __) => SizedBox(height: 12.h),
+      separatorBuilder: (_, _) => SizedBox(height: 12.h),
       itemBuilder: (context, index) {
         return Container(
           height: 82.h,

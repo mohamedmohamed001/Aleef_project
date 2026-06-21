@@ -8,8 +8,8 @@ class ConfirmedAppointmentsResponse {
       appointments: (json['appointments'] as List? ?? [])
           .map(
             (e) =>
-                ConfirmedAppointmentModel.fromJson(e as Map<String, dynamic>),
-          )
+            ConfirmedAppointmentModel.fromJson(e as Map<String, dynamic>),
+      )
           .toList(),
     );
   }
@@ -20,7 +20,7 @@ class ConfirmedAppointmentModel {
   final String date;
   final String time;
   final String reason;
-  final AppointmentPetModel pet; // هنا ربطنا بالحيوان الخاص بالموعد
+  final AppointmentPetModel pet;
   final AppointmentOwnerModel owner;
 
   ConfirmedAppointmentModel({
@@ -34,10 +34,10 @@ class ConfirmedAppointmentModel {
 
   factory ConfirmedAppointmentModel.fromJson(Map<String, dynamic> json) {
     return ConfirmedAppointmentModel(
-      id: json['id'] ?? '',
-      date: json['date'] ?? '',
-      time: json['time'] ?? '',
-      reason: json['reason'] ?? '',
+      id: json['id']?.toString() ?? '',
+      date: json['date']?.toString() ?? '',
+      time: json['time']?.toString() ?? '',
+      reason: json['reason']?.toString() ?? '',
       pet: AppointmentPetModel.fromJson(json['pet'] ?? {}),
       owner: AppointmentOwnerModel.fromJson(json['owner'] ?? {}),
     );
@@ -45,31 +45,56 @@ class ConfirmedAppointmentModel {
 }
 
 class AppointmentPetModel {
+  final String id;
   final String name;
   final String type;
-  final String gender;
-  final String profilePic;
+  final String? breed;
+  final String? profilePic;
+
+  final String? age;
+  final String? weight;
+  final String? gender;
 
   AppointmentPetModel({
+    required this.id,
     required this.name,
     required this.type,
-    required this.gender,
-    required this.profilePic,
+    this.breed,
+    this.profilePic,
+    this.age,
+    this.weight,
+    this.gender,
   });
 
   factory AppointmentPetModel.fromJson(Map<String, dynamic> json) {
     return AppointmentPetModel(
-      name: json['name'] ?? '',
-      type: json['type'] ?? '',
-      gender: json['gender'] ?? '',
-      profilePic: json['profilePic'] ?? '',
+      id: json['id']?.toString() ?? '',
+      name: json['name']?.toString() ?? '',
+      type: json['type']?.toString() ?? '',
+      breed: json['breed']?.toString(),
+      profilePic: json['profilePic']?.toString(),
+
+      // لو الباك بيرجعهم بأسماء دي هيتقرو، لو مش بيرجعهم هيفضلوا null
+      age: json['age']?.toString(),
+      weight: json['weight']?.toString(),
+      gender: json['gender']?.toString(),
     );
   }
 }
 
 class AppointmentOwnerModel {
   final String name;
-  AppointmentOwnerModel({required this.name});
-  factory AppointmentOwnerModel.fromJson(Map<String, dynamic> json) =>
-      AppointmentOwnerModel(name: json['name'] ?? '');
+  final String? phone;
+
+  AppointmentOwnerModel({
+    required this.name,
+    this.phone,
+  });
+
+  factory AppointmentOwnerModel.fromJson(Map<String, dynamic> json) {
+    return AppointmentOwnerModel(
+      name: json['name']?.toString() ?? '',
+      phone: json['phone']?.toString(),
+    );
+  }
 }

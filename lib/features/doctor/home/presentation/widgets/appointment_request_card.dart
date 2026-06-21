@@ -35,198 +35,267 @@ class AppointmentRequestCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        width: double.infinity,
-        padding: EdgeInsets.all(16.r),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(18.r),
-          border: Border.all(
-            color: Colors.black.withOpacity(0.07),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 3),
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(22.r),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(22.r),
+        child: Ink(
+          padding: EdgeInsets.all(15.w),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(22.r),
+            border: Border.all(
+              color: const Color(0xffE8EEEE),
+              width: 1,
             ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(14.r),
-                  child: _buildPetImage(),
-                ),
-
-                SizedBox(width: 12.w),
-
-                Expanded(
-                  child: Column(
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.035),
+                blurRadius: 18,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _PetImage(image: petImage),
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                petName,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: const Color(0xff172121),
+                                  fontSize: 17.sp,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ),
+                            SizedBox(width: 8.w),
+                            Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 8.w,
+                                vertical: 5.h,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.primary.withOpacity(0.09),
+                                borderRadius: BorderRadius.circular(99.r),
+                              ),
+                              child: Text(
+                                petType,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: AppColors.primary,
+                                  fontSize: 11.sp,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 7.h),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.person_outline_rounded,
+                              size: 16.sp,
+                              color: Colors.black38,
+                            ),
+                            SizedBox(width: 5.w),
+                            Expanded(
+                              child: Text(
+                                ownerName,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: Colors.black54,
+                                  fontSize: 12.5.sp,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 10.h),
+                        Row(
+                          children: [
+                            _SmallInfoBox(
+                              icon: Icons.calendar_today_rounded,
+                              text: date,
+                            ),
+                            SizedBox(width: 8.w),
+                            _SmallInfoBox(
+                              icon: Icons.access_time_rounded,
+                              text: time,
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              if (reason.trim().isNotEmpty) ...[
+                SizedBox(height: 14.h),
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 12.w,
+                    vertical: 10.h,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xffF8FAFA),
+                    borderRadius: BorderRadius.circular(15.r),
+                  ),
+                  child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        petName,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 17.sp,
-                          fontWeight: FontWeight.w700,
-                        ),
+                      Icon(
+                        Icons.sticky_note_2_outlined,
+                        size: 17.sp,
+                        color: AppColors.primary,
                       ),
-
-                      SizedBox(height: 5.h),
-
-                      Text(
-                        '$petType • Owner: $ownerName',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 13.sp,
-                          color: Colors.black54,
-                        ),
-                      ),
-
-                      SizedBox(height: 5.h),
-
-                      Text(
-                        '$date  •  $time',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 13.sp,
-                          color: Colors.black45,
+                      SizedBox(width: 8.w),
+                      Expanded(
+                        child: Text(
+                          reason,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: Colors.black87,
+                            fontSize: 13.sp,
+                            height: 1.35,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ),
                     ],
                   ),
                 ),
               ],
-            ),
-
-            if (reason.trim().isNotEmpty) ...[
               SizedBox(height: 14.h),
-
-              Text(
-                'Reason for visit',
-                style: TextStyle(
-                  fontSize: 12.sp,
-                  color: Colors.black45,
-                  fontWeight: FontWeight.w500,
+              if (isLoading)
+                SizedBox(
+                  height: 44.h,
+                  child: Center(
+                    child: SizedBox(
+                      width: 23.w,
+                      height: 23.w,
+                      child: const CircularProgressIndicator(
+                        color: AppColors.primary,
+                        strokeWidth: 2.5,
+                      ),
+                    ),
+                  ),
+                )
+              else
+                Row(
+                  children: [
+                    Expanded(
+                      child: SizedBox(
+                        height: 44.h,
+                        child: OutlinedButton(
+                          onPressed: onDecline,
+                          style: OutlinedButton.styleFrom(
+                            elevation: 0,
+                            foregroundColor: const Color(0xffE5484D),
+                            backgroundColor: const Color(0xffFFF5F5),
+                            side: BorderSide.none,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14.r),
+                            ),
+                          ),
+                          child: Text(
+                            'Cancel',
+                            style: TextStyle(
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 10.w),
+                    Expanded(
+                      child: SizedBox(
+                        height: 44.h,
+                        child: ElevatedButton(
+                          onPressed: onAccept,
+                          style: ElevatedButton.styleFrom(
+                            elevation: 0,
+                            backgroundColor: AppColors.primary,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14.r),
+                            ),
+                          ),
+                          child: Text(
+                            'Accept',
+                            style: TextStyle(
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-
-              SizedBox(height: 4.h),
-
-              Text(
-                reason,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  color: Colors.black87,
-                ),
-              ),
             ],
-
-            SizedBox(height: 18.h),
-
-            if (isLoading)
-              Padding(
-                padding: EdgeInsets.symmetric(vertical: 10.h),
-                child: const Center(
-                  child: CircularProgressIndicator(
-                    color: AppColors.primary,
-                  ),
-                ),
-              )
-            else
-              Row(
-                children: [
-                  Expanded(
-                    child: SizedBox(
-                      height: 48.h,
-                      child: ElevatedButton.icon(
-                        onPressed: onAccept,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          padding: EdgeInsets.symmetric(horizontal: 8.w),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14.r),
-                          ),
-                        ),
-                        icon: Icon(
-                          Icons.check_rounded,
-                          size: 19.sp,
-                        ),
-                        label: Text(
-                          'Accept',
-                          style: TextStyle(
-                            fontSize: 15.sp,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  SizedBox(width: 12.w),
-
-                  Expanded(
-                    child: SizedBox(
-                      height: 48.h,
-                      child: OutlinedButton.icon(
-                        onPressed: onDecline,
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.red,
-                          padding: EdgeInsets.symmetric(horizontal: 8.w),
-                          side: BorderSide(
-                            color: Colors.red,
-                            width: 1.3.w,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14.r),
-                          ),
-                        ),
-                        icon: Icon(
-                          Icons.close_rounded,
-                          size: 19.sp,
-                        ),
-                        label: Text(
-                          'Decline',
-                          style: TextStyle(
-                            fontSize: 15.sp,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-          ],
+          ),
         ),
       ),
     );
   }
+}
 
-  Widget _buildPetImage() {
-    if (petImage.trim().isEmpty) {
+class _PetImage extends StatelessWidget {
+  final String image;
+
+  const _PetImage({
+    required this.image,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 64.w,
+      height: 64.w,
+      padding: EdgeInsets.all(2.r),
+      decoration: BoxDecoration(
+        color: AppColors.primary.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(18.r),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16.r),
+        child: _buildImage(),
+      ),
+    );
+  }
+
+  Widget _buildImage() {
+    if (image.trim().isEmpty) {
       return _fallbackImage();
     }
 
     return Image.network(
-      petImage,
-      width: 62.w,
-      height: 62.w,
+      image,
+      width: 64.w,
+      height: 64.w,
       fit: BoxFit.cover,
       errorBuilder: (context, error, stackTrace) {
         return _fallbackImage();
@@ -237,9 +306,58 @@ class AppointmentRequestCard extends StatelessWidget {
   Widget _fallbackImage() {
     return Image.asset(
       AppAssets.blankProfilePhoto,
-      width: 62.w,
-      height: 62.w,
+      width: 64.w,
+      height: 64.w,
       fit: BoxFit.cover,
+    );
+  }
+}
+
+class _SmallInfoBox extends StatelessWidget {
+  final IconData icon;
+  final String text;
+
+  const _SmallInfoBox({
+    required this.icon,
+    required this.text,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Flexible(
+      child: Container(
+        padding: EdgeInsets.symmetric(
+          horizontal: 9.w,
+          vertical: 7.h,
+        ),
+        decoration: BoxDecoration(
+          color: const Color(0xffF3F7F7),
+          borderRadius: BorderRadius.circular(12.r),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 13.sp,
+              color: AppColors.primary,
+            ),
+            SizedBox(width: 5.w),
+            Flexible(
+              child: Text(
+                text,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: const Color(0xff354545),
+                  fontSize: 11.5.sp,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

@@ -21,15 +21,16 @@ class AddPetForm extends StatefulWidget {
 
 class _AddPetFormState extends State<AddPetForm> {
   final _formKey = GlobalKey<FormState>();
+
   File? _selectedImage;
   String? _selectedType;
   String? _selectedGender;
+  DateTime? _selectedBirthDate;
 
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _breedController = TextEditingController();
-  final TextEditingController _ageController = TextEditingController();
+  final TextEditingController _birthDateController = TextEditingController();
   final TextEditingController _weightController = TextEditingController();
-
 
   final SecureStorageService _storageService = SecureStorageService();
 
@@ -48,12 +49,61 @@ class _AddPetFormState extends State<AddPetForm> {
     });
   }
 
+  Future<void> _pickBirthDate() async {
+    final now = DateTime.now();
+
+    final DateTime? pickedDate = await showDatePicker(
+      context: context,
+      initialDate: _selectedBirthDate ?? DateTime(now.year - 1),
+      firstDate: DateTime(now.year - 30),
+      lastDate: now,
+      helpText: "Select birth date",
+      cancelText: "Cancel",
+      confirmText: "Select",
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: Theme.of(context).colorScheme.copyWith(
+              primary: AppColors.primary,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (pickedDate == null) return;
+
+    setState(() {
+      _selectedBirthDate = pickedDate;
+      _birthDateController.text = _formatDateForDisplay(pickedDate);
+    });
+  }
+
+  String _formatDateForDisplay(DateTime date) {
+    final day = date.day.toString().padLeft(2, '0');
+    final month = date.month.toString().padLeft(2, '0');
+    final year = date.year.toString();
+
+    return "$day-$month-$year";
+  }
+
+  String _formatDateForApi(DateTime date) {
+    final day = date.day.toString().padLeft(2, '0');
+    final month = date.month.toString().padLeft(2, '0');
+    final year = date.year.toString();
+
+    return "$year-$month-$day";
+  }
+
   void _showSuccessSnackBar() {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          "Pet Added Successfully!",
-          style: AppTextStyles.label14Medium.copyWith(color: Colors.white),
+          "Pet profile created successfully!",
+          style: AppTextStyles.label14Medium.copyWith(
+            color: Colors.white,
+          ),
         ),
         backgroundColor: Colors.green,
         behavior: SnackBarBehavior.floating,
@@ -67,7 +117,9 @@ class _AddPetFormState extends State<AddPetForm> {
       SnackBar(
         content: Text(
           message,
-          style: AppTextStyles.label14Medium.copyWith(color: Colors.white),
+          style: AppTextStyles.label14Medium.copyWith(
+            color: Colors.white,
+          ),
         ),
         backgroundColor: Colors.redAccent,
         behavior: SnackBarBehavior.floating,
@@ -80,162 +132,30 @@ class _AddPetFormState extends State<AddPetForm> {
   void dispose() {
     _nameController.dispose();
     _breedController.dispose();
-    _ageController.dispose();
+    _birthDateController.dispose();
     _weightController.dispose();
-    // _colorController.dispose();
-    // _medicalController.dispose();
-    // _notesController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-
     final petsProvider = Provider.of<PetsProvider>(context);
 
     return Form(
       key: _formKey,
       child: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
         child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h),
+          padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Center(
-                child: Column(
-                  children: [
-                    // Text(
-                    //   "Create Pet Profile",
-                    //   style: AppTextStyles.title16SemiBold,
-                    // ),
-                    // SizedBox(height: 6.h),
-                    // Text(
-                    //   "Add your pet information",
-                    //   style: AppTextStyles.label14Medium.copyWith(
-                    //     color: AppColors.hint,
-                    //   ),
-                    // ),
-                  ],
-                ),
-              ),
-
-              SizedBox(height: 20.h),
-              _buildHeroAvatar(),
-              // SizedBox(height: 24.h),
-              SizedBox(height: 10.h),
-
-              Center(
-                child: Text(
-                  "Tap to upload pet photo",
-                  style: AppTextStyles.label14Medium.copyWith(
-                    color: AppColors.hint,
-                  ),
-                ),
-              ),
-
-              _sectionCard(
-                title: "Basic Information",
-                child: Column(
-                  children: [
-                    CustomPetTextField(
-                      controller: _nameController,
-                      label: "Pet Name",
-                      hint: "Enter pet name",
-                      validator:Validators.validateName,
-                    ),
-
-                    CustomPetDropdown(
-                      label: "Pet Type",
-                      hint: "Select pet type",
-                      value: _selectedType,
-                      items: const ["dog", "cat"],
-                      onChanged: (val) => setState(() => _selectedType = val),
-                    ),
-
-                    CustomPetTextField(
-                      controller: _breedController,
-                      label: "Breed",
-                      hint: "Enter breed",
-                      validator: (value) =>
-                          Validators.validateRequiredField(value, "Breed"),
-                    ),
-
-                    CustomPetDropdown(
-                      label: "Gender",
-                      hint: "Select gender",
-                      value: _selectedGender,
-                      items: const ["male", "female"],
-                      onChanged: (val) => setState(() => _selectedGender = val),
-                    ),
-                  ],
-                ),
-              ),
-              _sectionCard(
-                title: "Additional Details",
-                child: Column(
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: CustomPetTextField(
-                            controller: _ageController,
-                            label: "Age",
-                            hint: "Years",
-                            validator: (value) =>
-                                Validators.validateRequiredField(
-                                  value,
-                                  "Age",
-                                )
-                          ),
-                        ),
-                        SizedBox(width: 15.w),
-                        Expanded(
-                          child: CustomPetTextField(
-                            controller: _weightController,
-                            label: "Weight",
-                            hint: "kg",
-                            validator: (value) =>
-                                Validators.validateNumericField(value, "Weight"),
-                            keyboardType: const TextInputType.numberWithOptions(
-                              decimal: true,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              // CustomPetTextField(
-              //   controller: _colorController,
-              //   label: "Color",
-              //   hint: "e.g. Golden, Black",
-              // ),
-              //
-              // Padding(
-              //   padding: EdgeInsets.only(top: 20.h),
-              //   child: Text(
-              //     "Medical Info (Optional)",
-              //     style: AppTextStyles.title16SemiBold,
-              //   ),
-              // ),
-              //
-              // CustomPetTextField(
-              //   controller: _medicalController,
-              //   label: "Known Conditions",
-              //   hint: "e.g. None",
-              // ),
-              //
-              // CustomPetTextField(
-              //   controller: _notesController,
-              //   label: "Notes",
-              //   hint: "Additional notes...",
-              //   maxLines: 3,
-              // ),
-      
-              SizedBox(height: 30.h),
+              _buildTopHeader(),
+              SizedBox(height: 18.h),
+              _buildPetInfoCard(),
+              SizedBox(height: 24.h),
               _buildActionButtons(petsProvider),
-              SizedBox(height: 20.h),
+              SizedBox(height: 18.h),
             ],
           ),
         ),
@@ -243,59 +163,272 @@ class _AddPetFormState extends State<AddPetForm> {
     );
   }
 
+  Widget _buildTopHeader() {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 22.h),
+      decoration: BoxDecoration(
+        color: AppColors.primary,
+        borderRadius: BorderRadius.circular(28.r),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withOpacity(.22),
+            blurRadius: 24.r,
+            offset: Offset(0, 12.h),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          _buildHeroAvatar(),
+          SizedBox(height: 14.h),
+          Text(
+            "Create Pet Profile",
+            style: AppTextStyles.title16SemiBold.copyWith(
+              color: Colors.white,
+              fontSize: 19.sp,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          SizedBox(height: 6.h),
+          Text(
+            "Add your pet details to personalize care",
+            textAlign: TextAlign.center,
+            style: AppTextStyles.label14Medium.copyWith(
+              color: Colors.white.withOpacity(.82),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildHeroAvatar() {
-    return Center(
+    return GestureDetector(
+      onTap: _pickImage,
       child: Stack(
         clipBehavior: Clip.none,
         children: [
           Container(
-            padding: EdgeInsets.all(4.r),
+            padding: EdgeInsets.all(5.r),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
+              color: Colors.white.withOpacity(.22),
               border: Border.all(
-                color: AppColors.primary,
-                width: 2,
+                color: Colors.white.withOpacity(.65),
+                width: 1.5,
               ),
             ),
             child: CircleAvatar(
-              radius: 58.r,
-              backgroundColor: AppColors.inputFill,
-              backgroundImage:
-              _selectedImage != null
+              radius: 56.r,
+              backgroundColor: Colors.white,
+              backgroundImage: _selectedImage != null
                   ? FileImage(_selectedImage!)
                   : null,
               child: _selectedImage == null
                   ? Icon(
-                Icons.pets,
-                size: 50.sp,
+                Icons.pets_rounded,
+                size: 48.sp,
                 color: AppColors.primary,
               )
                   : null,
             ),
           ),
-
           Positioned(
-            right: -2,
-            bottom: -2,
-            child: GestureDetector(
-              onTap: _pickImage,
-              child: Container(
-                padding: EdgeInsets.all(8.r),
-                decoration: const BoxDecoration(
-                  color: AppColors.primary,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.camera_alt,
-                  color: Colors.white,
-                  size: 18.sp,
-                ),
+            right: 0,
+            bottom: 2.h,
+            child: Container(
+              width: 36.r,
+              height: 36.r,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(.12),
+                    blurRadius: 12.r,
+                    offset: Offset(0, 5.h),
+                  ),
+                ],
+              ),
+              child: Icon(
+                Icons.camera_alt_rounded,
+                color: AppColors.primary,
+                size: 18.sp,
               ),
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildPetInfoCard() {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(18.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(26.r),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(.045),
+            blurRadius: 26.r,
+            spreadRadius: 1,
+            offset: Offset(0, 10.h),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildCardTitle(
+            icon: Icons.info_outline_rounded,
+            title: "Pet Information",
+          ),
+
+          CustomPetTextField(
+            controller: _nameController,
+            label: "Pet Name",
+            hint: "e.g. Max, Luna",
+            validator: Validators.validateName,
+            prefixIcon: Icon(
+              Icons.badge_outlined,
+              color: AppColors.primary,
+              size: 20.sp,
+            ),
+          ),
+
+          CustomPetChoiceChips(
+            label: "Pet Type",
+            selectedValue: _selectedType,
+            items: const ["dog", "cat"],
+            iconBuilder: (item) {
+              if (item == "dog") return Icons.pets_rounded;
+              return Icons.cruelty_free_rounded;
+            },
+            onSelected: (value) {
+              setState(() {
+                _selectedType = value;
+              });
+            },
+          ),
+
+          CustomPetChoiceChips(
+            label: "Gender",
+            selectedValue: _selectedGender,
+            items: const ["male", "female"],
+            iconBuilder: (item) {
+              if (item == "male") return Icons.male_rounded;
+              return Icons.female_rounded;
+            },
+            onSelected: (value) {
+              setState(() {
+                _selectedGender = value;
+              });
+            },
+          ),
+
+          CustomPetTextField(
+            controller: _breedController,
+            label: "Breed / Type",
+            hint: "Optional e.g. Golden Retriever, Persian",
+            prefixIcon: Icon(
+              Icons.auto_awesome_rounded,
+              color: AppColors.primary,
+              size: 20.sp,
+            ),
+          ),
+
+          SizedBox(height: 4.h),
+
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: CustomPetTextField(
+                  controller: _birthDateController,
+                  label: "Birth Date",
+                  hint: "Select date",
+                  readOnly: true,
+                  onTap: _pickBirthDate,
+                  validator: (value) {
+                    return Validators.validateRequiredField(
+                      value,
+                      "Birth Date",
+                    );
+                  },
+                  suffixIcon: Icon(
+                    Icons.calendar_month_rounded,
+                    color: AppColors.primary,
+                    size: 20.sp,
+                  ),
+                ),
+              ),
+              SizedBox(width: 12.w),
+              Expanded(
+                child: CustomPetTextField(
+                  controller: _weightController,
+                  label: "Weight",
+                  hint: "kg",
+                  validator: (value) {
+                    return Validators.validateNumericField(
+                      value,
+                      "Weight",
+                    );
+                  },
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  suffixIcon: Padding(
+                    padding: EdgeInsets.only(right: 14.w),
+                    child: Center(
+                      widthFactor: 1,
+                      child: Text(
+                        "kg",
+                        style: AppTextStyles.label14Medium.copyWith(
+                          color: AppColors.hint,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCardTitle({
+    required IconData icon,
+    required String title,
+  }) {
+    return Row(
+      children: [
+        Container(
+          width: 38.r,
+          height: 38.r,
+          decoration: BoxDecoration(
+            color: AppColors.primary.withOpacity(.10),
+            borderRadius: BorderRadius.circular(14.r),
+          ),
+          child: Icon(
+            icon,
+            color: AppColors.primary,
+            size: 20.sp,
+          ),
+        ),
+        SizedBox(width: 10.w),
+        Text(
+          title,
+          style: AppTextStyles.title16SemiBold.copyWith(
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+      ],
     );
   }
 
@@ -318,32 +451,39 @@ class _AddPetFormState extends State<AddPetForm> {
               if (!mounted) return;
 
               if (token == null || token.isEmpty) {
-                _showErrorSnackBar("Session expired, please login again");
+                _showErrorSnackBar(
+                  "Session expired, please login again",
+                );
+                return;
+              }
+
+              if (_selectedType == null) {
+                _showErrorSnackBar("Please select pet type");
+                return;
+              }
+
+              if (_selectedGender == null) {
+                _showErrorSnackBar("Please select gender");
+                return;
+              }
+
+              if (_selectedBirthDate == null) {
+                _showErrorSnackBar("Please select birth date");
                 return;
               }
 
               try {
                 final weightValue =
-                    double.tryParse(_weightController.text.trim()) ?? 0.0;
-                if (_selectedType == null) {
-                  _showErrorSnackBar(
-                    "Please select pet type",
-                  );
-                  return;
-                }
-                if (_selectedGender == null) {
-                  _showErrorSnackBar(
-                    "Please select gender",
-                  );
-                  return;
-                }
+                    double.tryParse(_weightController.text.trim()) ??
+                        0.0;
 
                 await petsProvider.addNewPet(
                   name: _nameController.text.trim(),
-                  type: (_selectedType ?? "dog").toLowerCase(),
-                  gender: (_selectedGender ?? "male").toLowerCase(),
+                  type: _selectedType!.toLowerCase(),
+                  gender: _selectedGender!.toLowerCase(),
                   weight: weightValue,
-                  age: _ageController.text.trim(),
+                  birthDate: _formatDateForApi(_selectedBirthDate!),
+                  breed: _breedController.text.trim(),
                   imagePath: _selectedImage?.path ?? '',
                   token: token,
                 );
@@ -357,13 +497,16 @@ class _AddPetFormState extends State<AddPetForm> {
 
                 if (!mounted) return;
 
-                _showErrorSnackBar("Something went wrong, try again");
+                _showErrorSnackBar(
+                  "Something went wrong, try again",
+                );
               }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
+              disabledBackgroundColor: AppColors.primary.withOpacity(.5),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16.r),
+                borderRadius: BorderRadius.circular(18.r),
               ),
               elevation: 0,
             ),
@@ -379,13 +522,14 @@ class _AddPetFormState extends State<AddPetForm> {
                 : Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(
-                  Icons.pets,
+                Icon(
+                  Icons.check_circle_rounded,
                   color: Colors.white,
+                  size: 21.sp,
                 ),
                 SizedBox(width: 8.w),
                 Text(
-                  "Add Pet Profile",
+                  "Create Pet Profile",
                   style: AppTextStyles.button16SemiBold,
                 ),
               ],
@@ -395,58 +539,30 @@ class _AddPetFormState extends State<AddPetForm> {
         SizedBox(height: 12.h),
         SizedBox(
           width: double.infinity,
-          height: 56.h,
+          height: 54.h,
           child: OutlinedButton(
-
-            onPressed: petsProvider.isLoading ? null : () => Navigator.pop(context),
+            onPressed: petsProvider.isLoading
+                ? null
+                : () => Navigator.pop(context),
             style: OutlinedButton.styleFrom(
               foregroundColor: AppColors.primary,
-              side: const BorderSide(
-                color: AppColors.border,
+              side: BorderSide(
+                color: AppColors.border.withOpacity(.9),
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(18.r),
               ),
             ),
             child: Text(
               "Cancel",
-                style: AppTextStyles.label14Medium.copyWith(
-                  color: AppColors.primary,
-                  fontWeight: FontWeight.w600,
-                )
+              style: AppTextStyles.label14Medium.copyWith(
+                color: AppColors.primary,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
         ),
       ],
-    );
-  }
-  Widget _sectionCard({
-    required String title,
-    required Widget child,
-  }) {
-    return Container(
-      margin: EdgeInsets.only(top: 18.h),
-      padding: EdgeInsets.all(18.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24.r),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(.04),
-            blurRadius: 25,
-            spreadRadius: 1,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: AppTextStyles.title16SemiBold,
-          ),
-          SizedBox(height: 10.h),
-          child,
-        ],
-      ),
     );
   }
 }

@@ -127,7 +127,7 @@ class AuthHeroContent extends StatelessWidget {
             child: Image.asset(
               logoPath,
               fit: BoxFit.contain,
-              errorBuilder: (_, __, ___) {
+              errorBuilder: (_, _, _) {
                 return Icon(
                   Icons.pets_rounded,
                   color: Colors.white,

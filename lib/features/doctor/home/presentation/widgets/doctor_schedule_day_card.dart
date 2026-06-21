@@ -137,7 +137,7 @@ class DoctorScheduleDayCard extends StatelessWidget {
                 ),
                 Switch(
                   value: item.isAvailable,
-                  activeColor: Colors.white,
+                  activeThumbColor: Colors.white,
                   activeTrackColor: AppColors.primary,
                   inactiveThumbColor: Colors.white,
                   inactiveTrackColor: Colors.grey[300],

@@ -1,20 +1,19 @@
 import 'dart:async';
 
-import 'package:aleef/features/appointments/data/models/appointment_model.dart';
-import 'package:aleef/features/appointments/data/models/doctor_model.dart';
+import 'package:aleef/providers/location_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/routing/app_routes.dart';
-import '../../../../core/services/secure_storage_service.dart';
 import '../../../../providers/bottom_nav_provider.dart';
-import '../../../../providers/user_provider.dart';
-import '../../services/appointment_api.dart';
-import '../widgets/appointment_card.dart';
-import '../widgets/appointment_screen_skeleton.dart';
-import '../widgets/appointments_header.dart';
+import '../provider/appointment_provider.dart';
+import '../widgets/appointments/appointment_card.dart';
+import '../widgets/appointments/appointment_screen_skeleton.dart';
+import '../widgets/appointments/appointments_header.dart';
 import '../widgets/available_doctors/available_doctors_section.dart';
+import '../widgets/location/location_permission_dialog.dart';
+import '../widgets/location/location_service_dialog.dart';
 import 'appointment_details.dart';
 
 class AppointmentTab extends StatefulWidget {
@@ -27,24 +26,33 @@ class AppointmentTab extends StatefulWidget {
 class _AppointmentTabState extends State<AppointmentTab> {
   final ScrollController _scrollController = ScrollController();
   Timer? _searchDebounce;
-  bool isDoctorsLoading = false;
-  bool isPageLoading = true;
-  bool isDoctorsLoadingMore = false;
 
-  int doctorsPage = 1;
-  int doctorsTotalPages = 1;
   String doctorsSearch = "";
-
-  AppointmentModel appointment = AppointmentModel();
-  List<DoctorModel> doctors = [];
-
-  bool get hasMoreDoctors => doctorsPage < doctorsTotalPages;
+  bool _didInitialLoad = false;
 
   @override
   void initState() {
     super.initState();
-    fetchAppointmentPageData();
+
+    Future.microtask(() async {
+      await _initialLoad();
+    });
+
     _scrollController.addListener(_onScroll);
+  }
+
+  Future<void> _initialLoad() async {
+    if (_didInitialLoad) return;
+    _didInitialLoad = true;
+
+    final appointmentProvider = context.read<AppointmentProvider>();
+
+    if (appointmentProvider.availableDoctors.isNotEmpty ||
+        appointmentProvider.activeAppointment.id != null) {
+      return;
+    }
+
+    await fetchAppointmentPageData();
   }
 
   @override
@@ -59,146 +67,59 @@ class _AppointmentTabState extends State<AppointmentTab> {
 
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent - 250) {
-      loadMoreDoctors();
+      final locationProvider = context.read<LocationProvider>();
+
+      context.read<AppointmentProvider>().loadMoreDoctors(
+        search: doctorsSearch,
+        lat: locationProvider.lat,
+        lng: locationProvider.lng,
+      );
     }
   }
 
   Future<void> fetchAppointmentPageData() async {
-    if (!mounted) return;
+    final locationProvider = context.read<LocationProvider>();
 
-    final bool firstLoad = appointment.id == null && doctors.isEmpty;
-
-    setState(() {
-      if (firstLoad) {
-        isPageLoading = true;
-      } else {
-        isDoctorsLoading = true;
-      }
-
-      doctorsPage = 1;
-      doctorsTotalPages = 1;
-      isDoctorsLoadingMore = false;
-    });
-
-    try {
-      final results = await Future.wait([
-        AppointmentApi().getActiveAppointment(),
-        AppointmentApi().getAvailableDoctor(
-          page: 1,
-          limit: 8,
-          search: doctorsSearch,
-        ),
-      ]);
-
-      if (!mounted) return;
-
-      final appointmentResponse = results[0];
-      final doctorsResponse = results[1];
-
-      if (appointmentResponse["status"] == "unauthorized" ||
-          doctorsResponse["status"] == "unauthorized") {
-        await _logoutAndGoLogin();
-        return;
-      }
-
-      final appointmentData = appointmentResponse["data"];
-
-      final loadedAppointment =
-      appointmentResponse["status"] == "success" &&
-          appointmentData != null &&
-          appointmentData is Map<String, dynamic> &&
-          appointmentData.isNotEmpty
-          ? AppointmentModel.fromJson(appointmentData)
-          : AppointmentModel();
-
-      final List doctorsData = doctorsResponse["data"] ?? [];
-
-      final loadedDoctors = doctorsData
-          .whereType<Map<String, dynamic>>()
-          .map((e) => DoctorModel.fromJson(e))
-          .toList();
-
-      setState(() {
-        appointment = loadedAppointment;
-        doctors = loadedDoctors;
-        doctorsPage = int.tryParse(doctorsResponse["page"].toString()) ?? 1;
-        doctorsTotalPages =
-            int.tryParse(doctorsResponse["totalPages"].toString()) ?? 1;
-
-        isPageLoading = false;
-        isDoctorsLoading = false;
-        isDoctorsLoadingMore = false;
-      });
-    } catch (e, s) {
-      debugPrint("fetchAppointmentPageData error: $e");
-      debugPrint("stack: $s");
-
-      if (!mounted) return;
-
-      setState(() {
-        if (firstLoad) {
-          appointment = AppointmentModel();
-          doctors = [];
-        }
-
-        isPageLoading = false;
-        isDoctorsLoading = false;
-        isDoctorsLoadingMore = false;
-      });
-    }
+    await context.read<AppointmentProvider>().fetchAppointmentTabData(
+      search: doctorsSearch,
+      lat: locationProvider.lat,
+      lng: locationProvider.lng,
+    );
   }
 
-  Future<void> loadMoreDoctors() async {
-    if (isDoctorsLoadingMore || !hasMoreDoctors) return;
+  Future<void> _enableLocationAndRefresh() async {
+    final locationProvider = context.read<LocationProvider>();
+    final appointmentProvider = context.read<AppointmentProvider>();
 
-    setState(() {
-      isDoctorsLoadingMore = true;
-    });
+    await locationProvider.refreshLocation(
+      requestPermission: true,
+    );
 
-    try {
-      final response = await AppointmentApi().getAvailableDoctor(
-        page: doctorsPage + 1,
-        limit: 8,
+    if (!mounted) return;
+
+    if (locationProvider.hasLocation) {
+      await appointmentProvider.fetchAppointmentTabData(
         search: doctorsSearch,
+        lat: locationProvider.lat,
+        lng: locationProvider.lng,
       );
-
-      if (!mounted) return;
-
-      if (response["status"] == "unauthorized") {
-        await _logoutAndGoLogin();
-        return;
-      }
-
-      if (response["status"] == "success") {
-        final List doctorsData = response["data"] ?? [];
-
-        final loadedDoctors = doctorsData
-            .whereType<Map<String, dynamic>>()
-            .map((e) => DoctorModel.fromJson(e))
-            .toList();
-
-        setState(() {
-          doctors.addAll(loadedDoctors);
-          doctorsPage = int.tryParse(response["page"].toString()) ?? doctorsPage;
-          doctorsTotalPages =
-              int.tryParse(response["totalPages"].toString()) ??
-                  doctorsTotalPages;
-          isDoctorsLoadingMore = false;
-        });
-      } else {
-        setState(() {
-          isDoctorsLoadingMore = false;
-        });
-      }
-    } catch (e) {
-      debugPrint("loadMoreDoctors error: $e");
-
-      if (!mounted) return;
-
-      setState(() {
-        isDoctorsLoadingMore = false;
-      });
+      return;
     }
+
+    final error = locationProvider.locationError;
+
+    if (error == null) return;
+
+    if (error.toLowerCase().contains('device location') ||
+        error.toLowerCase().contains('turn on')) {
+      showLocationServiceDialog(context);
+      return;
+    }
+
+    showLocationPermissionDialog(
+      context: context,
+      message: error,
+    );
   }
 
   void onDoctorSearchChanged(String value) {
@@ -206,36 +127,31 @@ class _AppointmentTabState extends State<AppointmentTab> {
 
     _searchDebounce = Timer(const Duration(milliseconds: 500), () {
       doctorsSearch = value.trim();
-      fetchAppointmentPageData();
+
+      final locationProvider = context.read<LocationProvider>();
+
+      context.read<AppointmentProvider>().fetchAppointmentTabData(
+        search: doctorsSearch,
+        lat: locationProvider.lat,
+        lng: locationProvider.lng,
+      );
     });
-  }
-
-  Future<void> _logoutAndGoLogin() async {
-    final storage = SecureStorageService();
-
-    await storage.deleteToken();
-    await storage.deleteUser();
-
-    if (!mounted) return;
-
-    context.read<UserProvider>().clearUser();
-
-    Navigator.pushNamedAndRemoveUntil(
-      context,
-      AppRoutes.login,
-          (route) => false,
-    );
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    final provider = context.watch<BottomNavProvider>();
+    final bottomNavProvider = context.watch<BottomNavProvider>();
 
-    if (provider.shouldRefreshAppointments) {
-      fetchAppointmentPageData();
-      provider.doneRefresh();
+    if (bottomNavProvider.shouldRefreshAppointments) {
+      Future.microtask(() async {
+        await fetchAppointmentPageData();
+
+        if (!mounted) return;
+
+        context.read<BottomNavProvider>().doneRefresh();
+      });
     }
   }
 
@@ -246,78 +162,92 @@ class _AppointmentTabState extends State<AppointmentTab> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF7F8FA),
-      body: SafeArea(
-        child: isPageLoading
-            ? const AppointmentTabSkeleton()
-            : RefreshIndicator(
-          onRefresh: fetchAppointmentPageData,
-          child: SingleChildScrollView(
-            controller: _scrollController,
-            physics: const BouncingScrollPhysics(
-              parent: AlwaysScrollableScrollPhysics(),
-            ),
-            child: Column(
-              children: [
-                AppointmentsHeader(
-                  onPreviousTap: () {
-                    Navigator.pushNamed(
-                      context,
-                      AppRoutes.previousAppointmentScreen,
-                    );
-                  },
+    return Consumer2<AppointmentProvider, LocationProvider>(
+      builder: (context, appointmentProvider, locationProvider, _) {
+        final appointment = appointmentProvider.activeAppointment;
+        final doctors = appointmentProvider.availableDoctors;
+
+        return Scaffold(
+          backgroundColor: const Color(0xFFF7F8FA),
+          body: SafeArea(
+            child: appointmentProvider.isAppointmentTabLoading
+                ? const AppointmentTabSkeleton()
+                : RefreshIndicator(
+              onRefresh: fetchAppointmentPageData,
+              child: SingleChildScrollView(
+                controller: _scrollController,
+                physics: const BouncingScrollPhysics(
+                  parent: AlwaysScrollableScrollPhysics(),
                 ),
-
-                SizedBox(height: 16.h),
-
-                if (appointment.doctor?.name != null)
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16.w),
-                    child: AppointmentCard(
-                      doctorName: appointment.doctor?.name ?? "",
-                      specialty: appointment.doctor?.specialization ?? "",
-                      date: _formatDate(appointment.date),
-                      time: appointment.time ?? "",
-                      petName: appointment.pet?.name ?? "",
-                      petType: appointment.pet?.type ?? "",
-                      status: appointment.status ?? "",
-                      imagePath: appointment.doctor?.profilePic ?? "",
-                      onViewDetails: () async {
-                        if (appointment.id == null) return;
-
-                        final result = await Navigator.push(
+                child: Column(
+                  children: [
+                    AppointmentsHeader(
+                      onPreviousTap: () {
+                        Navigator.pushNamed(
                           context,
-                          MaterialPageRoute(
-                            builder: (_) => AppointmentDetails(
-                              appointmentId: appointment.id!,
-                            ),
-                          ),
+                          AppRoutes.previousAppointmentScreen,
                         );
-
-                        if (result == true) {
-                          await fetchAppointmentPageData();
-                        }
                       },
                     ),
-                  ),
 
-                if (appointment.doctor?.name != null)
-                  SizedBox(height: 24.h),
+                    SizedBox(height: 16.h),
 
-                AvailableDoctorsSection(
-                  doctors: doctors,
-                  isLoading: isDoctorsLoading,
-                  isLoadingMore: isDoctorsLoadingMore,
-                  onSearchChanged: onDoctorSearchChanged,
+                    if (appointment.doctor?.name != null)
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 16.w),
+                        child: AppointmentCard(
+                          doctorName: appointment.doctor?.name ?? "",
+                          specialty:
+                          appointment.doctor?.specialization ?? "",
+                          date: _formatDate(appointment.date),
+                          time: appointment.time ?? "",
+                          petName: appointment.pet?.name ?? "",
+                          petType: appointment.pet?.type ?? "",
+                          status: appointment.status ?? "",
+                          imagePath:
+                          appointment.doctor?.profilePic ?? "",
+                          onViewDetails: () async {
+                            if (appointment.id == null) return;
+
+                            final result = await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => AppointmentDetails(
+                                  appointmentId: appointment.id!,
+                                ),
+                              ),
+                            );
+
+                            if (result == true) {
+                              await fetchAppointmentPageData();
+                            }
+                          },
+                        ),
+                      ),
+
+                    if (appointment.doctor?.name != null)
+                      SizedBox(height: 24.h),
+
+                    AvailableDoctorsSection(
+                      doctors: doctors,
+                      isLoading: appointmentProvider.isDoctorsLoading,
+                      isLoadingMore:
+                      appointmentProvider.isDoctorsLoadingMore,
+                      onSearchChanged: onDoctorSearchChanged,
+                      hasLocation: locationProvider.hasLocation,
+                      isLocationLoading:
+                      locationProvider.isLoadingLocation,
+                      onEnableLocationTap: _enableLocationAndRefresh,
+                    ),
+
+                    SizedBox(height: 16.h),
+                  ],
                 ),
-
-                SizedBox(height: 16.h),
-              ],
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

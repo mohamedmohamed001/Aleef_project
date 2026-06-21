@@ -1,387 +1,214 @@
 import 'package:aleef/core/theme/app_colors.dart';
-import 'package:aleef/features/appointments/data/models/appointment_model.dart';
-import 'package:aleef/features/appointments/presentation/widgets/%D9%90appointment_details_card.dart';
-import 'package:aleef/features/appointments/presentation/widgets/appointment_status_chip.dart';
-import 'package:aleef/features/appointments/services/appointment_api.dart';
+import 'package:aleef/core/theme/app_text_styles.dart';
+import 'package:aleef/features/chat/presentation/pages/chat_details.dart';
+import 'package:aleef/features/home/presentation/provider/home_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 
-import '../../../../core/routing/app_routes.dart';
-import '../../../../core/services/secure_storage_service.dart';
-import '../../../../core/theme/app_text_styles.dart';
-import '../../../chat/presentation/pages/chat_details.dart';
 import '../provider/appointment_provider.dart';
-import '../widgets/appointment_time_line.dart';
-import '../widgets/cancel_appointment_sheet.dart';
+import '../widgets/appointment_details/appointment_details_action_buttons.dart';
+import '../widgets/appointment_details/appointment_details_doctor_header.dart';
+import '../widgets/appointment_details/appointment_details_error_state.dart';
+import '../widgets/appointment_details/appointment_details_loading_view.dart';
+import '../widgets/appointment_details/appointment_time_line.dart';
+import '../widgets/appointment_details/cancel_appointment_sheet.dart';
+import '../widgets/appointment_details/ِappointment_details_card.dart';
 
 class AppointmentDetails extends StatefulWidget {
   final String appointmentId;
 
-  const AppointmentDetails({super.key, required this.appointmentId});
+  const AppointmentDetails({
+    super.key,
+    required this.appointmentId,
+  });
 
   @override
   State<AppointmentDetails> createState() => _AppointmentDetailsState();
 }
 
 class _AppointmentDetailsState extends State<AppointmentDetails> {
-  AppointmentModel appointment = AppointmentModel();
-
-  Future<void> getAppointmentDetails() async {
-    final response = await AppointmentApi().getAppointmentDetails(
-      widget.appointmentId,
-    );
-
-    if (!mounted) return;
-
-    if (response["status"] == "success") {
-      setState(() {
-        appointment = AppointmentModel.fromJson(response["data"]);
-      });
-    } else if (response["status"] == "unauthorized") {
-      await SecureStorageService().deleteToken();
-      await SecureStorageService().deleteUser();
-
-      if (!mounted) return;
-
-      Navigator.pushNamedAndRemoveUntil(
-        context,
-        AppRoutes.login,
-            (route) => false,
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16.r),
-          ),
-          margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
-          elevation: 0,
-          duration: const Duration(seconds: 3),
-          dismissDirection: DismissDirection.horizontal,
-          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
-          content: Text(
-            "Something went wrong",
-            style: TextStyle(
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w600,
-              color: Colors.white,
-            ),
-          ),
-        ),
-      );
-    }
-  }
+  late AppointmentProvider _appointmentProvider;
 
   @override
   void initState() {
     super.initState();
-    getAppointmentDetails();
+
+    Future.microtask(() {
+      context.read<AppointmentProvider>().getAppointmentDetails(
+        widget.appointmentId,
+      );
+    });
   }
 
   @override
-  Widget build(BuildContext context) {
-    final String status = appointment.status?.toLowerCase() ?? "";
-    final bool isAccepted = status == "accepted";
-    final bool canCancel = status != "cancelled" && status != "completed";
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _appointmentProvider = context.read<AppointmentProvider>();
+  }
 
-    final String doctorName = appointment.doctor?.name ?? "";
-    final String doctorFirstName =
-    doctorName.trim().isEmpty ? "Doctor" : doctorName.split(" ").first;
+  @override
+  void dispose() {
+    _appointmentProvider.clearAppointmentDetails();
+    super.dispose();
+  }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'Appointment Details',
-          style: AppTextStyles.black16Bold.copyWith(fontSize: 20.sp),
-        ),
-      ),
-      body: appointment.id == null
-          ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
-        onRefresh: getAppointmentDetails,
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
-          child: Column(
-            children: [
-              Container(
-                width: double.infinity,
-                padding: EdgeInsets.all(18.r),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(28.r),
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      AppColors.primary,
-                      AppColors.primary.withOpacity(0.88),
-                    ],
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.primary.withOpacity(0.22),
-                      blurRadius: 18,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: EdgeInsets.all(3.r),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: Colors.white.withOpacity(0.45),
-                          width: 1.5.w,
-                        ),
-                      ),
-                      child: ClipOval(
-                        child: Image.network(
-                          appointment.doctor?.profilePic ?? "",
-                          width: 70.w,
-                          height: 70.w,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Container(
-                              width: 70.w,
-                              height: 70.w,
-                              color: Colors.white.withOpacity(0.18),
-                              child: Icon(
-                                Icons.person,
-                                color: Colors.white,
-                                size: 34.sp,
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    ),
+  Future<void> _refreshAppointmentDetails() async {
+    await context.read<AppointmentProvider>().getAppointmentDetails(
+      widget.appointmentId,
+    );
+  }
 
-                    SizedBox(width: 14.w),
+  Future<void> _cancelAppointment(String reason) async {
+    final provider = context.read<AppointmentProvider>();
+    final appointment = provider.appointmentDetails;
 
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            appointment.doctor?.name ?? "",
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 18.sp,
-                              fontWeight: FontWeight.w800,
-                              color: Colors.white,
-                            ),
-                          ),
+    if (appointment.id == null) return;
 
-                          SizedBox(height: 5.h),
+    final success = await provider.cancelAppointment(
+      appointmentId: appointment.id!,
+      reason: reason,
+    );
 
-                          Text(
-                            appointment.doctor?.specialization ?? "",
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 13.sp,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.white.withOpacity(0.85),
-                            ),
-                          ),
+    if (!mounted) return;
 
-                          SizedBox(height: 10.h),
+    if (success) {
+      await _refreshHomeAppointment();
 
-                          Wrap(
-                            spacing: 8.w,
-                            runSpacing: 8.h,
-                            children: [
-                              _DoctorInfoChip(
-                                icon: Icons.star_rounded,
-                                text: "4.5",
-                                iconColor: Colors.amber,
-                              ),
-                              _DoctorInfoChip(
-                                icon: Icons.location_on_rounded,
-                                text: appointment.doctor?.city ?? "-",
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+      if (!mounted) return;
 
-              SizedBox(height: 16.h),
+      _showSuccessSnackBar("Appointment cancelled successfully");
 
-              AppointmentDetailsCard(appointment: appointment),
+      await Future.delayed(const Duration(milliseconds: 500));
 
-              SizedBox(height: 16.h),
+      if (!mounted) return;
 
-              AppointmentTimeLine(appointment: appointment),
+      Navigator.pop(context, true);
+      return;
+    }
 
-              SizedBox(height: 16.h),
+    _showErrorSnackBar(
+      provider.cancelAppointmentError ?? "Something went wrong",
+    );
+  }
 
-              ElevatedButton(
-                onPressed: isAccepted
-                    ? () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => ChatDetails(
-                        chatId: appointment.chatId ?? '',
-                      ),
-                    ),
-                  );
-                }
-                    : null,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.chat_bubble_outline,
-                      color: isAccepted ? Colors.white : Colors.grey,
-                      size: 20.sp,
-                    ),
-                    SizedBox(width: 8.w),
-                    Text(
-                      "Chat with $doctorFirstName",
-                      style: TextStyle(
-                        color: isAccepted ? Colors.white : Colors.grey,
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+  Future<void> _refreshHomeAppointment() async {
+    try {
+      await context.read<HomeProvider>().fetchCurrentAppointment(
+        onUnauthorized: () async {},
+      );
+    } catch (error) {
+      debugPrint('Refresh home appointment after cancel error: $error');
+    }
+  }
 
-              SizedBox(height: 12.h),
+  void _openChat(String? chatId) {
+    if (chatId == null || chatId.isEmpty) {
+      _showErrorSnackBar("Chat is not available for this appointment");
+      return;
+    }
 
-              OutlinedButton(
-                onPressed: canCancel
-                    ? () {
-                  showCancelAppointmentSheet(
-                    context: context,
-                    onConfirm: (reason) async {
-                      final success = await context.read<AppointmentProvider>().cancelAppointment(
-                        appointmentId: appointment.id!,
-                        reason: reason,
-                      );
-
-                      if (!context.mounted) return;
-
-                      if (success) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: const Text("Appointment cancelled successfully"),
-                            backgroundColor: Colors.green,
-                            behavior: SnackBarBehavior.floating,
-                            duration: const Duration(seconds: 2),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14.r),
-                            ),
-                          ),
-                        );
-
-                        await Future.delayed(const Duration(milliseconds: 500));
-
-                        if (!context.mounted) return;
-                        Navigator.pop(context, true);
-                      } else {
-                        final error = context.read<AppointmentProvider>().cancelAppointmentError;
-
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(error ?? "Something went wrong"),
-                            backgroundColor: Colors.red,
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
-                      }
-                    },
-                  );
-                }
-                    : null,
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.red,
-                  disabledForegroundColor: Colors.grey,
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 12.w,
-                    vertical: 12.h,
-                  ),
-                  side: BorderSide(
-                    color: canCancel ? Colors.red : Colors.grey.shade300,
-                    width: 1.3.w,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14.r),
-                  ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.cancel_outlined,
-                      color: canCancel ? Colors.red : Colors.grey,
-                      size: 20.sp,
-                    ),
-                    SizedBox(width: 8.w),
-                    Text(
-                      "Cancel Appointment",
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w600,
-                        color: canCancel ? Colors.red : Colors.grey,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ChatDetails(
+          chatId: chatId,
         ),
       ),
     );
   }
-}
 
-class _DoctorInfoChip extends StatelessWidget {
-  final IconData icon;
-  final String text;
-  final Color? iconColor;
+  void _showCancelSheet() {
+    showCancelAppointmentSheet(
+      context: context,
+      onConfirm: _cancelAppointment,
+    );
+  }
 
-  const _DoctorInfoChip({
-    required this.icon,
-    required this.text,
-    this.iconColor,
-  });
+  void _showSuccessSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.green,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 2),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14.r),
+        ),
+      ),
+    );
+  }
+
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14.r),
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 9.w, vertical: 5.h),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.14),
-        borderRadius: BorderRadius.circular(30.r),
+    return Scaffold(
+      backgroundColor: const Color(0xFFF9FBFB),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        centerTitle: true,
+        iconTheme: const IconThemeData(color: Colors.black),
+        title: Text(
+          'Appointment Details',
+          style: AppTextStyles.black16Bold.copyWith(fontSize: 18.sp),
+        ),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 15.sp, color: iconColor ?? Colors.white),
-          SizedBox(width: 4.w),
-          Text(
-            text,
-            style: TextStyle(
-              fontSize: 12.sp,
-              fontWeight: FontWeight.w600,
-              color: Colors.white,
+      body: Consumer<AppointmentProvider>(
+        builder: (context, provider, _) {
+          if (provider.isAppointmentDetailsLoading) {
+            return const AppointmentDetailsLoadingView();
+          }
+
+          final appointment = provider.appointmentDetails;
+
+          if (appointment.id == null) {
+            return AppointmentDetailsErrorState(
+              message:
+              provider.appointmentDetailsError ?? "Something went wrong",
+              onRetry: _refreshAppointmentDetails,
+            );
+          }
+
+          return RefreshIndicator(
+            onRefresh: _refreshAppointmentDetails,
+            color: AppColors.primary,
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(
+                parent: BouncingScrollPhysics(),
+              ),
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+              child: Column(
+                children: [
+                  AppointmentDetailsDoctorHeader(appointment: appointment),
+                  SizedBox(height: 16.h),
+                  AppointmentDetailsCard(appointment: appointment),
+                  SizedBox(height: 16.h),
+                  AppointmentTimeLine(appointment: appointment),
+                  SizedBox(height: 24.h),
+                  AppointmentDetailsActionButtons(
+                    appointment: appointment,
+                    onChatTap: () => _openChat(appointment.chatId),
+                    onCancelTap: _showCancelSheet,
+                  ),
+                  SizedBox(height: 20.h),
+                ],
+              ),
             ),
-          ),
-        ],
+          );
+        },
       ),
     );
   }

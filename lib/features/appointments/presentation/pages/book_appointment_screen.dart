@@ -1,20 +1,26 @@
 import 'package:aleef/core/theme/app_colors.dart';
-import 'package:aleef/features/pets/data/models/pet_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:provider/provider.dart';
 
-import '../../../../core/routing/app_routes.dart';
-import '../../../../core/services/secure_storage_service.dart';
-import '../../../../core/theme/app_text_styles.dart';
-import '../../data/models/doctor_model.dart';
-import '../../data/models/scheduled_day_model.dart';
-import '../../services/appointment_api.dart';
+import '../provider/appointment_provider.dart';
+import '../widgets/book_appointment/book_big_card.dart';
+import '../widgets/book_appointment/book_bottom_summary_bar.dart';
+import '../widgets/book_appointment/book_date_selector.dart';
+import '../widgets/book_appointment/book_doctor_hero_card.dart';
+import '../widgets/book_appointment/book_pet_selector.dart';
+import '../widgets/book_appointment/book_reason_fields.dart';
+import '../widgets/book_appointment/book_review_card.dart';
+import '../widgets/book_appointment/book_time_selector.dart';
 import '../widgets/booking_success_view.dart';
 
 class BookAppointmentScreen extends StatefulWidget {
   final String doctorId;
 
-  const BookAppointmentScreen({super.key, required this.doctorId});
+  const BookAppointmentScreen({
+    super.key,
+    required this.doctorId,
+  });
 
   @override
   State<BookAppointmentScreen> createState() => _BookAppointmentScreenState();
@@ -23,521 +29,367 @@ class BookAppointmentScreen extends StatefulWidget {
 class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
   final TextEditingController reasonController = TextEditingController();
   final TextEditingController notesController = TextEditingController();
-  DoctorModel? doctor;
-  List<PetModel?> pets=[];
-  List<ScheduledDayModel> availableDays = [];
-  List<String> availableSlots = [];
-  String? petId;
-  bool isSubmitted=false;
 
-  bool isLoading = true;
-  int selectedIndex = 0;
+  String? selectedPetId;
+
+  bool isSubmitted = false;
+
+  int selectedDateIndex = 0;
   int selectedSlotIndex = 0;
-  bool isButtonLoading=false;
+
+  late AppointmentProvider _appointmentProvider;
 
   @override
   void initState() {
     super.initState();
-    getDoctorSchedule(widget.doctorId);
-    getPets();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<AppointmentProvider>().fetchBookAppointmentData(
+        widget.doctorId,
+      );
+    });
   }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _appointmentProvider = context.read<AppointmentProvider>();
+  }
+
   @override
   void dispose() {
     reasonController.dispose();
     notesController.dispose();
+    _appointmentProvider.clearBookingData();
     super.dispose();
   }
-Future<void> getPets() async{
-    final response= await AppointmentApi().getPets();
-    if (response["status"] == "success") {
-      final data = response["data"];
 
-
-      if (!mounted) return;
-      setState(() {
-
-
-        pets = (data as List<dynamic>).map((e) => PetModel.fromJson(e)).toList();
-      });
-    } else if (response["status"] == "unauthorized") {
-      setState(() {
-        isLoading = false;
-      });
-
-      SecureStorageService().deleteToken();
-      SecureStorageService().deleteUser();
-
-      if (!mounted) return;
-      Navigator.pushNamedAndRemoveUntil(
-        context,
-        AppRoutes.login,
-            (route) => false,
-      );
-    } else {
-
-
-      if (!mounted) return;
-      setState(() {
-        isLoading = false;
-      });
+  String? _getSelectedPetName(List<dynamic> pets) {
+    for (final pet in pets) {
+      if (pet.id.toString() == selectedPetId) {
+        return pet.name ?? "Your pet";
+      }
     }
 
-}
-  Future<void> getDoctorSchedule(String doctorId) async {
-    final response = await AppointmentApi().getDoctorSchedule(doctorId);
-
-
-
-    if (response["status"] == "success") {
-      final data = response["data"];
-
-      if (!mounted) return;
-
-      setState(() {
-        doctor = DoctorModel.fromJson(data["doctor"]);
-
-        availableDays = (data["schedual"] as List<dynamic>)
-            .map((e) => ScheduledDayModel.fromJson(e))
-            .toList();
-
-        availableSlots = List<String>.from(data["firstDaySlots"] ?? []);
-
-
-
-        isLoading = false;
-      });
-    } else if (response["status"] == "unauthorized") {
-      setState(() {
-        isLoading = false;
-      });
-
-      SecureStorageService().deleteToken();
-      SecureStorageService().deleteUser();
-
-      if (!mounted) return;
-      Navigator.pushNamedAndRemoveUntil(
-        context,
-        AppRoutes.login,
-        (route) => false,
-      );
-    } else {
-
-
-      if (!mounted) return;
-      setState(() {
-        isLoading = false;
-      });
-    }
+    return null;
   }
-  Future<void> bookAppointment() async {
-    setState(() {
-      isButtonLoading = true;
-    });
-    final selectedDay = availableDays[selectedIndex];
-    final selectedSlot = availableSlots[selectedSlotIndex];
-    final time = selectedSlot;
-    final reason = reasonController.text;
-    final notes = notesController.text;
-    if (petId == null) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Please select your pet"),
-          backgroundColor: Colors.red,
-        ),
-      );
-      setState(() {
-        isButtonLoading = false;
-      });
+
+  Future<void> _bookAppointment() async {
+    final provider = context.read<AppointmentProvider>();
+
+    final validationMessage = _validateBooking(provider);
+
+    if (validationMessage != null) {
+      _showError(validationMessage);
       return;
     }
-    if (reason.isEmpty || reason.length < 5 || reason.length > 100) {
-      if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Please enter a valid reason"),
-          backgroundColor: Colors.red,
-        ),
-      );
+    final reason = reasonController.text.trim();
+    final notes = notesController.text.trim();
 
-      setState(() {
-        isButtonLoading = false;
-      });
+    final selectedDay = provider.bookingAvailableDays[selectedDateIndex];
+    final selectedSlot = provider.bookingAvailableSlots[selectedSlotIndex];
 
-      return; // 👈 مهم جدًا
-    }
-    final response = await AppointmentApi().bookAppointment(
-      petId!,
-      widget.doctorId,
-      selectedDay.date,
-      time,
-      reason,
-      notes,
+    final success = await provider.bookAppointment(
+      petId: selectedPetId!,
+      doctorId: widget.doctorId,
+      date: selectedDay.date,
+      time: selectedSlot,
+      reason: reason,
+      notes: notes,
     );
-    if(response ["status"]=="success"){
-      if (!mounted) return;
-      setState(() {
-        isButtonLoading = false;
-        isSubmitted=true;
-      });
-    }else if(response["status"]=="unauthorized"){
-      setState(() {
-        isButtonLoading = false;
-      });
-      SecureStorageService().deleteToken();
-      SecureStorageService().deleteUser();
-      Navigator.pushNamedAndRemoveUntil(
-        context,
-        AppRoutes.login,
-        (route) => false,
-      );
-    }else{
-      setState(() {
-        isButtonLoading = false;
-      });
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(response["message"]),
-          backgroundColor: Colors.red,
-        ),
-      );
+
+    if (!mounted) return;
+
+    if (success) {
+      setState(() => isSubmitted = true);
+      return;
     }
+
+    _showError(provider.bookAppointmentError ?? "Something went wrong");
+  }
+
+  String? _validateBooking(AppointmentProvider provider) {
+    if (selectedPetId == null || selectedPetId!.isEmpty) {
+      return "Please select your pet";
+    }
+
+    if (provider.bookingAvailableDays.isEmpty) {
+      return "No available days";
+    }
+
+    if (selectedDateIndex < 0 ||
+        selectedDateIndex >= provider.bookingAvailableDays.length) {
+      return "Please select a valid day";
+    }
+
+    if (provider.bookingAvailableSlots.isEmpty) {
+      return "No available slots for this day";
+    }
+
+    if (selectedSlotIndex < 0 ||
+        selectedSlotIndex >= provider.bookingAvailableSlots.length) {
+      return "Please select a valid time";
+    }
+
+    final reason = reasonController.text.trim();
+
+    if (reason.isEmpty) {
+      return "Please enter the appointment reason";
+    }
+
+    if (reason.length < 5) {
+      return "Reason must be at least 5 characters";
+    }
+
+    if (reason.length > 100) {
+      return "Reason must be less than 100 characters";
+    }
+
+    return null;
+  }
+
+  Future<void> _onDateSelected({
+    required int index,
+    required AppointmentProvider provider,
+  }) async {
+    if (index < 0 || index >= provider.bookingAvailableDays.length) return;
+
+    final selectedDate = provider.bookingAvailableDays[index].date;
+
+    setState(() {
+      selectedDateIndex = index;
+      selectedSlotIndex = -1;
+    });
+
+    await context.read<AppointmentProvider>().fetchBookingSlotsByDate(
+      doctorId: widget.doctorId,
+      date: selectedDate,
+    );
+
+    if (!mounted) return;
+
+    final updatedSlots =
+        context.read<AppointmentProvider>().bookingAvailableSlots;
+
+    setState(() {
+      selectedSlotIndex = updatedSlots.isNotEmpty ? 0 : -1;
+    });
+  }
+
+  void _onTimeSelected(int index) {
+    setState(() {
+      selectedSlotIndex = index;
+    });
+  }
+
+  void _onPetSelected(String value) {
+    setState(() {
+      selectedPetId = value;
+    });
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14.r),
+        ),
+      ),
+    );
+  }
+
+  String _getSelectedDayText(AppointmentProvider provider) {
+    final availableDays = provider.bookingAvailableDays;
+
+    if (availableDays.isNotEmpty &&
+        selectedDateIndex >= 0 &&
+        selectedDateIndex < availableDays.length) {
+      return availableDays[selectedDateIndex].display;
+    }
+
+    return "Not selected";
+  }
+
+  String _getSelectedTimeText(AppointmentProvider provider) {
+    final availableSlots = provider.bookingAvailableSlots;
+
+    if (availableSlots.isNotEmpty &&
+        selectedSlotIndex >= 0 &&
+        selectedSlotIndex < availableSlots.length) {
+      return availableSlots[selectedSlotIndex];
+    }
+
+    return "Not selected";
   }
 
   @override
   Widget build(BuildContext context) {
-    if (isLoading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
-    if(isSubmitted){
-      return BookingSuccessView();
-    }
-    return Scaffold(
-      appBar: AppBar(title: const Text("Book Appointment")),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+    return Consumer<AppointmentProvider>(
+      builder: (context, provider, child) {
+        final doctor = provider.bookingDoctor;
+        final pets = provider.bookingPets;
+        final availableDays = provider.bookingAvailableDays;
+        final availableSlots = provider.bookingAvailableSlots;
+
+        if (provider.isBookingDataLoading) {
+          return Scaffold(
+            backgroundColor: const Color(0xFFF7F9F9),
+            body: Center(
+              child: CircularProgressIndicator(
+                color: AppColors.primary,
+              ),
+            ),
+          );
+        }
+
+        if (isSubmitted) {
+          return const BookingSuccessView();
+        }
+
+        if (provider.bookingDataError != null) {
+          return _BookingErrorView(
+            message: provider.bookingDataError!,
+          );
+        }
+
+        final selectedDayText = _getSelectedDayText(provider);
+        final selectedTimeText = _getSelectedTimeText(provider);
+        final selectedPetName = _getSelectedPetName(pets);
+
+        return Scaffold(
+          backgroundColor: const Color(0xFFF7F9F9),
+          appBar: AppBar(
+            title: const Text("Book Appointment"),
+            centerTitle: true,
+            elevation: 0,
+            backgroundColor: const Color(0xFFF7F9F9),
+            foregroundColor: Colors.black,
+          ),
+          bottomNavigationBar: BookBottomSummaryBar(
+            fee: "${doctor?.appointmentFee ?? 0} EGP",
+            isLoading: provider.isBookAppointmentLoading,
+            onPressed: _bookAppointment,
+          ),
+          body: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            padding: EdgeInsets.fromLTRB(18.w, 10.h, 18.w, 120.h),
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(20.r),
-                  child: Image.network(
-                    doctor?.profilePic ?? '',
-                    width: 65.w,
-                    height: 65.w,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        width: 65.w,
-                        height: 65.w,
-                        color: Colors.grey.shade200,
-                        child: Icon(
-                          Icons.person,
-                          color: Colors.grey,
-                          size: 28.sp,
-                        ),
-                      );
-                    },
+                BookDoctorHeroCard(
+                  image: doctor?.profilePic ?? "",
+                  name: doctor?.name ?? "",
+                  specialization: doctor?.specialization ?? "",
+                  city: doctor?.city ?? "",
+                  rating: "${doctor?.rating ?? 0}",
+                ),
+                SizedBox(height: 18.h),
+                BookBigCard(
+                  emoji: "🐾",
+                  title: "Pet",
+                  value: selectedPetName ?? "Choose your pet",
+                  child: BookPetSelector(
+                    pets: pets,
+                    selectedPetId: selectedPetId,
+                    onPetSelected: _onPetSelected,
                   ),
                 ),
-                SizedBox(width: 12.w),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        doctor?.name ?? "",
-                        style: AppTextStyles.titleLarge.copyWith(
-                          fontSize: 20.sp,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      SizedBox(height: 2.h),
-
-                          Text(
-                            doctor?.specialization ?? "",
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-
-                      SizedBox(height: 4.h),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.star,
-                            color: AppColors.primary,
-                            size: 16.sp,
-                          ),
-                          SizedBox(width: 4.w),
-                          Text("${doctor?.rating ?? 0}"),
-                          SizedBox(width: 8.w),
-                          Icon(
-                            Icons.location_on_outlined,
-                            size: 16.sp,
-                            color: Colors.grey,
-                          ),
-                          SizedBox(width: 2.w),
-                          Expanded(
-                            child: Text(
-                              doctor?.city ?? "",
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          Spacer(),
-                          Text(
-                            "${doctor?.appointmentFee ?? 0} \EGP",
-                            style: TextStyle(
-                              fontSize: 16.sp,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.primary, // أو Colors.green
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 24.h),
-
-            Text(
-              "Select Date",
-              style: AppTextStyles.titleLarge.copyWith(fontSize: 18.sp),
-            ),
-            SizedBox(height: 12.h),
-
-            SizedBox(
-              height: 90.h,
-              child: availableDays.isEmpty
-                  ? Center(
-                      child: Text(
-                        "No available days",
-                        style: TextStyle(color: Colors.red, fontSize: 16.sp),
-                      ),
-                    )
-                  : ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: availableDays.length,
-                      separatorBuilder: (_, __) => SizedBox(width: 8.w),
-                      itemBuilder: (context, index) {
-                        final item = availableDays[index];
-                        final isSelected = selectedIndex == index;
-
-                        final parts = item.display.split(" ");
-                        final day = parts.isNotEmpty ? parts[0] : "";
-                        final date = parts.length >= 3 ? parts[2] : "";
-
-                        return GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              selectedIndex = index;
-                            });
-                          },
-                          child: Container(
-                            width: 60.w,
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(
-                              color: isSelected
-                                  ? AppColors.primary
-                                  : Colors.white,
-                              borderRadius: BorderRadius.circular(18.r),
-                              border: Border.all(
-                                color: isSelected
-                                    ? AppColors.primary
-                                    : Colors.grey.shade400,
-                                width: 1.2,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.05),
-                                  blurRadius: 10.r,
-                                  offset: Offset(0, 4.h),
-                                ),
-                              ],
-                            ),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  day,
-                                  style: TextStyle(
-                                    fontSize: 12.sp,
-                                    fontWeight: FontWeight.w500,
-                                    color: isSelected
-                                        ? Colors.white
-                                        : Colors.grey,
-                                  ),
-                                ),
-                                SizedBox(height: 6.h),
-                                Text(
-                                  date,
-                                  style: TextStyle(
-                                    fontSize: 18.sp,
-                                    fontWeight: FontWeight.bold,
-                                    color: isSelected
-                                        ? Colors.white
-                                        : Colors.black,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
+                SizedBox(height: 14.h),
+                BookBigCard(
+                  emoji: "📅",
+                  title: "Date",
+                  value: selectedDayText,
+                  child: BookDateSelector(
+                    availableDays: availableDays,
+                    selectedIndex: selectedDateIndex,
+                    onDateSelected: (index) => _onDateSelected(
+                      index: index,
+                      provider: provider,
                     ),
-            ),
-
-            SizedBox(height: 24.h),
-
-            Text(
-              "Available Time Slots",
-              style: AppTextStyles.titleLarge.copyWith(fontSize: 18.sp),
-            ),
-            SizedBox(height: 12.h),
-
-            availableSlots.isEmpty
-                ? Center(
-                    child: Text(
-                      "No available slots",
-                      style: TextStyle(color: Colors.red, fontSize: 16.sp),
+                  ),
+                ),
+                SizedBox(height: 14.h),
+                BookBigCard(
+                  emoji: "⏰",
+                  title: "Time",
+                  value: selectedTimeText,
+                  child: provider.isBookingSlotsLoading
+                      ? Padding(
+                    padding: EdgeInsets.symmetric(vertical: 18.h),
+                    child: Center(
+                      child: SizedBox(
+                        width: 24.w,
+                        height: 24.w,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.4,
+                          color: AppColors.primary,
+                        ),
+                      ),
                     ),
                   )
-                : SizedBox(
-                    height: 110.h,
-                    child: GridView.builder(
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: availableSlots.length > 8
-                          ? 8
-                          : availableSlots.length,
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 4,
-                        crossAxisSpacing: 10.w,
-                        mainAxisSpacing: 10.h,
-                        childAspectRatio: 1.9,
-                      ),
-                      itemBuilder: (context, index) {
-                        final slot = availableSlots[index];
-                        final isSelected = selectedSlotIndex == index;
-
-                        return GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              selectedSlotIndex = index;
-                            });
-                          },
-                          child: Container(
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(
-                              color: isSelected
-                                  ? AppColors.primary
-                                  : Colors.white,
-                              borderRadius: BorderRadius.circular(14.r),
-                              border: Border.all(
-                                color: isSelected
-                                    ? AppColors.primary
-                                    : Colors.grey.shade400,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.05),
-                                  blurRadius: 8.r,
-                                  offset: Offset(0, 3.h),
-                                ),
-                              ],
-                            ),
-                            child: Text(
-                              slot,
-                              style: TextStyle(
-                                fontSize: 13.sp,
-                                fontWeight: FontWeight.w600,
-                                color: isSelected
-                                    ? Colors.white
-                                    : Colors.black87,
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
+                      : BookTimeSelector(
+                    availableSlots: availableSlots,
+                    selectedSlotIndex: selectedSlotIndex,
+                    onTimeSelected: _onTimeSelected,
                   ),
-            SizedBox(height: 24.h),
-            Text(
-              "Booking Details",
-              style: AppTextStyles.titleLarge.copyWith(fontSize: 18.sp),
-            ),
-            SizedBox(height: 12.h),
-            DropdownButtonFormField(
-              hint: Text("Select your pet"),
-              items: [
-                DropdownMenuItem(
-                  value: null,
-                  child: Text("Select your pet"),
                 ),
-                ...pets.map((pet) {
-                  return DropdownMenuItem(
-                    value: pet?.id.toString() ?? "",
-                    child: Text(pet?.name ?? ""),
-                  );
-                }).toList(),
+                SizedBox(height: 14.h),
+                BookBigCard(
+                  emoji: "📝",
+                  title: "Reason",
+                  value: "Tell the doctor what happened",
+                  child: BookReasonFields(
+                    reasonController: reasonController,
+                    notesController: notesController,
+                  ),
+                ),
+                SizedBox(height: 14.h),
+                BookReviewCard(
+                  pet: selectedPetName ?? "Not selected",
+                  date: selectedDayText,
+                  time: selectedTimeText,
+                  fee: "${doctor?.appointmentFee ?? 0} EGP",
+                ),
               ],
-              onChanged: (value) {
-                setState(() {
-                  petId = value;
-                });
-              },
             ),
-            SizedBox(height: 12.h),
-            Text("Reason for Visit"),
-            SizedBox(height: 12.h),
-            TextFormField(
-              controller: reasonController,
-              decoration: InputDecoration(
-                hintText: "e.g. Annual checkup, vaccination...",
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12.r),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12.r),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
-                ),
-              ),
-            ),
-            SizedBox(height: 12.h),
-            Text("Additional Notes (optional)"),
-            SizedBox(height: 12.h,),
-            TextFormField(
-              controller:notesController,
-              decoration: InputDecoration(
-                hintText: "Any additional info for the doctor...",
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12.r),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
-                ),
-              ),
-              maxLines: 3,
-            ),
-            SizedBox(height: 24.h,),
-            ElevatedButton(
-                onPressed: isButtonLoading == true? null:
-                    () {
-              bookAppointment();
+          ),
+        );
+      },
+    );
+  }
+}
 
-            }, child: isButtonLoading == true ? CircularProgressIndicator(
-              color: AppColors.primary,
-              strokeWidth: 2.sp,
-            ) :
-            Text("Book Appointment")),
-            SizedBox(height: 24.h,)
-          ],
+class _BookingErrorView extends StatelessWidget {
+  final String message;
+
+  const _BookingErrorView({
+    required this.message,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF7F9F9),
+      appBar: AppBar(
+        title: const Text("Book Appointment"),
+        centerTitle: true,
+      ),
+      body: Center(
+        child: Padding(
+          padding: EdgeInsets.all(24.w),
+          child: Text(
+            message,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.red,
+              fontSize: 16.sp,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
         ),
       ),
     );

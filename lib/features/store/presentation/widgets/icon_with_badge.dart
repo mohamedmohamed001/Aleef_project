@@ -17,14 +17,16 @@ class IconWithBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool showBadge = count.isNotEmpty && count != '0';
+
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Padding(
         padding: EdgeInsets.symmetric(horizontal: 6.w),
         child: SizedBox(
-          width: 32.w,
-          height: 32.h,
+          width: 32.r,
+          height: 32.r,
           child: Stack(
             clipBehavior: Clip.none,
             children: [
@@ -32,39 +34,36 @@ class IconWithBadge extends StatelessWidget {
                 child: Icon(
                   icon,
                   color: const Color(0xFF2D3E4E),
-                  size: 24, // ثابت عشان ميصغرش زيادة
+                  size: 24.sp,
                 ),
               ),
 
-              /// 🔴 Badge
-              if (count.isNotEmpty)
+              if (showBadge)
                 Positioned(
-                  right: -2.w,
-                  top: -2.h,
+                  right: -3.w,
+                  top: -4.h,
                   child: Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 4.w,
-                      vertical: 2.h,
-                    ),
                     constraints: BoxConstraints(
-                      minWidth: 14.w,
-                      minHeight: 14.h,
+                      minWidth: 16.r,
+                      minHeight: 16.r,
                     ),
+                    padding: EdgeInsets.symmetric(horizontal: 4.w),
                     decoration: BoxDecoration(
                       color: badgeColor,
                       borderRadius: BorderRadius.circular(20.r),
                       border: Border.all(
                         color: Colors.white,
-                        width: 1.5,
+                        width: 1.5.w,
                       ),
                     ),
                     alignment: Alignment.center,
                     child: Text(
                       count,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: Colors.white,
-                        fontSize: 9,
-                        fontWeight: FontWeight.bold,
+                        fontSize: 8.5.sp,
+                        fontWeight: FontWeight.w900,
+                        height: 1,
                       ),
                     ),
                   ),

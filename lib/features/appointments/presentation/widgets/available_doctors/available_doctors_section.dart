@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../../data/models/doctor_model.dart';
 import '../../pages/doctor_details_screen.dart';
+import '../location/enable_location_card.dart';
 import 'doctor_card.dart';
 import 'doctor_search_field.dart';
 
@@ -13,11 +14,18 @@ class AvailableDoctorsSection extends StatelessWidget {
   final void Function(String search) onSearchChanged;
   final bool isLoading;
 
+  final bool hasLocation;
+  final bool isLocationLoading;
+  final VoidCallback onEnableLocationTap;
+
   const AvailableDoctorsSection({
     super.key,
     required this.doctors,
     required this.onSearchChanged,
     required this.isLoading,
+    required this.hasLocation,
+    required this.isLocationLoading,
+    required this.onEnableLocationTap,
     this.isLoadingMore = false,
   });
 
@@ -74,6 +82,17 @@ class AvailableDoctorsSection extends StatelessWidget {
             ),
           ),
 
+          if (!hasLocation) SizedBox(height: 12.h),
+
+          if (!hasLocation)
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.w),
+              child: EnableLocationCard(
+                isLoading: isLocationLoading,
+                onTap: onEnableLocationTap,
+              ),
+            ),
+
           SizedBox(height: 16.h),
 
           if (isLoading)
@@ -104,8 +123,8 @@ class AvailableDoctorsSection extends StatelessWidget {
                     Container(
                       width: 54.r,
                       height: 54.r,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFEFF7F6),
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFEFF7F6),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
@@ -144,7 +163,7 @@ class AvailableDoctorsSection extends StatelessWidget {
                 itemCount: doctors.length,
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                separatorBuilder: (_, __) => SizedBox(height: 12.h),
+                separatorBuilder: (_, _) => SizedBox(height: 12.h),
                 itemBuilder: (context, index) {
                   final doctor = doctors[index];
 

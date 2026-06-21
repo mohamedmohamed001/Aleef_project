@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:aleef/core/constants/api_constant.dart';
 import 'package:aleef/core/services/secure_storage_service.dart';
 import 'package:aleef/core/services/service_locator.dart';
@@ -10,8 +11,11 @@ class SocketService {
   factory SocketService() => _instance;
 
   SocketService._internal();
-
+  VoidCallback? onSocketConnected;
+  VoidCallback? onSocketReconnected;
   io.Socket? _socket;
+
+  void Function(Map<String, dynamic> data)? onNotificationReceived;
 
   io.Socket? get socket => _socket;
 
@@ -29,6 +33,7 @@ class SocketService {
         token: doctorToken,
         userId: doctor.id as String,
       );
+      await _waitForConnection();
       return;
     }
 
@@ -41,10 +46,31 @@ class SocketService {
         token: userToken,
         userId: user.id,
       );
+      await _waitForConnection();
       return;
     }
 
     debugPrint('❌ Socket connectCurrentSession failed: no session found');
+  }
+
+  Future<void> _waitForConnection() async {
+    if (_socket == null) return;
+    if (_socket!.connected) return;
+
+    final completer = Completer<void>();
+
+    _socket!.once('connect', (_) {
+      if (!completer.isCompleted) completer.complete();
+    });
+
+    _socket!.once('connect_error', (_) {
+      if (!completer.isCompleted) completer.complete();
+    });
+
+    await completer.future.timeout(
+      const Duration(seconds: 5),
+      onTimeout: () {},
+    );
   }
 
   void connect({
@@ -79,8 +105,9 @@ class SocketService {
         'userId': userId,
       })
           .enableReconnection()
-          .setReconnectionAttempts(5)
+          .setReconnectionAttempts(double.infinity)
           .setReconnectionDelay(1000)
+          .setReconnectionDelayMax(5000)
           .build(),
     );
 
@@ -92,6 +119,12 @@ class SocketService {
     emitWhenConnected('join_chat', {
       'chatId': chatId,
     });
+  }
+
+  void listenNotifications({
+    required void Function(Map<String, dynamic> data) onNotification,
+  }) {
+    onNotificationReceived = onNotification;
   }
 
   void emit(String event, dynamic data) {
@@ -107,8 +140,6 @@ class SocketService {
 
     _socket?.emit(event, data);
   }
-
-
 
   void emitWhenConnected(String event, dynamic data) {
     if (isConnected) {
@@ -162,6 +193,7 @@ class SocketService {
       ..off('disconnect')
       ..off('connect_error')
       ..off('error')
+      ..off('notification')
       ..disconnect()
       ..dispose();
 
@@ -169,8 +201,30 @@ class SocketService {
   }
 
   void _bindDefaultListeners() {
+    _socket?.onAny((event, data) {
+      debugPrint('📩 SOCKET EVENT: $event');
+      debugPrint('📩 SOCKET DATA: $data');
+    });
+
     _socket?.onConnect((_) {
       debugPrint('✅ Socket connected: ${_socket?.id}');
+      onSocketConnected?.call();
+    });
+
+    _socket?.onReconnect((_) {
+      debugPrint('🔁 Socket reconnected: ${_socket?.id}');
+      onSocketReconnected?.call();
+    });
+
+    _socket?.off('notification');
+    _socket?.on('notification', (data) {
+      debugPrint('🔥 Socket notification listener received: $data');
+
+      if (data is Map) {
+        onNotificationReceived?.call(
+          Map<String, dynamic>.from(data),
+        );
+      }
     });
 
     _socket?.onDisconnect((data) {

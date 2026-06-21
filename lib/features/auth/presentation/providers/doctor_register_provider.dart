@@ -1,4 +1,5 @@
 import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:aleef/features/auth/data/services/doctor_auth_api_service.dart';
 
@@ -23,6 +24,10 @@ class DoctorRegisterProvider extends ChangeNotifier {
     required File NationalIdBack,
     required File IdentityVerificationImage,
     required String password,
+
+    // Clinic location
+    required double latitude,
+    required double longitude,
   }) async {
     if (isLoading) return false;
 
@@ -34,25 +39,32 @@ class DoctorRegisterProvider extends ChangeNotifier {
         name: name,
         email: email,
         phone: phone,
-        licenseNumber: licenseNumber, // سيرفر متوقع license_number
+        licenseNumber: licenseNumber,
         city: city,
         address: address,
         specialization: specialization,
-        appointmentFee: appointmentFee, // number
+        appointmentFee: appointmentFee,
         profilePic: profilePic,
         NationalIdFront: NationalIdFront,
         NationalIdBack: NationalIdBack,
         IdentityVerificationImage: IdentityVerificationImage,
         password: password,
+
+        // Clinic location
+        latitude: latitude,
+        longitude: longitude,
       );
 
       isLoading = false;
       notifyListeners();
+
       return success;
     } catch (e) {
       isLoading = false;
       notifyListeners();
+
       debugPrint("Doctor registration error: $e");
+
       return false;
     }
   }

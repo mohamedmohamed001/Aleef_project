@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 
 import '../../../core/constants/api_constant.dart';
@@ -106,6 +108,7 @@ class ChatApi {
 
         return {
           'status': 'success',
+          'chatId': responseData['chatId'],
           'messages': responseData['messages'] is List
               ? responseData['messages']
               : [],
@@ -130,13 +133,70 @@ class ChatApi {
     }
   }
 
-  Future<Options> _authOptions() async {
+  Future<Map<String, dynamic>> uploadChatbotImage(File imageFile) async {
+    try {
+      final fileName = imageFile.path.split('/').last;
+
+      final formData = FormData.fromMap({
+        'image': await MultipartFile.fromFile(
+          imageFile.path,
+          filename: fileName,
+        ),
+      });
+
+      final response = await _dio.post(
+        '/chats/chatbot/image',
+        data: formData,
+        options: await _authOptions(
+          contentType: Headers.multipartFormDataContentType,
+        ),
+      );
+
+      if (_isSuccess(response.statusCode)) {
+        final responseData = _asMap(response.data);
+
+        if (responseData['status'] == 'success' &&
+            responseData['image'] != null) {
+          return {
+            'status': 'success',
+            'image': responseData['image'].toString(),
+          };
+        }
+
+        return {
+          'status': 'error',
+          'message': responseData['message']?.toString() ??
+              'Image uploaded but URL not found',
+        };
+      }
+
+      if (_isUnauthorized(response.statusCode)) {
+        return {'status': 'unauthorized'};
+      }
+
+      return {
+        'status': 'error',
+        'message': _errorMessage(response.data),
+      };
+    } on DioException catch (e) {
+      return _handleDioError(e);
+    } catch (e) {
+      return {
+        'status': 'error',
+        'message': e.toString(),
+      };
+    }
+  }
+
+  Future<Options> _authOptions({String? contentType}) async {
     final token = await _storage.getToken();
-    final doctorToken= await _storage.getDoctorToken();
+    final doctorToken = await _storage.getDoctorToken();
 
     return Options(
+      contentType: contentType,
       headers: {
         'Authorization': 'Bearer ${token ?? doctorToken ?? ''}',
+        'Accept': 'application/json',
       },
     );
   }
@@ -173,7 +233,9 @@ class ChatApi {
 
     return {
       'status': 'error',
-      'message': e.message ?? 'Network error',
+      'message': e.response?.data is Map<String, dynamic>
+          ? _errorMessage(e.response?.data)
+          : e.message ?? 'Network error',
     };
   }
 }

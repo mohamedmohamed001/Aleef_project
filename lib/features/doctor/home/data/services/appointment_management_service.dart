@@ -1,11 +1,10 @@
 import 'package:aleef/core/constants/api_constant.dart';
+import 'package:aleef/core/services/secure_storage_service.dart';
 import 'package:dio/dio.dart';
- // افترضي وجود ملف للـ BaseUrl
 
 class AppointmentManagementService {
   final Dio _dio;
 
-  // نقوم باستقبال Dio في الكونستركتور (يفضل حقنها عبر GetIt)
   AppointmentManagementService(this._dio);
 
   Future<Map<String, dynamic>> endAppointment({
@@ -13,22 +12,52 @@ class AppointmentManagementService {
     required FormData formData,
   }) async {
     try {
-      // تنفيذ الـ PATCH Request
+      final storage = SecureStorageService();
+      final token = await storage.getDoctorToken();
+
+      if (token == null || token.toString().isEmpty) {
+        return {
+          "status": "error",
+          "message": "Doctor token not found",
+        };
+      }
+
       final response = await _dio.patch(
         "${ApiConstant.baseUrl}/appointments/end-appointment/$appointmentId",
         data: formData,
+        options: Options(
+          headers: {
+            "Authorization": "Bearer $token",
+            "Accept": "application/json",
+          },
+        ),
       );
 
-      // إرجاع النتيجة
       return {
         "status": "success",
         "data": response.data,
       };
     } on DioException catch (e) {
-      // معالجة الأخطاء
+      final responseData = e.response?.data;
+
+      String message = "حدث خطأ غير متوقع";
+
+      if (responseData is Map<String, dynamic>) {
+        message = responseData["message"]?.toString() ??
+            responseData["error"]?.toString() ??
+            message;
+      } else if (responseData != null) {
+        message = responseData.toString();
+      }
+
       return {
         "status": "error",
-        "message": e.response?.data['message'] ?? "حدث خطأ غير متوقع",
+        "message": message,
+      };
+    } catch (e) {
+      return {
+        "status": "error",
+        "message": e.toString().replaceAll("Exception:", "").trim(),
       };
     }
   }

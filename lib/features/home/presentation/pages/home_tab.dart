@@ -1,26 +1,25 @@
 import 'package:aleef/core/routing/app_routes.dart';
 import 'package:aleef/core/services/secure_storage_service.dart';
 import 'package:aleef/core/services/service_locator.dart';
-import 'package:aleef/core/services/session_service.dart';
 import 'package:aleef/core/theme/app_colors.dart';
-import 'package:aleef/features/appointments/data/models/appointment_model.dart';
 import 'package:aleef/features/appointments/presentation/pages/appointment_details.dart';
-import 'package:aleef/features/appointments/services/appointment_api.dart';
-import 'package:aleef/features/home/presentation/widgets/home_content_panel.dart';
+import 'package:aleef/features/home/presentation/provider/home_provider.dart';
+import 'package:aleef/features/home/presentation/widgets/home_body.dart';
 import 'package:aleef/features/home/presentation/widgets/home_products_section.dart';
-import 'package:aleef/features/home/presentation/widgets/home_section_title.dart';
-import 'package:aleef/features/home/presentation/widgets/home_top_section.dart';
-import 'package:aleef/features/home/presentation/widgets/quick_action_section.dart';
-import 'package:aleef/features/home/presentation/widgets/upcoming_appointment_section.dart';
+import 'package:aleef/features/home/presentation/widgets/home_tab_skeleton.dart';
+import 'package:aleef/features/home/presentation/widgets/pet_switcher_bottom_sheet.dart';
+import 'package:aleef/features/pets/data/models/pet_model.dart';
+import 'package:aleef/features/pets/presentation/manager/pets_provider.dart';
 import 'package:aleef/features/pets/presentation/pages/pet_profile_screen.dart';
+import 'package:aleef/features/profile/presentation/manager/profile_provider.dart';
+import 'package:aleef/features/profile/presentation/pages/profile_screen.dart';
 import 'package:aleef/features/store/presentation/pages/details_screen.dart';
+import 'package:aleef/features/store/services/store_provider.dart';
 import 'package:aleef/providers/bottom_nav_provider.dart';
 import 'package:aleef/providers/user_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
-
-import '../../../pets/presentation/manager/pets_provider.dart';
-import '../../../store/services/store_provider.dart';
 
 class HomeTab extends StatefulWidget {
   const HomeTab({super.key});
@@ -30,111 +29,35 @@ class HomeTab extends StatefulWidget {
 }
 
 class _HomeTabState extends State<HomeTab> {
-  AppointmentModel appointment = AppointmentModel();
-
-  final SessionService session = getIt<SessionService>();
-
-  bool isAppointmentLoading = true;
-
   @override
   void initState() {
     super.initState();
-    _initHome();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initHome();
+    });
   }
 
   Future<void> _initHome() async {
-    await _initSession();
+    final homeProvider = context.read<HomeProvider>();
 
-    await Future.wait([
-      fetchCurrentAppointment(),
-      fetchPets(),
-      fetchProducts(),
-    ]);
+    await homeProvider.initHome(
+      userProvider: context.read<UserProvider>(),
+      petsProvider: context.read<PetsProvider>(),
+      storeProvider: context.read<StoreProvider>(),
+      onUnauthorized: _logoutAndGoLogin,
+    );
   }
 
-  Future<void> _initSession() async {
-    final storage = getIt<SecureStorageService>();
-    final user = await storage.getUser();
-    final token = await storage.getToken();
+  Future<void> _refreshHome() async {
+    final homeProvider = context.read<HomeProvider>();
 
-    if (user != null && token != null && token.isNotEmpty) {
-      session.setSession(user: user, tokenValue: token);
-
-      if (!mounted) return;
-      context.read<UserProvider>().setUser(user);
-    }
-
-    if (!mounted) return;
-    setState(() {});
-  }
-
-  Future<void> fetchPets() async {
-    final storage = getIt<SecureStorageService>();
-    final token = await storage.getToken();
-
-    if (token == null || token.isEmpty) return;
-    if (!mounted) return;
-
-    try {
-      await context.read<PetsProvider>().getAllPets(token);
-    } catch (_) {
-      // Prevent home from crashing if pets API fails.
-    }
-  }
-
-  Future<void> fetchProducts() async {
-    if (!mounted) return;
-
-    try {
-      await context.read<StoreProvider>().getAllProducts();
-    } catch (_) {
-      // Prevent home from crashing if products API fails.
-    }
-  }
-
-  Future<void> fetchCurrentAppointment() async {
-    if (!mounted) return;
-
-    setState(() {
-      isAppointmentLoading = true;
-    });
-
-    try {
-      final response = await AppointmentApi().getActiveAppointment();
-
-      debugPrint('Active appointment response: $response');
-
-      if (!mounted) return;
-
-      if (response['status'] == 'success') {
-        setState(() {
-          appointment = (response['data'] != null
-              ? AppointmentModel.fromJson(
-            response['data'] as Map<String, dynamic>,
-          )
-              : null)!;
-
-          isAppointmentLoading = false;
-        });
-      } else if (response['status'] == 'unauthorized') {
-        await _logoutAndGoLogin();
-      } else {
-        setState(() {
-          appointment = AppointmentModel();
-          isAppointmentLoading = false;
-        });
-      }
-    } catch (e, stackTrace) {
-      debugPrint('fetchCurrentAppointment error: $e');
-      debugPrint('stack: $stackTrace');
-
-      if (!mounted) return;
-
-      setState(() {
-        appointment = AppointmentModel();
-        isAppointmentLoading = false;
-      });
-    }
+    await homeProvider.refreshHome(
+      userProvider: context.read<UserProvider>(),
+      petsProvider: context.read<PetsProvider>(),
+      storeProvider: context.read<StoreProvider>(),
+      onUnauthorized: _logoutAndGoLogin,
+    );
   }
 
   Future<void> _logoutAndGoLogin() async {
@@ -154,123 +77,188 @@ class _HomeTabState extends State<HomeTab> {
     );
   }
 
+  void _openProfile() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const ProfileTab(
+          showBackButton: true,
+        ),
+      ),
+    );
+  }
+
+  void _openChatBot() {
+    Navigator.pushNamed(context, AppRoutes.chatBotScreen);
+  }
+
+  void _openAddPet() {
+    Navigator.pushNamed(context, AppRoutes.addPet);
+  }
+
+  void _openSelectedPetProfile(PetModel? selectedPet) {
+    if (selectedPet == null) return;
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PetProfileScreen(
+          pet: selectedPet,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openAppointmentDetails() async {
+    final appointmentId = context.read<HomeProvider>().appointment.id;
+
+    if (appointmentId == null || appointmentId.isEmpty) return;
+
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AppointmentDetails(
+          appointmentId: appointmentId,
+        ),
+      ),
+    );
+
+    if (!mounted) return;
+
+    if (result == true) {
+      await context.read<HomeProvider>().fetchCurrentAppointment(
+        onUnauthorized: _logoutAndGoLogin,
+      );
+    }
+  }
+
+  void _openProductDetails(HomeProductData product) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ProductDetails(
+          productId: product.id,
+        ),
+      ),
+    );
+  }
+
+  void _goToAppointmentsTab() {
+    context.read<BottomNavProvider>().changeTab(1);
+  }
+
+  void _goToStoreTab() {
+    context.read<BottomNavProvider>().changeTab(3);
+  }
+
+  void _handlePetCardTap({
+    required List<PetModel> pets,
+    required PetModel? selectedPet,
+  }) {
+    if (pets.isEmpty) {
+      _openAddPet();
+      return;
+    }
+
+    if (pets.length == 1) {
+      _openSelectedPetProfile(selectedPet);
+      return;
+    }
+
+    _showPetSwitcherSheet(pets);
+  }
+
+  void _showPetSwitcherSheet(List<PetModel> pets) {
+    final homeProvider = context.read<HomeProvider>();
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withOpacity(0.35),
+      builder: (_) {
+        return PetSwitcherBottomSheet(
+          pets: pets,
+          selectedPetIndex: homeProvider.selectedPetIndex,
+          onAddPetTap: () {
+            Navigator.pop(context);
+            _openAddPet();
+          },
+          onPetSelected: (index, pet) async {
+            Navigator.pop(context);
+
+            await context.read<HomeProvider>().fetchSelectedPetDetails(
+              index: index,
+              pet: pet,
+              petsProvider: context.read<PetsProvider>(),
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final topPadding = MediaQuery.of(context).padding.top;
 
-    final user = context.watch<UserProvider>().user ?? session.currentUser;
+    final homeProvider = context.watch<HomeProvider>();
+    final userProvider = context.watch<UserProvider>();
     final petsProvider = context.watch<PetsProvider>();
     final storeProvider = context.watch<StoreProvider>();
+    final profileProvider = context.watch<ProfileProvider>();
 
-    final selectedPet =
-    petsProvider.allPets.isNotEmpty ? petsProvider.allPets.first : null;
+    final user = userProvider.user ?? homeProvider.session.currentUser;
+    final pets = petsProvider.allPets;
 
-    final homeProducts = storeProvider.allProducts.take(5).map((product) {
-      return HomeProductData(
-        id: product.id,
-        name: product.title,
-        imageUrl: product.thumbnail.url,
-        price: "EGP ${product.finalPrice.toStringAsFixed(0)}",
-      );
-    }).toList();
+    final selectedPet = homeProvider.resolveSelectedPet(
+      petsProvider: petsProvider,
+    );
+
+    final homeProducts = homeProvider.buildHomeProducts(storeProvider);
+
+    final int petsCount = petsProvider.allPets.length;
+    final int userVisits = profileProvider.appointmentsCount;
+
+    final bool hasPets = petsCount > 0;
+    final bool showFreeFirstBookingCard = userVisits == 0;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFA),
       body: RefreshIndicator(
         color: AppColors.primary,
         edgeOffset: topPadding,
-        displacement: topPadding + 28,
-        onRefresh: _initHome,
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(
-            parent: BouncingScrollPhysics(),
-          ),
-          child: Column(
-            children: [
-              HomeTopSection(
-                userName: user?.name ?? "Guest",
-                profilePic: user?.profilePic,
-                selectedPet: selectedPet,
-                onPetTap: () {
-                  if (selectedPet == null) return;
-
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => PetProfileScreen(
-                        pet: selectedPet,
-                      ),
-                    ),
-                  );
-                },
-                onAddPetTap: () {
-                  Navigator.pushNamed(context, AppRoutes.addPet);
-                },
-              ),
-
-              HomeContentPanel(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const HomeSectionTitle(title: "Quick Care"),
-
-                    const SizedBox(height: 14),
-
-                    const QuickActionsSection(),
-
-                    const SizedBox(height: 26),
-
-                    UpcomingAppointmentSection(
-                      isLoading: isAppointmentLoading,
-                      appointment: appointment,
-                      onBookTap: () {
-                        context.read<BottomNavProvider>().changeTab(1);
-                      },
-                      onViewDetails: () {
-                        if (appointment.id == null) return;
-
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => AppointmentDetails(
-                              appointmentId: appointment.id!,
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-
-                    const SizedBox(height: 26),
-
-                    HomeProductsSection(
-                      title: selectedPet != null
-                          ? "Picked for ${selectedPet.name}"
-                          : "Pet Essentials",
-                      subtitle: selectedPet != null
-                          ? "Products your ${selectedPet.type} may need"
-                          : "Handpicked care products for pets",
-                      isLoading: storeProvider.isLoading,
-                      products: homeProducts,
-                      onViewAllTap: () {
-                        context.read<BottomNavProvider>().changeTab(3);
-                      },
-                      onProductTap: (product) {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => ProductDetails(
-                              productId: product.id,
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 105),
-                  ],
-                ),
-              ),
-            ],
-          ),
+        displacement: topPadding + 28.h,
+        onRefresh: _refreshHome,
+        child: homeProvider.isFirstLoading
+            ? const HomeTabSkeleton()
+            : HomeBody(
+          userName: user?.name ?? "Guest",
+          profilePic: user?.profilePic,
+          selectedPet: selectedPet,
+          showFreeFirstBookingCard: showFreeFirstBookingCard,
+          hasPetsForFreeBooking: hasPets,
+          isAppointmentLoading: homeProvider.isAppointmentLoading,
+          appointment: homeProvider.appointment,
+          isProductsLoading: storeProvider.isLoading,
+          products: homeProducts,
+          onProfileTap: _openProfile,
+          onPetTap: () {
+            _handlePetCardTap(
+              pets: pets,
+              selectedPet: selectedPet,
+            );
+          },
+          onAddPetTap: _openAddPet,
+          onOpenPetTap: () {
+            _openSelectedPetProfile(selectedPet);
+          },
+          onAskAleefTap: _openChatBot,
+          onBookAppointmentTap: _goToAppointmentsTab,
+          onFreeFirstBookingTap:
+          hasPets ? _goToAppointmentsTab : _openAddPet,
+          onViewAppointmentDetails: _openAppointmentDetails,
+          onViewAllProductsTap: _goToStoreTab,
+          onProductTap: _openProductDetails,
         ),
       ),
     );

@@ -13,6 +13,29 @@ class BottomNavBar extends StatelessWidget {
     required this.onItemSelected,
   });
 
+  static const List<_BottomNavItemData> _items = [
+    _BottomNavItemData(
+      icon: FontAwesomeIcons.house,
+      label: 'Home',
+    ),
+    _BottomNavItemData(
+      icon: FontAwesomeIcons.calendarDays,
+      label: 'Book',
+    ),
+    _BottomNavItemData(
+      icon: FontAwesomeIcons.commentDots,
+      label: 'Chat',
+    ),
+    _BottomNavItemData(
+      icon: FontAwesomeIcons.bagShopping,
+      label: 'Store',
+    ),
+    _BottomNavItemData(
+      icon: FontAwesomeIcons.paw,
+      label: 'Pets',
+    ),
+  ];
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -24,10 +47,10 @@ class BottomNavBar extends StatelessWidget {
       ),
       child: Container(
         height: 72.h,
-        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 9.h),
+        padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 8.h),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(36.r),
+          borderRadius: BorderRadius.circular(34.r),
           border: Border.all(
             color: AppColors.primary.withOpacity(0.08),
             width: 1,
@@ -41,38 +64,18 @@ class BottomNavBar extends StatelessWidget {
           ],
         ),
         child: Row(
-          children: [
-            _NavItem(
-              index: 0,
-              icon: FontAwesomeIcons.house,
-              selectedIndex: selectedIndex,
-              onTap: onItemSelected,
-            ),
-            _NavItem(
-              index: 1,
-              icon: FontAwesomeIcons.calendarDays,
-              selectedIndex: selectedIndex,
-              onTap: onItemSelected,
-            ),
-            _NavItem(
-              index: 2,
-              icon: FontAwesomeIcons.comment,
-              selectedIndex: selectedIndex,
-              onTap: onItemSelected,
-            ),
-            _NavItem(
-              index: 3,
-              icon: FontAwesomeIcons.bagShopping,
-              selectedIndex: selectedIndex,
-              onTap: onItemSelected,
-            ),
-            _NavItem(
-              index: 4,
-              icon: FontAwesomeIcons.paw,
-              selectedIndex: selectedIndex,
-              onTap: onItemSelected,
-            ),
-          ],
+          children: List.generate(_items.length, (index) {
+            final bool isSelected = selectedIndex == index;
+
+            return Expanded(
+              flex: isSelected ? 16 : 10,
+              child: _NavItem(
+                isSelected: isSelected,
+                item: _items[index],
+                onTap: () => onItemSelected(index),
+              ),
+            );
+          }),
         ),
       ),
     );
@@ -80,61 +83,89 @@ class BottomNavBar extends StatelessWidget {
 }
 
 class _NavItem extends StatelessWidget {
-  final int index;
-  final int selectedIndex;
-  final FaIconData icon;
-  final ValueChanged<int> onTap;
+  final bool isSelected;
+  final _BottomNavItemData item;
+  final VoidCallback onTap;
 
   const _NavItem({
-    required this.index,
-    required this.selectedIndex,
-    required this.icon,
+    required this.isSelected,
+    required this.item,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final bool isSelected = index == selectedIndex;
-
-    return Expanded(
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 2.w),
       child: GestureDetector(
-        onTap: () => onTap(index),
+        onTap: onTap,
         behavior: HitTestBehavior.opaque,
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 240),
+          duration: const Duration(milliseconds: 260),
           curve: Curves.easeOutCubic,
           height: double.infinity,
-          alignment: Alignment.center,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 240),
-            curve: Curves.easeOutCubic,
-            width: isSelected ? 48.r : 44.r,
-            height: isSelected ? 48.r : 44.r,
-            decoration: BoxDecoration(
-              color: isSelected ? AppColors.primary : Colors.transparent,
-              shape: BoxShape.circle,
-              boxShadow: isSelected
-                  ? [
-                BoxShadow(
-                  color: AppColors.primary.withOpacity(0.26),
-                  blurRadius: 14.r,
-                  offset: Offset(0, 7.h),
-                ),
-              ]
-                  : [],
-            ),
-            child: AnimatedScale(
-              duration: const Duration(milliseconds: 220),
-              curve: Curves.easeOutCubic,
-              scale: isSelected ? 1.04 : 1.0,
-              child: Center(
-                child: FaIcon(
-                  icon,
-                  size: 18.sp,
-                  color: isSelected
-                      ? Colors.white
-                      : const Color(0xFF9A9A9A),
-                ),
+          padding: EdgeInsets.symmetric(
+            horizontal: isSelected ? 6.w : 0,
+          ),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? AppColors.primary.withOpacity(0.12)
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(24.r),
+          ),
+          child: Center(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 260),
+                    curve: Curves.easeOutCubic,
+                    width: isSelected ? 34.r : 40.r,
+                    height: isSelected ? 34.r : 40.r,
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? AppColors.primary
+                          : const Color(0xFFF4F7F7),
+                      shape: BoxShape.circle,
+                      boxShadow: isSelected
+                          ? [
+                        BoxShadow(
+                          color: AppColors.primary.withOpacity(0.24),
+                          blurRadius: 12.r,
+                          offset: Offset(0, 6.h),
+                        ),
+                      ]
+                          : [],
+                    ),
+                    child: Center(
+                      child: FaIcon(
+                        item.icon,
+                        size: isSelected ? 14.sp : 16.sp,
+                        color: isSelected
+                            ? Colors.white
+                            : const Color(0xFF8A9696),
+                      ),
+                    ),
+                  ),
+
+                  if (isSelected) ...[
+                    SizedBox(width: 5.w),
+                    Text(
+                      item.label,
+                      maxLines: 1,
+                      softWrap: false,
+                      overflow: TextOverflow.fade,
+                      style: TextStyle(
+                        fontSize: 10.5.sp,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.primary,
+                        height: 1,
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
           ),
@@ -142,4 +173,14 @@ class _NavItem extends StatelessWidget {
       ),
     );
   }
+}
+
+class _BottomNavItemData {
+  final FaIconData icon;
+  final String label;
+
+  const _BottomNavItemData({
+    required this.icon,
+    required this.label,
+  });
 }

@@ -1,10 +1,10 @@
+import 'package:aleef/features/home/presentation/provider/home_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 
-import '../../../../core/routing/app_routes.dart';
-import '../../../../providers/bottom_nav_provider.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../providers/bottom_nav_provider.dart';
 
 class BookingSuccessView extends StatefulWidget {
   const BookingSuccessView({super.key});
@@ -17,6 +17,8 @@ class _BookingSuccessViewState extends State<BookingSuccessView>
     with TickerProviderStateMixin {
   late final AnimationController _entryController;
   late final AnimationController _pulseController;
+
+  bool _isNavigating = false;
 
   @override
   void initState() {
@@ -40,16 +42,33 @@ class _BookingSuccessViewState extends State<BookingSuccessView>
     super.dispose();
   }
 
-  void _goToAppointments() {
-    Navigator.pushNamedAndRemoveUntil(
-      context,
-      AppRoutes.mainLayout,
-          (route) => false,
-    );
+  Future<void> _goToAppointments() async {
+    if (_isNavigating) return;
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<BottomNavProvider>().changeTab(1);
+    setState(() {
+      _isNavigating = true;
     });
+
+    _entryController.stop();
+    _pulseController.stop();
+
+    await _refreshHomeAppointment();
+
+    if (!mounted) return;
+
+    context.read<BottomNavProvider>().changeTab(1);
+
+    Navigator.of(context).popUntil((route) => route.isFirst);
+  }
+
+  Future<void> _refreshHomeAppointment() async {
+    try {
+      await context.read<HomeProvider>().fetchCurrentAppointment(
+        onUnauthorized: () async {},
+      );
+    } catch (error) {
+      debugPrint('Refresh home appointment after booking error: $error');
+    }
   }
 
   @override
@@ -88,7 +107,6 @@ class _BookingSuccessViewState extends State<BookingSuccessView>
                 right: 24.w,
                 child: _Circle(size: 55.w, opacity: .10),
               ),
-
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 24.w),
                 child: Column(
@@ -141,9 +159,7 @@ class _BookingSuccessViewState extends State<BookingSuccessView>
                         ),
                       ),
                     ),
-
                     SizedBox(height: 35.h),
-
                     FadeTransition(
                       opacity: CurvedAnimation(
                         parent: _entryController,
@@ -196,9 +212,7 @@ class _BookingSuccessViewState extends State<BookingSuccessView>
                                   ),
                                 ),
                               ),
-
                               SizedBox(height: 18.h),
-
                               Text(
                                 "Appointment Booked!",
                                 textAlign: TextAlign.center,
@@ -208,9 +222,7 @@ class _BookingSuccessViewState extends State<BookingSuccessView>
                                   color: const Color(0xff142322),
                                 ),
                               ),
-
                               SizedBox(height: 12.h),
-
                               Text(
                                 "Your pet’s visit is all set.\nYou can view appointment details anytime.",
                                 textAlign: TextAlign.center,
@@ -220,9 +232,7 @@ class _BookingSuccessViewState extends State<BookingSuccessView>
                                   color: Colors.grey.shade600,
                                 ),
                               ),
-
                               SizedBox(height: 26.h),
-
                               Row(
                                 children: [
                                   Expanded(
@@ -242,23 +252,35 @@ class _BookingSuccessViewState extends State<BookingSuccessView>
                                   ),
                                 ],
                               ),
-
                               SizedBox(height: 28.h),
-
                               SizedBox(
                                 width: double.infinity,
                                 height: 56.h,
                                 child: ElevatedButton(
-                                  onPressed: _goToAppointments,
+                                  onPressed:
+                                  _isNavigating ? null : _goToAppointments,
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: primary,
+                                    disabledBackgroundColor:
+                                    primary.withOpacity(0.65),
                                     elevation: 0,
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(18.r),
                                     ),
                                   ),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
+                                  child: _isNavigating
+                                      ? SizedBox(
+                                    width: 22.r,
+                                    height: 22.r,
+                                    child:
+                                    const CircularProgressIndicator(
+                                      strokeWidth: 2.4,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                      : Row(
+                                    mainAxisAlignment:
+                                    MainAxisAlignment.center,
                                     children: [
                                       Text(
                                         "View Appointments",
@@ -278,9 +300,7 @@ class _BookingSuccessViewState extends State<BookingSuccessView>
                                   ),
                                 ),
                               ),
-
                               SizedBox(height: 12.h),
-
                             ],
                           ),
                         ),

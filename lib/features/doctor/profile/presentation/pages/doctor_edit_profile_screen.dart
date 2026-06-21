@@ -1,12 +1,16 @@
 import 'dart:io';
-import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:provider/provider.dart';
-import 'package:aleef/core/theme/app_colors.dart';
+
+import 'package:aleef/core/widgets/app_snack_bar.dart';
 import 'package:aleef/features/doctor/home/presentation/manager/doctor_profile_provider.dart';
-import 'package:aleef/features/doctor/home/presentation/widgets/doctor_edit_section_card.dart';
 import 'package:aleef/features/doctor/home/presentation/widgets/doctor_edit_text_field.dart';
+import 'package:aleef/features/doctor/profile/presentation/widgets/edit_profile/doctor_edit_profile_header.dart';
+import 'package:aleef/features/doctor/profile/presentation/widgets/edit_profile/doctor_edit_profile_loading_overlay.dart';
+import 'package:aleef/features/doctor/profile/presentation/widgets/edit_profile/doctor_edit_profile_save_button.dart';
+import 'package:aleef/features/doctor/profile/presentation/widgets/edit_profile/doctor_edit_profile_section.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
 
 class DoctorEditProfileScreen extends StatefulWidget {
   const DoctorEditProfileScreen({super.key});
@@ -18,37 +22,41 @@ class DoctorEditProfileScreen extends StatefulWidget {
 
 class _DoctorEditProfileScreenState extends State<DoctorEditProfileScreen> {
   final _formKey = GlobalKey<FormState>();
+  final ImagePicker _picker = ImagePicker();
 
-  late TextEditingController _nameController;
-  late TextEditingController _specializationController;
-  late TextEditingController _cityController;
-  late TextEditingController _clinicAddressController;
-  late TextEditingController _phoneController;
-  late TextEditingController _emailController;
-  late TextEditingController _aboutController;
+  late final TextEditingController _nameController;
+  late final TextEditingController _specializationController;
+  late final TextEditingController _cityController;
+  late final TextEditingController _clinicAddressController;
+  late final TextEditingController _phoneController;
+  late final TextEditingController _emailController;
+  late final TextEditingController _aboutController;
+  late final TextEditingController _appointmentFeeController;
 
   File? _selectedImage;
-  final ImagePicker _picker = ImagePicker();
+  bool _isPickingImage = false;
 
   @override
   void initState() {
     super.initState();
-    final doctor = Provider.of<DoctorProfileProvider>(
-      context,
-      listen: false,
-    ).doctorProfile;
+
+    final doctor = context.read<DoctorProfileProvider>().doctorProfile;
 
     _nameController = TextEditingController(text: doctor?.name ?? '');
     _specializationController = TextEditingController(
       text: doctor?.specialization ?? '',
     );
     _cityController = TextEditingController(text: doctor?.city ?? '');
-
     _phoneController = TextEditingController(text: doctor?.phone ?? '');
     _emailController = TextEditingController(text: doctor?.email ?? '');
     _aboutController = TextEditingController(text: doctor?.about ?? '');
     _clinicAddressController = TextEditingController(
-      text: doctor?.clinicAddress ?? '',
+      text: doctor?.address ?? '',
+    );
+    _appointmentFeeController = TextEditingController(
+      text: (doctor?.appointmentFee ?? 0) > 0
+          ? doctor!.appointmentFee.toString()
+          : '',
     );
   }
 
@@ -61,272 +69,264 @@ class _DoctorEditProfileScreenState extends State<DoctorEditProfileScreen> {
     _phoneController.dispose();
     _emailController.dispose();
     _aboutController.dispose();
+    _appointmentFeeController.dispose();
     super.dispose();
   }
 
   Future<void> _pickImage() async {
-    final XFile? pickedFile = await _picker.pickImage(
-      source: ImageSource.gallery,
-    );
-    if (pickedFile != null) {
-      setState(() {
-        _selectedImage = File(pickedFile.path);
-      });
+    if (_isPickingImage) return;
+
+    FocusScope.of(context).unfocus();
+
+    setState(() => _isPickingImage = true);
+
+    await Future.delayed(const Duration(milliseconds: 120));
+
+    try {
+      final pickedFile = await _picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 85,
+      );
+
+      if (!mounted) return;
+
+      if (pickedFile != null) {
+        setState(() {
+          _selectedImage = File(pickedFile.path);
+        });
+      }
+    } catch (_) {
+      if (!mounted) return;
+
+      AppSnackBar.show(
+        context,
+        message: 'Could not open gallery. Please try again.',
+        type: AppSnackBarType.error,
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isPickingImage = false);
+      }
     }
   }
 
-  Future<void> _saveProfileChanges() async {
-    if (!_formKey.currentState!.validate()) return;
+  String? _requiredValidator(String? value, String fieldName) {
+    if (value == null || value.trim().isEmpty) {
+      return '$fieldName is required';
+    }
+    return null;
+  }
 
-    // 1. تجميع البيانات (استبعاد الإيميل وتصحيح اسم الـ controller)
-    final Map<String, String> bodyData = {
+  String? _feeValidator(String? value) {
+    final feeText = value?.trim() ?? '';
+
+    if (feeText.isEmpty) {
+      return 'Appointment fee is required';
+    }
+
+    final fee = int.tryParse(feeText);
+
+    if (fee == null) {
+      return 'Enter a valid number';
+    }
+
+    if (fee <= 0) {
+      return 'Fee must be greater than 0';
+    }
+
+    if (fee > 100000) {
+      return 'Fee is too high';
+    }
+
+    return null;
+  }
+
+  Future<void> _saveProfileChanges() async {
+    if (!_formKey.currentState!.validate()) {
+      AppSnackBar.show(
+        context,
+        message: 'Please complete the required fields.',
+        type: AppSnackBarType.warning,
+      );
+      return;
+    }
+
+    FocusScope.of(context).unfocus();
+
+    final bodyData = {
       'name': _nameController.text.trim(),
       'specialization': _specializationController.text.trim(),
-      'city': _cityController.text.trim(), // تم التصحيح هنا
+      'city': _cityController.text.trim(),
       'phone': _phoneController.text.trim(),
       'about': _aboutController.text.trim(),
       'address': _clinicAddressController.text.trim(),
-    }; // إضافة العنوان فقط إذا كان موجوداً
+      'appointmentFee': _appointmentFeeController.text.trim(),
+    };
 
-    print("Data to send: $bodyData");
+    final provider = context.read<DoctorProfileProvider>();
 
-    final provider = Provider.of<DoctorProfileProvider>(context, listen: false);
-
-    // 2. إرسال البيانات
     final success = await provider.updateProfile(
       bodyData: bodyData,
       imageFile: _selectedImage,
     );
 
-    if (success && mounted) {
-      Navigator.pop(context, true);
-    } else if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(provider.errorMessage ?? 'Update failed.'),
-          backgroundColor: Colors.red,
-        ),
+    if (!mounted) return;
+
+    if (success) {
+      AppSnackBar.show(
+        context,
+        message: 'Profile updated successfully.',
+        type: AppSnackBarType.success,
       );
+
+      await Future.delayed(const Duration(milliseconds: 450));
+
+      if (!mounted) return;
+      Navigator.pop(context, true);
+      return;
     }
+
+    AppSnackBar.show(
+      context,
+      message: provider.errorMessage ?? 'Update failed.',
+      type: AppSnackBarType.error,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final doctor = Provider.of<DoctorProfileProvider>(context).doctorProfile;
+    final provider = context.watch<DoctorProfileProvider>();
+    final doctor = provider.doctorProfile;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        title: const Text(
-          'Edit Profile',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          // التعديل هنا: يفضل لو رجع باك عادي من غير ما يحفظ نرجع بـ false أو null
-          onPressed: () => Navigator.pop(context, false),
-        ),
-        backgroundColor: Colors.transparent,
-        centerTitle: true,
-        elevation: 0,
-      ),
-      body: Consumer<DoctorProfileProvider>(
-        builder: (context, provider, child) {
-          return SingleChildScrollView(
-            child: Form(
-              key: _formKey,
-              child: Column(
-                children: [
-                  _buildImagePickerHeader(doctor?.profilePic ?? ''),
-                  Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 16.w,
-                      vertical: 10.h,
-                    ),
+      backgroundColor: const Color(0xFFF6F8F8),
+      body: Stack(
+        children: [
+          CustomScrollView(
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+            slivers: [
+              SliverToBoxAdapter(
+                child: DoctorEditProfileHeader(
+                  currentImageUrl: doctor?.profilePic ?? '',
+                  selectedImage: _selectedImage,
+                  isPickingImage: _isPickingImage,
+                  onBackTap: () => Navigator.pop(context, false),
+                  onImageTap: _pickImage,
+                ),
+              ),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(16.w, 18.h, 16.w, 24.h),
+                  child: Form(
+                    key: _formKey,
                     child: Column(
                       children: [
-                        DoctorEditSectionCard(
-                          title: 'PERSONAL INFORMATION',
-                          children: [
-                            DoctorEditTextField(
-                              label: 'Full Name',
-                              controller: _nameController,
-                              keyboardType: TextInputType.name,
-                            ),
-                            SizedBox(height: 12.h),
-                            DoctorEditTextField(
-                              label: 'Specialization',
-                              controller: _specializationController,
-                            ),
-                            SizedBox(height: 12.h),
-                            DoctorEditTextField(
-                              label: 'City',
-                              controller: _cityController,
-                            ),
-                          ],
-                        ),
-                        DoctorEditSectionCard(
-                          title: 'CONTACT INFORMATION',
-                          children: [
-                            DoctorEditTextField(
-                              label: 'Phone Number',
-                              controller: _phoneController,
-                              keyboardType: TextInputType.phone,
-                            ),
-                            SizedBox(height: 12.h),
-                            DoctorEditTextField(
-                              label: 'Email Address',
-                              controller: _emailController,
-                              keyboardType: TextInputType.emailAddress,
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: 12.h),
-                        DoctorEditTextField(
-                          label: 'Clinic Address (Optional)',
-                          controller: _clinicAddressController,
-                        ),
-                        DoctorEditSectionCard(
-                          title: 'ABOUT',
-                          children: [
-                            DoctorEditTextField(
-                              label: 'Professional Bio',
-                              controller: _aboutController,
-                              maxLines: 4,
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: 24.h),
-                        SizedBox(
-                          width: double.infinity,
-                          height: 50.h,
-                          child: ElevatedButton(
-                            onPressed: provider.isUpdating
-                                ? null
-                                : _saveProfileChanges,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primary,
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14.r),
+                        DoctorEditProfileSection(
+                          title: 'Personal Information',
+                          icon: Icons.person_outline_rounded,
+                          child: Column(
+                            children: [
+                              DoctorEditTextField(
+                                label: 'Full Name',
+                                controller: _nameController,
+                                keyboardType: TextInputType.name,
+                                validator: (value) =>
+                                    _requiredValidator(value, 'Full name'),
                               ),
-                            ),
-                            child: provider.isUpdating
-                                ? const CircularProgressIndicator(
-                                    color: Colors.white,
-                                  )
-                                : Text(
-                                    'Save Changes',
-                                    style: TextStyle(
-                                      fontSize: 15.sp,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white,
-                                    ),
-                                  ),
+                              SizedBox(height: 12.h),
+                              DoctorEditTextField(
+                                label: 'Specialization',
+                                controller: _specializationController,
+                                validator: (value) => _requiredValidator(
+                                  value,
+                                  'Specialization',
+                                ),
+                              ),
+                              SizedBox(height: 12.h),
+                              DoctorEditTextField(
+                                label: 'City',
+                                controller: _cityController,
+                                validator: (value) =>
+                                    _requiredValidator(value, 'City'),
+                              ),
+                            ],
                           ),
                         ),
-                        SizedBox(height: 40.h),
+                        DoctorEditProfileSection(
+                          title: 'Contact Information',
+                          icon: Icons.call_outlined,
+                          child: Column(
+                            children: [
+                              DoctorEditTextField(
+                                label: 'Phone Number',
+                                controller: _phoneController,
+                                keyboardType: TextInputType.phone,
+                                validator: (value) =>
+                                    _requiredValidator(value, 'Phone number'),
+                              ),
+                              SizedBox(height: 12.h),
+                              DoctorEditTextField(
+                                label: 'Email Address',
+                                controller: _emailController,
+                                keyboardType: TextInputType.emailAddress,
+                                enabled: false,
+                              ),
+                            ],
+                          ),
+                        ),
+                        DoctorEditProfileSection(
+                          title: 'Clinic Details',
+                          icon: Icons.local_hospital_outlined,
+                          child: Column(
+                            children: [
+                              DoctorEditTextField(
+                                label: 'Clinic Address',
+                                controller: _clinicAddressController,
+                                maxLines: 2,
+                                validator: (value) => _requiredValidator(
+                                  value,
+                                  'Clinic address',
+                                ),
+                              ),
+                              SizedBox(height: 12.h),
+                              DoctorEditTextField(
+                                label: 'Appointment Fee',
+                                controller: _appointmentFeeController,
+                                keyboardType: TextInputType.number,
+                                validator: _feeValidator,
+                              ),
+                            ],
+                          ),
+                        ),
+                        DoctorEditProfileSection(
+                          title: 'About',
+                          icon: Icons.info_outline_rounded,
+                          child: DoctorEditTextField(
+                            label: 'Professional Bio',
+                            controller: _aboutController,
+                            maxLines: 4,
+                          ),
+                        ),
+                        SizedBox(height: 8.h),
+                        DoctorEditProfileSaveButton(
+                          isLoading: provider.isUpdating,
+                          onTap: _saveProfileChanges,
+                        ),
+                        SizedBox(height: 24.h),
                       ],
                     ),
                   ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildImagePickerHeader(String currentImageUrl) {
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        Column(
-          children: [
-            Container(
-              width: double.infinity,
-              height: 180.h,
-              decoration: BoxDecoration(
-                color: AppColors.primary,
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(32.r),
-                  bottomRight: Radius.circular(32.r),
                 ),
               ),
-            ),
-            SizedBox(height: 70.h),
-          ],
-        ),
-        Positioned(
-          top: 100.h,
-          child: Container(
-            padding: EdgeInsets.all(16.w),
-            width: 325.w,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20.r),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.03),
-                  blurRadius: 10,
-                  offset: const Offset(0, 5),
-                ),
-              ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Stack(
-                  children: [
-                    CircleAvatar(
-                      radius: 46.r,
-                      backgroundColor: Colors.grey[100],
-                      backgroundImage: _selectedImage != null
-                          ? FileImage(_selectedImage!)
-                          : (currentImageUrl.isNotEmpty
-                                    ? NetworkImage(
-                                        currentImageUrl +
-                                            "?t=${DateTime.now().microsecondsSinceEpoch}",
-                                      )
-                                    : const AssetImage(
-                                        'assets/images/default_doctor.png',
-                                      ))
-                                as ImageProvider,
-                    ),
-                    Positioned(
-                      bottom: 0,
-                      right: 0,
-                      child: GestureDetector(
-                        onTap: _pickImage,
-                        child: CircleAvatar(
-                          radius: 15.r,
-                          backgroundColor: AppColors.primary,
-                          child: Icon(
-                            Icons.camera_alt,
-                            color: Colors.white,
-                            size: 14.sp,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 8.h),
-                Text(
-                  'Tap to change profile photo',
-                  style: TextStyle(
-                    color: Colors.grey[500],
-                    fontSize: 12.sp,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
+            ],
           ),
-        ),
-      ],
+          if (_isPickingImage || provider.isUpdating)
+            DoctorEditProfileLoadingOverlay(
+              message:
+              _isPickingImage ? 'Opening gallery...' : 'Saving changes...',
+            ),
+        ],
+      ),
     );
   }
 }

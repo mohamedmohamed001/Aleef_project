@@ -76,8 +76,8 @@ class _StoreTabState extends State<StoreTab> {
 
     return products.where((product) {
       return product.categories.any(
-        (category) =>
-            category.name.toLowerCase() == selectedCategory.toLowerCase(),
+            (category) =>
+        category.name.toLowerCase() == selectedCategory.toLowerCase(),
       );
     }).toList();
   }
@@ -125,6 +125,7 @@ class _StoreTabState extends State<StoreTab> {
   @override
   void dispose() {
     _debounce?.cancel();
+    _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     _searchController.dispose();
     super.dispose();
@@ -184,6 +185,7 @@ class _StoreTabState extends State<StoreTab> {
                 ),
               ),
             ),
+
             if (storeProvider.isLoading)
               const SliverFillRemaining(
                 child: StoreStateView(type: StoreStateType.loading),
@@ -196,14 +198,15 @@ class _StoreTabState extends State<StoreTab> {
                 ),
               )
             else if (products.isEmpty)
-              const SliverFillRemaining(
-                child: StoreStateView(type: StoreStateType.empty),
-              )
-            else
-              StoreProductsGrid(
-                products: products,
-                onProductTap: _onProductTap,
-              ),
+                const SliverFillRemaining(
+                  child: StoreStateView(type: StoreStateType.empty),
+                )
+              else
+                StoreProductsGrid(
+                  products: products,
+                  onProductTap: _onProductTap,
+                ),
+
             if (storeProvider.isLoadingMore)
               SliverToBoxAdapter(
                 child: Padding(
@@ -215,7 +218,11 @@ class _StoreTabState extends State<StoreTab> {
                   ),
                 ),
               ),
-            SliverToBoxAdapter(child: SizedBox(height: 24.h)),
+
+            /// مهم جدًا عشان آخر Product مايتغطاش بالـ Bottom Navigation Bar
+            SliverToBoxAdapter(
+              child: SizedBox(height: 120.h),
+            ),
           ],
         ),
       ),

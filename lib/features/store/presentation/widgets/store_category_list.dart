@@ -21,7 +21,7 @@ class StoreCategoryList extends StatelessWidget {
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: categories.length,
-        separatorBuilder: (_, __) => SizedBox(width: 10.w),
+        separatorBuilder: (_, _) => SizedBox(width: 10.w),
         itemBuilder: (context, index) {
           final category = categories[index];
           final selected = category == selectedCategory;

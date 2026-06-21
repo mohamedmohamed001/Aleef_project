@@ -1,39 +1,55 @@
 class DoctorPerformanceModel {
-  final List<DoctorPerformanceAppointment> appointments;
-  final AppointmentsCounts appointmentsCounts;
-  final DoctorRating doctorRating;
+  final List<DoctorPerformanceAppointmentModel> appointments;
+  final AppointmentsCountsModel appointmentsCounts;
+  final DoctorRatingModel doctorRating;
+  final DoctorWalletModel wallet;
+  final double totalEarnings;
 
   DoctorPerformanceModel({
     required this.appointments,
     required this.appointmentsCounts,
     required this.doctorRating,
+    required this.wallet,
+    required this.totalEarnings,
   });
 
   factory DoctorPerformanceModel.fromJson(Map<String, dynamic> json) {
     return DoctorPerformanceModel(
       appointments: (json['appointments'] as List? ?? [])
-          .map((e) => DoctorPerformanceAppointment.fromJson(e))
+          .map((e) => DoctorPerformanceAppointmentModel.fromJson(e))
           .toList(),
-      appointmentsCounts: AppointmentsCounts.fromJson(
-        json['appoinmentsCounts'] ?? {},
+
+      appointmentsCounts: AppointmentsCountsModel.fromJson(
+        json['appoinmentsCounts'] ??
+            json['appointmentsCounts'] ??
+            {},
       ),
-      doctorRating: DoctorRating.fromJson(
+
+      doctorRating: DoctorRatingModel.fromJson(
         json['doctorRating'] ?? {},
       ),
+
+      wallet: DoctorWalletModel.fromJson(
+        json['wallet'] ?? {},
+      ),
+
+      totalEarnings:
+      double.tryParse(json['totalEarnings']?.toString() ?? '0') ?? 0.0,
     );
   }
 }
 
-class DoctorPerformanceAppointment {
+class DoctorPerformanceAppointmentModel {
   final String id;
-  final String date;
+  final DateTime? date;
   final String time;
   final String reason;
   final String status;
-  final PerformanceOwner owner;
-  final PerformancePet pet;
+  final OwnerModel owner;
+  final PetModel pet;
+  final int cancelledCount;
 
-  DoctorPerformanceAppointment({
+  DoctorPerformanceAppointmentModel({
     required this.id,
     required this.date,
     required this.time,
@@ -41,80 +57,50 @@ class DoctorPerformanceAppointment {
     required this.status,
     required this.owner,
     required this.pet,
+    required this.cancelledCount,
   });
 
-  factory DoctorPerformanceAppointment.fromJson(Map<String, dynamic> json) {
-    return DoctorPerformanceAppointment(
+  factory DoctorPerformanceAppointmentModel.fromJson(
+      Map<String, dynamic> json,
+      ) {
+    return DoctorPerformanceAppointmentModel(
       id: json['id'] ?? '',
-      date: json['date'] ?? '',
+      date: json['date'] == null ? null : DateTime.tryParse(json['date']),
       time: json['time'] ?? '',
       reason: json['reason'] ?? '',
       status: json['status'] ?? '',
-      owner: PerformanceOwner.fromJson(json['owner'] ?? {}),
-      pet: PerformancePet.fromJson(json['pet'] ?? {}),
+      owner: OwnerModel.fromJson(json['owner'] ?? {}),
+      pet: PetModel.fromJson(json['pet'] ?? {}),
+      cancelledCount: int.tryParse(json['cancelledCount'].toString()) ?? 0,
     );
   }
 }
 
-class AppointmentsCounts {
-  final int totalAppointments;
-  final int completedAppointments;
-
-  AppointmentsCounts({
-    required this.totalAppointments,
-    required this.completedAppointments,
-  });
-
-  factory AppointmentsCounts.fromJson(Map<String, dynamic> json) {
-    return AppointmentsCounts(
-      totalAppointments: json['totalAppoinments'] ?? 0,
-      completedAppointments: json['completedAppoinments'] ?? 0,
-    );
-  }
-}
-
-class DoctorRating {
-  final double rating;
-  final int ratingCount;
-
-  DoctorRating({
-    required this.rating,
-    required this.ratingCount,
-  });
-
-  factory DoctorRating.fromJson(Map<String, dynamic> json) {
-    return DoctorRating(
-      rating: (json['rating'] ?? 0).toDouble(),
-      ratingCount: json['ratingCount'] ?? 0,
-    );
-  }
-}
-
-class PerformanceOwner {
+class OwnerModel {
   final String id;
   final String name;
 
-  PerformanceOwner({
+  OwnerModel({
     required this.id,
     required this.name,
   });
 
-  factory PerformanceOwner.fromJson(Map<String, dynamic> json) {
-    return PerformanceOwner(
+  factory OwnerModel.fromJson(Map<String, dynamic> json) {
+    return OwnerModel(
       id: json['id'] ?? '',
       name: json['name'] ?? '',
     );
   }
 }
 
-class PerformancePet {
+class PetModel {
   final String id;
   final String name;
   final String type;
   final String gender;
-  final String profilePic;
+  final String? profilePic;
 
-  PerformancePet({
+  PetModel({
     required this.id,
     required this.name,
     required this.type,
@@ -122,13 +108,71 @@ class PerformancePet {
     required this.profilePic,
   });
 
-  factory PerformancePet.fromJson(Map<String, dynamic> json) {
-    return PerformancePet(
+  factory PetModel.fromJson(Map<String, dynamic> json) {
+    return PetModel(
       id: json['id'] ?? '',
       name: json['name'] ?? '',
       type: json['type'] ?? '',
       gender: json['gender'] ?? '',
-      profilePic: json['profilePic'] ?? '',
+      profilePic: json['profilePic'],
+    );
+  }
+}
+
+class AppointmentsCountsModel {
+  final int totalAppointments;
+  final int completedAppointments;
+  final int cancelledAppointments;
+
+  AppointmentsCountsModel({
+    required this.totalAppointments,
+    required this.completedAppointments,
+    required this.cancelledAppointments,
+  });
+
+  factory AppointmentsCountsModel.fromJson(Map<String, dynamic> json) {
+    return AppointmentsCountsModel(
+      totalAppointments: json['totalAppoinments'] ?? 0,
+      completedAppointments: json['completedAppoinments'] ?? 0,
+      cancelledAppointments: json['cancelledAppoinments'] ?? 0,
+    );
+  }
+}
+
+class DoctorRatingModel {
+  final double rating;
+  final int ratingCount;
+
+  DoctorRatingModel({
+    required this.rating,
+    required this.ratingCount,
+  });
+
+  factory DoctorRatingModel.fromJson(Map<String, dynamic> json) {
+    return DoctorRatingModel(
+      rating: double.tryParse(json['rating'].toString()) ?? 0,
+      ratingCount: json['ratingCount'] ?? 0,
+    );
+  }
+}
+
+class DoctorWalletModel {
+  final String id;
+  final double balance;
+  final int transactionsCount;
+
+  DoctorWalletModel({
+    required this.id,
+    required this.balance,
+    required this.transactionsCount,
+  });
+
+  factory DoctorWalletModel.fromJson(Map<String, dynamic> json) {
+    return DoctorWalletModel(
+      id: json['id']?.toString() ?? '',
+      balance: double.tryParse(json['balance']?.toString() ?? '0') ?? 0.0,
+      transactionsCount:
+      int.tryParse(json['transactionsCount']?.toString() ?? '0') ?? 0,
     );
   }
 }

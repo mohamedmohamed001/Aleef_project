@@ -1,20 +1,22 @@
 import 'dart:io';
+
+import 'package:aleef/features/auth/presentation/pages/pick_location_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/routing/app_routes.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/validators/validators.dart';
 import '../providers/doctor_register_provider.dart';
 import '../providers/verify_provider.dart';
 import '../widgets/auth_card.dart';
 import '../widgets/auth_scaffold.dart';
 import '../widgets/auth_snackbar.dart';
+import '../widgets/custom_text_form.dart';
 import '../widgets/doctor_register/identity_verification_section.dart';
 import '../widgets/doctor_register/personal_information.dart';
 import '../widgets/doctor_register/professional_information.dart';
-import '../widgets/custom_text_form.dart';
-import '../../../../core/theme/app_colors.dart';
 
 class DoctorRegisterScreen extends StatefulWidget {
   const DoctorRegisterScreen({super.key});
@@ -31,7 +33,8 @@ class _DoctorRegisterScreenState extends State<DoctorRegisterScreen> {
   final TextEditingController cityController = TextEditingController();
   final TextEditingController addressController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-  final TextEditingController confirmPasswordController = TextEditingController();
+  final TextEditingController confirmPasswordController =
+      TextEditingController();
 
   final _formKey = GlobalKey<FormState>();
   int currentStep = 0;
@@ -40,6 +43,9 @@ class _DoctorRegisterScreenState extends State<DoctorRegisterScreen> {
   File? selectedNationalIdFront;
   File? selectedNationalIdBack;
   File? selectedIdentityVerificationImage;
+
+  double? clinicLatitude;
+  double? clinicLongitude;
 
   static const int totalSteps = 4;
 
@@ -58,12 +64,30 @@ class _DoctorRegisterScreenState extends State<DoctorRegisterScreen> {
 
   void _goBack() {
     FocusScope.of(context).unfocus();
+
     if (currentStep == 0) {
       Navigator.pop(context);
       return;
     }
+
     setState(() {
       currentStep--;
+    });
+  }
+
+  Future<void> _openLocationPicker() async {
+    FocusScope.of(context).unfocus();
+
+    final result = await Navigator.push<PickLocationResult>(
+      context,
+      MaterialPageRoute(builder: (_) => const PickLocationScreen()),
+    );
+
+    if (result == null) return;
+
+    setState(() {
+      clinicLatitude = result.latitude;
+      clinicLongitude = result.longitude;
     });
   }
 
@@ -71,16 +95,24 @@ class _DoctorRegisterScreenState extends State<DoctorRegisterScreen> {
     FocusScope.of(context).unfocus();
     final provider = context.read<DoctorRegisterProvider>();
 
-    // تحقق من كل الحقول
     if (!_formKey.currentState!.validate()) return;
 
-    // التحقق من الصور في المرحلة الثالثة
+    if (currentStep == 1) {
+      if (clinicLatitude == null || clinicLongitude == null) {
+        showAuthSnackBar(context, message: "Please pick your clinic location");
+        return;
+      }
+    }
+
     if (currentStep == 2) {
       if (selectedProfilePic == null ||
           selectedNationalIdFront == null ||
           selectedNationalIdBack == null ||
           selectedIdentityVerificationImage == null) {
-        showAuthSnackBar(context, message: "Please upload all required documents");
+        showAuthSnackBar(
+          context,
+          message: "Please upload all required documents",
+        );
         return;
       }
     }
@@ -90,7 +122,6 @@ class _DoctorRegisterScreenState extends State<DoctorRegisterScreen> {
       return;
     }
 
-    // المرحلة الرابعة: إرسال البيانات للـ Provider
     final success = await provider.registerDoctor(
       name: fullNameController.text.trim(),
       email: emailController.text.trim(),
@@ -105,10 +136,13 @@ class _DoctorRegisterScreenState extends State<DoctorRegisterScreen> {
       NationalIdBack: selectedNationalIdBack!,
       IdentityVerificationImage: selectedIdentityVerificationImage!,
       password: passwordController.text.trim(),
+
+      // ضيف دول في البروفايدر والسيرفيس
+      latitude: clinicLatitude!,
+      longitude: clinicLongitude!,
     );
 
     if (success) {
-
       context.read<VerifyProvider>().setVerificationData(
         email: emailController.text.trim(),
         doctor: true,
@@ -120,16 +154,11 @@ class _DoctorRegisterScreenState extends State<DoctorRegisterScreen> {
         type: AuthSnackBarType.success,
       );
 
-      await Future.delayed(
-        const Duration(milliseconds: 500),
-      );
+      await Future.delayed(const Duration(milliseconds: 500));
 
       if (!mounted) return;
 
-      Navigator.pushNamed(
-        context,
-        AppRoutes.verificationOtp,
-      );
+      Navigator.pushNamed(context, AppRoutes.verificationOtp);
     }
   }
 
@@ -140,27 +169,62 @@ class _DoctorRegisterScreenState extends State<DoctorRegisterScreen> {
           fullNameController: fullNameController,
           emailController: emailController,
           phoneController: phoneController,
-          // validators للـ fields إلزامية
           fullNameValidator: Validators.validateName,
           emailValidator: Validators.validateEmail,
           phoneValidator: Validators.validatePhone,
         );
+
       case 1:
-        return ProfessionalInformation(
-          licenseController: licenseController,
-          cityController: cityController,
-          addressController: addressController,
-          licenseValidator: (v) => v!.isEmpty ? "License is required" : null,
-          cityValidator: (v) => v!.isEmpty ? "City is required" : null,
-          addressValidator: (v) => v!.isEmpty ? "Address is required" : null,
+        return Column(
+          children: [
+            ProfessionalInformation(
+              licenseController: licenseController,
+              cityController: cityController,
+              addressController: addressController,
+              licenseValidator: (v) =>
+                  v!.isEmpty ? "License is required" : null,
+              cityValidator: (v) => v!.isEmpty ? "City is required" : null,
+              addressValidator: (v) =>
+                  v!.isEmpty ? "Address is required" : null,
+            ),
+            SizedBox(height: 14.h),
+            _ClinicLocationPickerCard(
+              latitude: clinicLatitude,
+              longitude: clinicLongitude,
+              onTap: _openLocationPicker,
+            ),
+          ],
         );
+
       case 2:
         return IdentityVerificationSection(
-          onProfilePicSelected: (file) => selectedProfilePic = file,
-          onIdFrontSelected: (file) => selectedNationalIdFront = file,
-          onIdBackSelected: (file) => selectedNationalIdBack = file,
-          onIdentityImageSelected: (file) => selectedIdentityVerificationImage = file,
+          selectedProfilePic: selectedProfilePic,
+          selectedNationalIdFront: selectedNationalIdFront,
+          selectedNationalIdBack: selectedNationalIdBack,
+          selectedIdentityVerificationImage: selectedIdentityVerificationImage,
+
+          onProfilePicSelected: (file) {
+            setState(() {
+              selectedProfilePic = file;
+            });
+          },
+          onIdFrontSelected: (file) {
+            setState(() {
+              selectedNationalIdFront = file;
+            });
+          },
+          onIdBackSelected: (file) {
+            setState(() {
+              selectedNationalIdBack = file;
+            });
+          },
+          onIdentityImageSelected: (file) {
+            setState(() {
+              selectedIdentityVerificationImage = file;
+            });
+          },
         );
+
       case 3:
         return Column(
           children: [
@@ -182,6 +246,7 @@ class _DoctorRegisterScreenState extends State<DoctorRegisterScreen> {
             ),
           ],
         );
+
       default:
         return const SizedBox.shrink();
     }
@@ -217,7 +282,9 @@ class _DoctorRegisterScreenState extends State<DoctorRegisterScreen> {
     }
   }
 
-  String get _buttonText => currentStep == totalSteps - 1 ? "Complete Registration" : "Continue";
+  String get _buttonText {
+    return currentStep == totalSteps - 1 ? "Complete Registration" : "Continue";
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -306,7 +373,9 @@ class _DoctorRegisterScreenState extends State<DoctorRegisterScreen> {
                       style: ElevatedButton.styleFrom(
                         elevation: 0,
                         backgroundColor: AppColors.primary,
-                        disabledBackgroundColor: AppColors.primary.withOpacity(0.65),
+                        disabledBackgroundColor: AppColors.primary.withOpacity(
+                          0.65,
+                        ),
                         foregroundColor: Colors.white,
                         padding: EdgeInsets.symmetric(horizontal: 10.w),
                         shape: RoundedRectangleBorder(
@@ -315,26 +384,28 @@ class _DoctorRegisterScreenState extends State<DoctorRegisterScreen> {
                       ),
                       child: provider.isLoading
                           ? SizedBox(
-                        height: 20.r,
-                        width: 20.r,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2.2.w,
-                          valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
-                        ),
-                      )
+                              height: 20.r,
+                              width: 20.r,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.2.w,
+                                valueColor: const AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
+                              ),
+                            )
                           : FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Text(
-                          _buttonText,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 12.5.sp,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                _buttonText,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 12.5.sp,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
                     ),
                   ),
                 ),
@@ -347,16 +418,124 @@ class _DoctorRegisterScreenState extends State<DoctorRegisterScreen> {
   }
 }
 
-// Steps Indicator تعريف
+class _ClinicLocationPickerCard extends StatelessWidget {
+  final double? latitude;
+  final double? longitude;
+  final VoidCallback onTap;
+
+  const _ClinicLocationPickerCard({
+    required this.latitude,
+    required this.longitude,
+    required this.onTap,
+  });
+
+  bool get hasLocation => latitude != null && longitude != null;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(18.r),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 220),
+          padding: EdgeInsets.all(15.w),
+          decoration: BoxDecoration(
+            color: hasLocation
+                ? AppColors.primary.withOpacity(0.07)
+                : const Color(0xFFF8FAFA),
+            borderRadius: BorderRadius.circular(18.r),
+            border: Border.all(
+              color: hasLocation
+                  ? AppColors.primary.withOpacity(0.45)
+                  : AppColors.border.withOpacity(0.8),
+              width: 1.1.w,
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                height: 46.r,
+                width: 46.r,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  hasLocation
+                      ? Icons.location_on_rounded
+                      : Icons.add_location_alt_outlined,
+                  color: AppColors.primary,
+                  size: 24.sp,
+                ),
+              ),
+              SizedBox(width: 13.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      hasLocation
+                          ? "Clinic location selected"
+                          : "Pick clinic location",
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 14.5.sp,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    SizedBox(height: 5.h),
+                    Text(
+                      hasLocation
+                          ? "Lat: ${latitude!.toStringAsFixed(5)}, Lng: ${longitude!.toStringAsFixed(5)}"
+                          : "Open map and choose your clinic location",
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 11.5.sp,
+                        height: 1.25,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(width: 8.w),
+              Container(
+                height: 32.r,
+                width: 32.r,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: AppColors.border.withOpacity(0.8)),
+                ),
+                child: Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 13.sp,
+                  color: AppColors.primary,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class DoctorRegisterStepsIndicator extends StatelessWidget {
   final int currentStep;
   final int totalSteps;
 
   const DoctorRegisterStepsIndicator({
-    Key? key,
+    super.key,
     required this.currentStep,
     required this.totalSteps,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -378,7 +557,10 @@ class DoctorRegisterStepsIndicator extends StatelessWidget {
               Expanded(
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 220),
-                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 10.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 8.w,
+                    vertical: 10.h,
+                  ),
                   decoration: BoxDecoration(
                     color: isActive || isDone
                         ? AppColors.primary.withOpacity(0.08)
@@ -397,15 +579,22 @@ class DoctorRegisterStepsIndicator extends StatelessWidget {
                         height: 30.h,
                         width: 30.w,
                         decoration: BoxDecoration(
-                          color: isDone || isActive ? AppColors.primary : Colors.white,
+                          color: isDone || isActive
+                              ? AppColors.primary
+                              : Colors.white,
                           shape: BoxShape.circle,
                           border: Border.all(
-                              color: isDone || isActive ? AppColors.primary : AppColors.border),
+                            color: isDone || isActive
+                                ? AppColors.primary
+                                : AppColors.border,
+                          ),
                         ),
                         child: Icon(
                           isDone ? Icons.check_rounded : steps[index].icon,
                           size: 16.sp,
-                          color: isDone || isActive ? Colors.white : AppColors.textSecondary,
+                          color: isDone || isActive
+                              ? Colors.white
+                              : AppColors.textSecondary,
                         ),
                       ),
                       SizedBox(height: 7.h),
@@ -416,8 +605,12 @@ class DoctorRegisterStepsIndicator extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 11.5.sp,
                           height: 1,
-                          color: isActive || isDone ? AppColors.primary : AppColors.textSecondary,
-                          fontWeight: isActive ? FontWeight.w800 : FontWeight.w600,
+                          color: isActive || isDone
+                              ? AppColors.primary
+                              : AppColors.textSecondary,
+                          fontWeight: isActive
+                              ? FontWeight.w800
+                              : FontWeight.w600,
                         ),
                       ),
                     ],
@@ -447,5 +640,6 @@ class DoctorRegisterStepsIndicator extends StatelessWidget {
 class _StepData {
   final String title;
   final IconData icon;
+
   const _StepData({required this.title, required this.icon});
 }

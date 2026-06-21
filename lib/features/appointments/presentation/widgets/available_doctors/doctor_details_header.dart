@@ -51,7 +51,7 @@ class DoctorDetailsHeader extends StatelessWidget {
                   width: 128.w,
                   height: 128.w,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Image.asset(
+                  errorBuilder: (_, _, _) => Image.asset(
                     AppAssets.profilePhoto,
                     width: 128.w,
                     height: 128.w,

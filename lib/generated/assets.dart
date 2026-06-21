@@ -6,10 +6,15 @@ import 'package:flutter_svg/flutter_svg.dart';
 class Assets {
   Assets._();
 
+  static const AssetGenImage aiDog = AssetGenImage('assets/images/ai_dog.jpeg');
+  static const AssetGenImage appIcon = AssetGenImage(
+    'assets/images/app_icon.png',
+  );
   static const AssetGenImage cat = AssetGenImage('assets/images/cat.png');
   static const AssetGenImage cat3d = AssetGenImage('assets/images/cat_3d.png');
   static const AssetGenImage chatBot = AssetGenImage(
-      'assets/images/chat_bot.png');
+    'assets/images/chat_bot.png',
+  );
   static const $AssetsAssetsGen assets = $AssetsAssetsGen();
   static const $AssetsLibGen lib = $AssetsLibGen();
 }
@@ -26,38 +31,56 @@ class $AssetsImagesGen {
 
   final $AssetsSvgsGen svgs = const $AssetsSvgsGen();
   final AssetGenImage adjustablePetCollar = const AssetGenImage(
-      'assets/images/Adjustable Pet Collar.png');
+    'assets/images/Adjustable Pet Collar.png',
+  );
   final AssetGenImage interactivePetToy = const AssetGenImage(
-      'assets/images/Interactive Pet Toy.png');
+    'assets/images/Interactive Pet Toy.png',
+  );
   final AssetGenImage premiumDogFood = const AssetGenImage(
-      'assets/images/Premium Dog Food.png');
+    'assets/images/Premium Dog Food.png',
+  );
+  final AssetGenImage aiDog = const AssetGenImage('assets/images/ai_dog.jpeg');
   final AssetGenImage aleefLogo = const AssetGenImage(
-      'assets/images/aleef_logo.png');
+    'assets/images/aleef_logo.png',
+  );
+  final AssetGenImage appIcon = const AssetGenImage(
+    'assets/images/app_icon.png',
+  );
   final AssetGenImage authPetHeader = const AssetGenImage(
-      'assets/images/auth_pet_header.png');
+    'assets/images/auth_pet_header.png',
+  );
   final AssetGenImage backGroundLogin = const AssetGenImage(
-      'assets/images/backGroundLogin.png');
+    'assets/images/backGroundLogin.png',
+  );
   final AssetGenImage blankProfilePhoto = const AssetGenImage(
-      'assets/images/blank_profile_photo.png');
+    'assets/images/blank_profile_photo.png',
+  );
   final AssetGenImage cat = const AssetGenImage('assets/images/cat.png');
   final AssetGenImage cat3d = const AssetGenImage('assets/images/cat_3d.png');
   final AssetGenImage chatBot = const AssetGenImage(
-      'assets/images/chat_bot.png');
+    'assets/images/chat_bot.png',
+  );
   final AssetGenImage discountCard = const AssetGenImage(
-      'assets/images/discountCard.png');
+    'assets/images/discountCard.png',
+  );
   final AssetGenImage google2 = const AssetGenImage(
-      'assets/images/google2.png');
+    'assets/images/google2.png',
+  );
   final AssetGenImage logo = const AssetGenImage('assets/images/logo.png');
   final AssetGenImage logoNative = const AssetGenImage(
-      'assets/images/logo_native.png');
+    'assets/images/logo_native.png',
+  );
   final AssetGenImage paw = const AssetGenImage('assets/images/paw.png');
   final AssetGenImage paw2 = const AssetGenImage('assets/images/paw2.png');
   final AssetGenImage petHeader = const AssetGenImage(
-      'assets/images/pet_header.png');
+    'assets/images/pet_header.png',
+  );
   final AssetGenImage profile = const AssetGenImage(
-      'assets/images/profile.jpg');
+    'assets/images/profile.jpg',
+  );
   final AssetGenImage profilePhoto = const AssetGenImage(
-      'assets/images/profile_photo.jpg');
+    'assets/images/profile_photo.jpg',
+  );
   final AssetGenImage splash = const AssetGenImage('assets/images/splash.png');
 }
 
@@ -65,9 +88,11 @@ class $AssetsSvgsGen {
   const $AssetsSvgsGen();
 
   final SvgGenImage container = const SvgGenImage(
-      'assets/images/svgs/Container.svg');
+    'assets/images/svgs/Container.svg',
+  );
   final SvgGenImage backGround = const SvgGenImage(
-      'assets/images/svgs/backGround.svg');
+    'assets/images/svgs/backGround.svg',
+  );
 }
 
 class $AssetsSoundsGen {
@@ -85,7 +110,9 @@ class $AssetsLibGen {
 class $AssetsFeaturesGen {
   const $AssetsFeaturesGen();
 
+  final $AssetsAuthGen auth = const $AssetsAuthGen();
   final $AssetsDoctorGen doctor = const $AssetsDoctorGen();
+  final $AssetsHomeGen home = const $AssetsHomeGen();
   final $AssetsOnboardingGen onboarding = const $AssetsOnboardingGen();
   final $AssetsProfileGen profile = const $AssetsProfileGen();
   final $AssetsStoreGen store = const $AssetsStoreGen();
@@ -112,10 +139,14 @@ class $AssetsWidgetsGen {
 class $AssetsEditProfileGen {
   const $AssetsEditProfileGen();
 
-  final String editProfileAvatarSection = 'lib/features/profile/presentation/widgets/edit_profile/edit_profile_avatar_section.dart';
-  final String editProfileFormSection = 'lib/features/profile/presentation/widgets/edit_profile/edit_profile_form_section.dart';
-  final String editProfileSaveButton = 'lib/features/profile/presentation/widgets/edit_profile/edit_profile_save_button.dart';
-  final String editProfileTextField = 'lib/features/profile/presentation/widgets/edit_profile/edit_profile_text_field.dart';
+  final String editProfileAvatarSection =
+      'lib/features/profile/presentation/widgets/edit_profile/edit_profile_avatar_section.dart';
+  final String editProfileFormSection =
+      'lib/features/profile/presentation/widgets/edit_profile/edit_profile_form_section.dart';
+  final String editProfileSaveButton =
+      'lib/features/profile/presentation/widgets/edit_profile/edit_profile_save_button.dart';
+  final String editProfileTextField =
+      'lib/features/profile/presentation/widgets/edit_profile/edit_profile_text_field.dart';
 }
 
 class $AssetsStoreGen {
@@ -133,12 +164,18 @@ class $AssetsPresentationGen {
 class $AssetsPagesGen {
   const $AssetsPagesGen();
 
-  final String cartScreen = 'lib/features/store/presentation/pages/cart_screen.dart';
-  final String checkoutScreen = 'lib/features/store/presentation/pages/checkout_screen.dart';
-  final String detailsScreen = 'lib/features/store/presentation/pages/details_screen.dart';
-  final String myOrdersScreen = 'lib/features/store/presentation/pages/my_orders_screen.dart';
-  final String orderSuccessView = 'lib/features/store/presentation/pages/order_success_view.dart';
-  final String storeTab = 'lib/features/store/presentation/pages/store_tab.dart';
+  final String cartScreen =
+      'lib/features/store/presentation/pages/cart_screen.dart';
+  final String checkoutScreen =
+      'lib/features/store/presentation/pages/checkout_screen.dart';
+  final String detailsScreen =
+      'lib/features/store/presentation/pages/details_screen.dart';
+  final String myOrdersScreen =
+      'lib/features/store/presentation/pages/my_orders_screen.dart';
+  final String orderSuccessView =
+      'lib/features/store/presentation/pages/order_success_view.dart';
+  final String storeTab =
+      'lib/features/store/presentation/pages/store_tab.dart';
 }
 
 class $AssetsOnboardingGen {
@@ -156,20 +193,24 @@ class $AssetsPresentationGen {
 class $AssetsPagesGen {
   const $AssetsPagesGen();
 
-  final String onboardingScreen = 'lib/features/onboarding/presentation/pages/onboarding_screen.dart';
-  final String welcomeScreen = 'lib/features/onboarding/presentation/pages/welcome_screen.dart';
+  final String onboardingScreen =
+      'lib/features/onboarding/presentation/pages/onboarding_screen.dart';
+  final String welcomeScreen =
+      'lib/features/onboarding/presentation/pages/welcome_screen.dart';
 }
 
 class $AssetsDoctorGen {
   const $AssetsDoctorGen();
 
   final $AssetsHomeGen home = const $AssetsHomeGen();
+  final $AssetsProfileGen profile = const $AssetsProfileGen();
 }
 
 class $AssetsHomeGen {
   const $AssetsHomeGen();
 
   final $AssetsDataGen data = const $AssetsDataGen();
+  final $AssetsPresentationGen presentation = const $AssetsPresentationGen();
 }
 
 class $AssetsDataGen {
@@ -181,18 +222,173 @@ class $AssetsDataGen {
 class $AssetsModelsGen {
   const $AssetsModelsGen();
 
-  final String endAppointmentRequestModel = 'lib/features/doctor/home/data/models/End_Appointment_Request_Model.dart';
-  final String appointmentDetailsModel = 'lib/features/doctor/home/data/models/appointment_details_model.dart';
-  final String appointmentRequestModel = 'lib/features/doctor/home/data/models/appointment_request_model.dart';
-  final String confirmedAppointmentModel = 'lib/features/doctor/home/data/models/confirmed_appointment_model.dart';
-  final String doctorProfileModel = 'lib/features/doctor/home/data/models/doctor_profile_model.dart';
+  final String endAppointmentRequestModel =
+      'lib/features/doctor/home/data/models/End_Appointment_Request_Model.dart';
+  final String appointmentDetailsModel =
+      'lib/features/doctor/home/data/models/appointment_details_model.dart';
+  final String appointmentRequestModel =
+      'lib/features/doctor/home/data/models/appointment_request_model.dart';
+  final String confirmedAppointmentModel =
+      'lib/features/doctor/home/data/models/confirmed_appointment_model.dart';
+  final String doctorProfileModel =
+      'lib/features/doctor/home/data/models/doctor_profile_model.dart';
+}
+
+class $AssetsPresentationGen {
+  const $AssetsPresentationGen();
+
+  final $AssetsWidgetsGen widgets = const $AssetsWidgetsGen();
+}
+
+class $AssetsWidgetsGen {
+  const $AssetsWidgetsGen();
+
+  final $AssetsAppointmentManagementGen appointmentManagement =
+      const $AssetsAppointmentManagementGen();
+}
+
+class $AssetsAppointmentManagementGen {
+  const $AssetsAppointmentManagementGen();
+
+  final String actionCard =
+      'lib/features/doctor/home/presentation/widgets/appointment_management/action_card.dart';
+  final String infoLine =
+      'lib/features/doctor/home/presentation/widgets/appointment_management/info_line.dart';
+  final String labeledField =
+      'lib/features/doctor/home/presentation/widgets/appointment_management/labeled_field.dart';
+  final String medicalRecordCard =
+      'lib/features/doctor/home/presentation/widgets/appointment_management/medical_record_card.dart';
+  final String petAppointmentCard =
+      'lib/features/doctor/home/presentation/widgets/appointment_management/pet_appointment_card.dart';
+  final String petSmallInfoBox =
+      'lib/features/doctor/home/presentation/widgets/appointment_management/pet_small_info_box.dart';
+  final String sectionTitle =
+      'lib/features/doctor/home/presentation/widgets/appointment_management/section_title.dart';
+  final String upcomingVaccinationCard =
+      'lib/features/doctor/home/presentation/widgets/appointment_management/upcoming_vaccination_card.dart';
+  final String vaccinationCard =
+      'lib/features/doctor/home/presentation/widgets/appointment_management/vaccination_card.dart';
+}
+
+class $AssetsProfileGen {
+  const $AssetsProfileGen();
+
+  final $AssetsPresentationGen presentation = const $AssetsPresentationGen();
+}
+
+class $AssetsPresentationGen {
+  const $AssetsPresentationGen();
+
+  final $AssetsPagesGen pages = const $AssetsPagesGen();
+}
+
+class $AssetsPagesGen {
+  const $AssetsPagesGen();
+
+  final String editDoctorScheduleScreen =
+      'lib/features/doctor/profile/presentation/pages/Edit_doctor_schedule_screen.dart';
+  final String doctorChangePassword =
+      'lib/features/doctor/profile/presentation/pages/doctor_change_password.dart';
+  final String doctorEditProfileScreen =
+      'lib/features/doctor/profile/presentation/pages/doctor_edit_profile_screen.dart';
+  final String doctorProfileTab =
+      'lib/features/doctor/profile/presentation/pages/doctor_profile_tab.dart';
+}
+
+class $AssetsHomeGen {
+  const $AssetsHomeGen();
+
+  final $AssetsPresentationGen presentation = const $AssetsPresentationGen();
+}
+
+class $AssetsPresentationGen {
+  const $AssetsPresentationGen();
+
+  final $AssetsWidgetsGen widgets = const $AssetsWidgetsGen();
+}
+
+class $AssetsWidgetsGen {
+  const $AssetsWidgetsGen();
+
+  final String doctorCard =
+      'lib/features/home/presentation/widgets/doctor_card.dart';
+  final String homeBody =
+      'lib/features/home/presentation/widgets/home_body.dart';
+  final String homeContentPanel =
+      'lib/features/home/presentation/widgets/home_content_panel.dart';
+  final String homeFreeFirstBookingCard =
+      'lib/features/home/presentation/widgets/home_free_first_booking_card.dart';
+  final String homePetSelector =
+      'lib/features/home/presentation/widgets/home_pet_selector.dart';
+  final String homeProductsSection =
+      'lib/features/home/presentation/widgets/home_products_section.dart';
+  final String homeSectionTitle =
+      'lib/features/home/presentation/widgets/home_section_title.dart';
+  final String homeTabSkeleton =
+      'lib/features/home/presentation/widgets/home_tab_skeleton.dart';
+  final String homeTodaySummaryCard =
+      'lib/features/home/presentation/widgets/home_today_summary_card.dart';
+  final String homeTopSection =
+      'lib/features/home/presentation/widgets/home_top_section.dart';
+  final String homeVetTipCard =
+      'lib/features/home/presentation/widgets/home_vet_tip_card.dart';
+  final String notificationButton =
+      'lib/features/home/presentation/widgets/notification_button.dart';
+  final String petSwitcherBottomSheet =
+      'lib/features/home/presentation/widgets/pet_switcher_bottom_sheet.dart';
+  final String quickActionSection =
+      'lib/features/home/presentation/widgets/quick_action_section.dart';
+  final String selectedPetSummaryCard =
+      'lib/features/home/presentation/widgets/selected_pet_summary_card.dart';
+  final String upcomingAppointmentSection =
+      'lib/features/home/presentation/widgets/upcoming_appointment_section.dart';
+}
+
+class $AssetsAuthGen {
+  const $AssetsAuthGen();
+
+  final $AssetsPresentationGen presentation = const $AssetsPresentationGen();
+}
+
+class $AssetsPresentationGen {
+  const $AssetsPresentationGen();
+
+  final $AssetsPagesGen pages = const $AssetsPagesGen();
+}
+
+class $AssetsPagesGen {
+  const $AssetsPagesGen();
+
+  final String chooseRoleScreen =
+      'lib/features/auth/presentation/pages/choose_role_screen.dart';
+  final String doctorForgetPasswordScreen =
+      'lib/features/auth/presentation/pages/doctor_forget_password_screen.dart';
+  final String doctorLoginScreen =
+      'lib/features/auth/presentation/pages/doctor_login_screen.dart';
+  final String doctorPendingReviewScreen =
+      'lib/features/auth/presentation/pages/doctor_pending_review_screen.dart';
+  final String doctorRegisterScreen =
+      'lib/features/auth/presentation/pages/doctor_register_screen.dart';
+  final String doctorResetPasswordScreen =
+      'lib/features/auth/presentation/pages/doctor_reset_password_screen.dart';
+  final String loginScreen =
+      'lib/features/auth/presentation/pages/login_screen.dart';
+  final String pickLocationScreen =
+      'lib/features/auth/presentation/pages/pick_location_screen.dart';
+  final String registerScreen =
+      'lib/features/auth/presentation/pages/register_screen.dart';
+  final String userForgetPasswordScreen =
+      'lib/features/auth/presentation/pages/user_forget_password_screen.dart';
+  final String userResetPasswordScreen =
+      'lib/features/auth/presentation/pages/user_reset_password_screen.dart';
+  final String verficationOtpScreen =
+      'lib/features/auth/presentation/pages/verfication_otp_screen.dart';
 }
 
 class AssetGenImage {
   const AssetGenImage(this._assetName, {this.size, this.flavors = const {}});
 
   final String _assetName;
-
 
   final Size? size;
   final Set<String> flavors;
@@ -250,15 +446,8 @@ class AssetGenImage {
     );
   }
 
-  ImageProvider provider({
-    AssetBundle? bundle,
-    String? package,
-  }) {
-    return AssetImage(
-      _assetName,
-      bundle: bundle,
-      package: package,
-    );
+  ImageProvider provider({AssetBundle? bundle, String? package}) {
+    return AssetImage(_assetName, bundle: bundle, package: package);
   }
 
   Widget custom({
@@ -336,4 +525,3 @@ class SvgGenImage {
 
   String get keyName => _assetName;
 }
-

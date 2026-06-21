@@ -3,7 +3,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class ChatEmptyState extends StatelessWidget {
-  const ChatEmptyState({super.key});
+  final String title;
+  final String subtitle;
+  final IconData icon;
+
+  const ChatEmptyState({
+    super.key,
+    this.title = 'No chats yet',
+    this.subtitle =
+    'When you book an appointment or start a conversation, your chats will appear here.',
+    this.icon = Icons.forum_outlined,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -20,14 +30,15 @@ class ChatEmptyState extends StatelessWidget {
               shape: BoxShape.circle,
             ),
             child: Icon(
-              Icons.forum_outlined,
+              icon,
               color: AppColors.primary,
               size: 38.sp,
             ),
           ),
           SizedBox(height: 18.h),
           Text(
-            'No chats yet',
+            title,
+            textAlign: TextAlign.center,
             style: TextStyle(
               color: const Color(0xFF1F2A2E),
               fontSize: 20.sp,
@@ -36,7 +47,7 @@ class ChatEmptyState extends StatelessWidget {
           ),
           SizedBox(height: 8.h),
           Text(
-            'When you book an appointment or start a conversation, your chats will appear here.',
+            subtitle,
             textAlign: TextAlign.center,
             style: TextStyle(
               color: const Color(0xFF8A8F93),

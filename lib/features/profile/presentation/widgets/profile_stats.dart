@@ -7,13 +7,13 @@ import '../../../../core/theme/app_text_styles.dart';
 class ProfileStats extends StatelessWidget {
   final int petsCount;
   final int ordersCount;
-  final int visitsCount;
+  final int appointmentsCount;
 
   const ProfileStats({
     super.key,
     required this.petsCount,
     required this.ordersCount,
-    required this.visitsCount,
+    required this.appointmentsCount,
   });
 
   @override
@@ -64,7 +64,7 @@ class ProfileStats extends StatelessWidget {
           _buildDivider(),
           Expanded(
             child: _StatItem(
-              value: visitsCount.toString(),
+              value: appointmentsCount.toString(),
               label: "Visits",
               icon: Icons.favorite_rounded,
               iconColor: AppColors.error,
@@ -131,6 +131,8 @@ class _StatItem extends StatelessWidget {
         SizedBox(height: 4.h),
         Text(
           label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: AppTextStyles.hint14Regular.copyWith(
             fontSize: 12.sp,
             fontWeight: FontWeight.w600,

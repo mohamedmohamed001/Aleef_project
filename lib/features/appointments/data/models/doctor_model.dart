@@ -13,6 +13,9 @@ class DoctorModel {
   final String? about;
   final int? appointmentFee;
 
+  final String? distanceKm;
+  final int? minutes;
+
   DoctorModel({
     this.id,
     this.name,
@@ -27,6 +30,8 @@ class DoctorModel {
     this.ratingsCount,
     this.about,
     this.appointmentFee,
+    this.distanceKm,
+    this.minutes,
   });
 
   Map<String, dynamic> toJson() {
@@ -44,16 +49,19 @@ class DoctorModel {
       'ratingsCount': ratingsCount,
       'about': about,
       'appointmentFee': appointmentFee,
+      'distance_km': distanceKm,
+      'minitus': minutes,
     };
   }
 
   factory DoctorModel.fromJson(Map<String, dynamic> json) {
     return DoctorModel(
-      id: json['id']?.toString(),
+      id: json['id']?.toString() ?? json['_id']?.toString(),
       name: json['name']?.toString(),
       specialization: json['specialization']?.toString(),
       rating: json['rating']?.toString(),
-      reviewsCount: (json['ratingCount'] as num?)?.toInt(),
+      reviewsCount: (json['reviewsCount'] as num?)?.toInt() ??
+          (json['ratingCount'] as num?)?.toInt(),
       location: json['location']?.toString(),
       phone: json['phone']?.toString(),
       city: json['city']?.toString(),
@@ -62,6 +70,12 @@ class DoctorModel {
       ratingsCount: (json['ratingsCount'] as num?)?.toDouble(),
       about: json['about']?.toString(),
       appointmentFee: (json['appointmentFee'] as num?)?.toInt(),
+      distanceKm: json['distance_km']?.toString() ??
+          json['distanceKm']?.toString() ??
+          json['distance']?.toString(),
+      minutes: (json['minitus'] as num?)?.toInt() ??
+          (json['minutes'] as num?)?.toInt() ??
+          (json['duration'] as num?)?.toInt(),
     );
   }
 }

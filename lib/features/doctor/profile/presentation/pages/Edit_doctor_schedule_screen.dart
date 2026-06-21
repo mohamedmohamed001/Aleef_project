@@ -1,10 +1,15 @@
 import 'package:aleef/features/doctor/home/data/models/doctor_profile_model.dart';
 import 'package:aleef/features/doctor/home/presentation/manager/doctor_profile_provider.dart';
 import 'package:aleef/features/doctor/home/presentation/widgets/doctor_schedule_day_card.dart';
+import 'package:aleef/features/doctor/profile/presentation/widgets/edit_schedule/doctor_edit_schedule_header.dart';
+import 'package:aleef/features/doctor/profile/presentation/widgets/edit_schedule/doctor_edit_schedule_save_bar.dart';
+import 'package:aleef/features/doctor/profile/presentation/widgets/edit_schedule/doctor_edit_schedule_summary_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:aleef/core/theme/app_colors.dart';
 import 'package:provider/provider.dart';
+import 'package:shimmer/shimmer.dart';
+
+import '../../../../../core/widgets/app_snack_bar.dart';
 
 class DoctorEditScheduleScreen extends StatefulWidget {
   const DoctorEditScheduleScreen({super.key});
@@ -15,7 +20,7 @@ class DoctorEditScheduleScreen extends StatefulWidget {
 }
 
 class _DoctorEditScheduleScreenState extends State<DoctorEditScheduleScreen> {
-  final List<String> _weekDays = [
+  final List<String> _weekDays = const [
     'sunday',
     'monday',
     'tuesday',
@@ -27,37 +32,55 @@ class _DoctorEditScheduleScreenState extends State<DoctorEditScheduleScreen> {
 
   Map<String, ScheduleItem> _currentScheduleMap = {};
 
+  int get _availableDaysCount {
+    return _currentScheduleMap.values
+        .where((item) => item.isAvailable)
+        .length;
+  }
+
+  bool get _hasScheduleData => _currentScheduleMap.isNotEmpty;
+
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final provider = Provider.of<DoctorProfileProvider>(
-        context,
-        listen: false,
-      );
-      provider.fetchDoctorSchedule().then((_) {
-        _initializeScheduleState(provider.doctorSchedule);
-      });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+
+      final provider = context.read<DoctorProfileProvider>();
+
+      await provider.fetchDoctorSchedule();
+
+      if (!mounted) return;
+
+      _initializeScheduleState(provider.doctorSchedule);
     });
   }
 
   void _initializeScheduleState(List<ScheduleItem> backendSchedule) {
     final Map<String, ScheduleItem> tempMap = {};
-    for (var day in _weekDays) {
+
+    for (final day in _weekDays) {
       final existingItem = backendSchedule.firstWhere(
-        (item) => item.dayOfWeek.toLowerCase() == day,
-        orElse: () => ScheduleItem(
-          dayOfWeek: day,
-          startTime: '09:00:00',
-          endTime: '17:00:00',
-          isAvailable: false,
-        ),
+            (item) => item.dayOfWeek.toLowerCase() == day,
+        orElse: () => _defaultScheduleItem(day),
       );
+
       tempMap[day] = existingItem;
     }
+
     setState(() {
       _currentScheduleMap = tempMap;
     });
+  }
+
+  ScheduleItem _defaultScheduleItem(String day) {
+    return ScheduleItem(
+      dayOfWeek: day,
+      startTime: '09:00:00',
+      endTime: '17:00:00',
+      isAvailable: false,
+    );
   }
 
   void _updateDaySchedule(String day, ScheduleItem updatedItem) {
@@ -66,139 +89,268 @@ class _DoctorEditScheduleScreenState extends State<DoctorEditScheduleScreen> {
     });
   }
 
-  void _saveSchedule() async {
-    final provider = Provider.of<DoctorProfileProvider>(context, listen: false);
+  Future<void> _saveSchedule() async {
+    if (!_hasScheduleData) return;
+
+    final provider = context.read<DoctorProfileProvider>();
     final listToSend = _currentScheduleMap.values.toList();
 
     final success = await provider.updateDoctorSchedule(listToSend);
-    if (mounted) {
-      if (success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Schedule updated successfully'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        Navigator.pop(context);
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(provider.errorMessage ?? 'Failed to update schedule'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+
+    if (!mounted) return;
+
+    if (success) {
+      AppSnackBar.show(
+        context,
+        message: 'Schedule updated successfully',
+        type: AppSnackBarType.success,
+      );
+
+      Navigator.pop(context, true);
+      return;
     }
+
+    AppSnackBar.show(
+      context,
+      message: provider.errorMessage ?? 'Failed to update schedule',
+      type: AppSnackBarType.error,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final provider = Provider.of<DoctorProfileProvider>(context);
+    final provider = context.watch<DoctorProfileProvider>();
+
+    final isInitialLoading = provider.isLoading && !_hasScheduleData;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
-      appBar: AppBar(
-        title: Text(
-          'Edit Schedule',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 18.sp,
-            fontWeight: FontWeight.bold,
+      backgroundColor: const Color(0xFFF6F8F8),
+      body: Column(
+        children: [
+          DoctorEditScheduleHeader(
+            availableDaysCount: isInitialLoading ? 0 : _availableDaysCount,
+            totalDaysCount: _weekDays.length,
+            onBackTap: () => Navigator.pop(context, false),
           ),
-        ),
-        backgroundColor: AppColors.primary,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
-        centerTitle: true,
-        elevation: 0,
-      ),
-      body: provider.isLoading && _currentScheduleMap.isEmpty
-          ? const Center(
-              child: CircularProgressIndicator(color: AppColors.primary),
-            )
-          : Column(
-              children: [
-                Container(
-                  width: double.infinity,
-                  color: AppColors.primary,
-                  padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 20.h),
-                  child: Text(
-                    "Set your weekly availability. Toggle each day and specify your working hours.",
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.9),
-                      fontSize: 13.sp,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: ListView.builder(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 16.w,
-                      vertical: 12.h,
-                    ),
-                    itemCount: _weekDays.length,
-                    itemBuilder: (context, index) {
-                      final day = _weekDays[index];
-                      final item =
-                          _currentScheduleMap[day] ??
-                          ScheduleItem(
-                            dayOfWeek: day,
-                            startTime: '09:00:00',
-                            endTime: '17:00:00',
-                            isAvailable: false,
-                          );
 
-                      return DoctorScheduleDayCard(
-                        day: day,
-                        item: item,
-                        onChanged: (updatedItem) =>
-                            _updateDaySchedule(day, updatedItem),
-                      );
-                    },
-                  ),
+          Expanded(
+            child: isInitialLoading
+                ? const _DoctorEditScheduleSkeleton()
+                : ListView(
+              physics: const BouncingScrollPhysics(),
+              padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 16.h),
+              children: [
+                DoctorEditScheduleSummaryCard(
+                  availableDaysCount: _availableDaysCount,
+                  totalDaysCount: _weekDays.length,
                 ),
-                Padding(
-                  padding: EdgeInsets.all(16.w),
-                  child: SizedBox(
-                    width: double.infinity,
-                    height: 50.h,
-                    child: ElevatedButton(
-                      onPressed: provider.isUpdating ? null : _saveSchedule,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14.r),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: provider.isUpdating
-                          ? const CircularProgressIndicator(color: Colors.white)
-                          : Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.save,
-                                  color: Colors.white,
-                                  size: 18.sp,
-                                ),
-                                SizedBox(width: 8.w),
-                                Text(
-                                  "Save Changes",
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 15.sp,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
+
+                SizedBox(height: 14.h),
+
+                ..._weekDays.map((day) {
+                  final item =
+                      _currentScheduleMap[day] ?? _defaultScheduleItem(day);
+
+                  return Padding(
+                    padding: EdgeInsets.only(bottom: 12.h),
+                    child: DoctorScheduleDayCard(
+                      day: day,
+                      item: item,
+                      onChanged: (updatedItem) {
+                        _updateDaySchedule(day, updatedItem);
+                      },
                     ),
-                  ),
+                  );
+                }),
+              ],
+            ),
+          ),
+
+          if (!isInitialLoading)
+            DoctorEditScheduleSaveBar(
+              isLoading: provider.isUpdating,
+              onTap: _saveSchedule,
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DoctorEditScheduleSkeleton extends StatelessWidget {
+  const _DoctorEditScheduleSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      physics: const NeverScrollableScrollPhysics(),
+      padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 16.h),
+      children: [
+        _shimmer(
+          child: _summarySkeleton(),
+        ),
+
+        SizedBox(height: 14.h),
+
+        ...List.generate(6, (index) {
+          return Padding(
+            padding: EdgeInsets.only(bottom: 12.h),
+            child: _shimmer(
+              child: _dayCardSkeleton(),
+            ),
+          );
+        }),
+      ],
+    );
+  }
+
+  Widget _summarySkeleton() {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(18.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24.r),
+        border: Border.all(
+          color: Colors.black.withOpacity(0.04),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.035),
+            blurRadius: 14.r,
+            offset: Offset(0, 6.h),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          _box(
+            width: 48.w,
+            height: 48.w,
+            radius: 16.r,
+          ),
+          SizedBox(width: 14.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _box(
+                  height: 16.h,
+                  width: 160.w,
+                  radius: 8.r,
+                ),
+                SizedBox(height: 9.h),
+                _box(
+                  height: 12.h,
+                  width: 220.w,
+                  radius: 8.r,
                 ),
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _dayCardSkeleton() {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(16.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22.r),
+        border: Border.all(
+          color: Colors.black.withOpacity(0.04),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.035),
+            blurRadius: 14.r,
+            offset: Offset(0, 6.h),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              _box(
+                width: 42.w,
+                height: 42.w,
+                radius: 14.r,
+              ),
+              SizedBox(width: 12.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _box(
+                      height: 15.h,
+                      width: 110.w,
+                      radius: 8.r,
+                    ),
+                    SizedBox(height: 8.h),
+                    _box(
+                      height: 11.h,
+                      width: 170.w,
+                      radius: 8.r,
+                    ),
+                  ],
+                ),
+              ),
+              _box(
+                width: 44.w,
+                height: 26.h,
+                radius: 20.r,
+              ),
+            ],
+          ),
+
+          SizedBox(height: 16.h),
+
+          Row(
+            children: [
+              Expanded(
+                child: _box(
+                  height: 46.h,
+                  radius: 16.r,
+                ),
+              ),
+              SizedBox(width: 10.w),
+              Expanded(
+                child: _box(
+                  height: 46.h,
+                  radius: 16.r,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _shimmer({required Widget child}) {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey.shade300,
+      highlightColor: Colors.grey.shade100,
+      child: child,
+    );
+  }
+
+  Widget _box({
+    required double height,
+    double? width,
+    double radius = 8,
+  }) {
+    return Container(
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(radius),
+      ),
     );
   }
 }

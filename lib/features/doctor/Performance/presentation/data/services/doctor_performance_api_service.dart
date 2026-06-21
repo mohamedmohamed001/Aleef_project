@@ -3,7 +3,6 @@ import 'package:dio/dio.dart';
 import '../../../../../../core/constants/api_constant.dart';
 import '../../../../../../core/services/secure_storage_service.dart';
 
-
 class DoctorPerformanceApiService {
   final Dio _dio = Dio(
     BaseOptions(
@@ -27,17 +26,47 @@ class DoctorPerformanceApiService {
         ),
       );
 
-      return response.data;
+      return Map<String, dynamic>.from(response.data);
     } on DioException catch (e) {
-      return {
-        'status': 'error',
-        'message': e.response?.data['message'] ?? 'Something went wrong',
-      };
+      return _handleDioError(e);
     } catch (e) {
       return {
         'status': 'error',
         'message': 'Unexpected error',
       };
     }
+  }
+
+  Future<Map<String, dynamic>> getWalletTransactions() async {
+    try {
+      final token = await SecureStorageService().getDoctorToken();
+
+      final response = await _dio.get(
+        '/appointments/wallet-transactions',
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+          },
+        ),
+      );
+
+      return Map<String, dynamic>.from(response.data);
+    } on DioException catch (e) {
+      return _handleDioError(e);
+    } catch (e) {
+      return {
+        'status': 'error',
+        'message': 'Unexpected error',
+      };
+    }
+  }
+
+  Map<String, dynamic> _handleDioError(DioException e) {
+    return {
+      'status': 'error',
+      'message': e.response?.data is Map
+          ? e.response?.data['message'] ?? 'Something went wrong'
+          : 'Something went wrong',
+    };
   }
 }

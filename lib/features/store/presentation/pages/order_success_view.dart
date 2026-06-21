@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 
-import '../../../../core/routing/app_routes.dart';
 import '../../../../providers/bottom_nav_provider.dart';
 import '../../../../core/theme/app_colors.dart';
 
@@ -16,7 +15,7 @@ class OrderSuccessView extends StatefulWidget {
 class _OrderSuccessViewState extends State<OrderSuccessView>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
-
+  bool _isNavigating = false;
   late final Animation<double> _boxScale;
   late final Animation<double> _fade;
   late final Animation<Offset> _contentSlide;
@@ -58,15 +57,14 @@ class _OrderSuccessViewState extends State<OrderSuccessView>
   }
 
   void _goToShop() {
-    Navigator.pushNamedAndRemoveUntil(
-      context,
-      AppRoutes.mainLayout,
-          (route) => false,
-    );
+    if (_isNavigating) return;
+    _isNavigating = true;
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<BottomNavProvider>().changeTab(2);
-    });
+    _controller.stop();
+
+    context.read<BottomNavProvider>().changeTab(3);
+
+    Navigator.of(context).popUntil((route) => route.isFirst);
   }
 
   @override
@@ -410,7 +408,7 @@ class _PopItem extends StatelessWidget {
   final double? top;
   final double? left;
   final double? right;
-  final double? bottom;
+  final double bottom;
 
   const _PopItem({
     required this.controller,
@@ -418,8 +416,7 @@ class _PopItem extends StatelessWidget {
     required this.child,
     this.top,
     this.left,
-    this.right,
-    this.bottom,
+    this.right, this.bottom = 0,
   });
 
   @override

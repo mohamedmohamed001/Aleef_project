@@ -8,6 +8,7 @@ import '../../../../core/services/secure_storage_service.dart';
 import '../../../../core/services/service_locator.dart';
 import '../../../../core/services/session_service.dart';
 import '../../auth/data/models/user_model.dart';
+import '../models/profile_stats_count_model.dart';
 
 class ProfileApi {
   Future<bool> editProfile(String name, String phone) async {
@@ -161,4 +162,30 @@ class ProfileApi {
       return false;
     }
   }
+
+  Future<ProfileStatsCountModel> getAppointmentsAndOrdersCount() async {
+  final storage = getIt<SecureStorageService>();
+  final token = await storage.getToken();
+
+  final uri = Uri.parse(
+  '${ApiConstant.baseUrl}/users/get-appointments-and-orders-count',
+  );
+
+  final response = await http.get(
+  uri,
+  headers: {
+  'Authorization': 'Bearer $token',
+  'Content-Type': 'application/json',
+  },
+  );
+
+  final data = jsonDecode(response.body);
+
+  if (response.statusCode >= 200 && response.statusCode < 300) {
+  return ProfileStatsCountModel.fromJson(data);
+  }
+
+  throw Exception(data['message'] ?? 'Failed to load profile stats count');
+  }
+
 }

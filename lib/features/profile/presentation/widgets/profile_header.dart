@@ -1,14 +1,24 @@
 import 'package:aleef/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:provider/provider.dart';
 
 import '../../../../core/services/secure_storage_service.dart';
 import '../../../../core/services/service_locator.dart';
 import '../../../../core/services/session_service.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../notifications/pages/notifications_screen.dart';
+import '../../../notifications/presentation/provider/notification_provider.dart';
 
 class ProfileHeader extends StatefulWidget {
-  const ProfileHeader({super.key});
+  final bool showBackButton;
+  final VoidCallback? onBackTap;
+
+  const ProfileHeader({
+    super.key,
+    this.showBackButton = false,
+    this.onBackTap,
+  });
 
   @override
   State<ProfileHeader> createState() => _ProfileHeaderState();
@@ -118,6 +128,14 @@ class _ProfileHeaderState extends State<ProfileHeader> {
                     children: [
                       Row(
                         children: [
+                          if (widget.showBackButton) ...[
+                            _HeaderBackButton(
+                              onTap: widget.onBackTap ??
+                                      () => Navigator.pop(context),
+                            ),
+                            SizedBox(width: 8.w),
+                          ],
+
                           Text(
                             "Profile",
                             style: AppTextStyles.userNameAppbar.copyWith(
@@ -125,22 +143,87 @@ class _ProfileHeaderState extends State<ProfileHeader> {
                               fontWeight: FontWeight.w800,
                             ),
                           ),
+
                           const Spacer(),
-                          Container(
-                            height: 36.r,
-                            width: 36.r,
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.16),
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: Colors.white.withOpacity(0.18),
-                              ),
-                            ),
-                            child: Icon(
-                              Icons.notifications_none_rounded,
-                              color: Colors.white,
-                              size: 20.sp,
-                            ),
+
+                          Consumer<NotificationProvider>(
+                            builder: (context, notificationProvider, _) {
+                              final unreadCount = notificationProvider.unreadCount;
+
+                              return Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(50.r),
+                                  onTap: () async {
+                                    if (notificationProvider.unreadCount > 0) {
+                                      await notificationProvider.markAllAsRead();
+                                    }
+
+                                    if (!context.mounted) return;
+
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => const NotificationsScreen(),
+                                      ),
+                                    );
+                                  },
+                                  child: Stack(
+                                    clipBehavior: Clip.none,
+                                    children: [
+                                      Container(
+                                        height: 36.r,
+                                        width: 36.r,
+                                        decoration: BoxDecoration(
+                                          color: Colors.white.withOpacity(0.16),
+                                          shape: BoxShape.circle,
+                                          border: Border.all(
+                                            color: Colors.white.withOpacity(0.18),
+                                          ),
+                                        ),
+                                        child: Icon(
+                                          Icons.notifications_none_rounded,
+                                          color: Colors.white,
+                                          size: 20.sp,
+                                        ),
+                                      ),
+
+                                      if (unreadCount > 0)
+                                        Positioned(
+                                          right: -4.w,
+                                          top: -4.h,
+                                          child: Container(
+                                            constraints: BoxConstraints(
+                                              minWidth: 17.r,
+                                              minHeight: 17.r,
+                                            ),
+                                            padding: EdgeInsets.symmetric(horizontal: 4.w),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFFE53935),
+                                              borderRadius: BorderRadius.circular(20.r),
+                                              border: Border.all(
+                                                color: Colors.white,
+                                                width: 1.6.w,
+                                              ),
+                                            ),
+                                            child: Center(
+                                              child: Text(
+                                                unreadCount > 9 ? '9+' : unreadCount.toString(),
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 8.5.sp,
+                                                  fontWeight: FontWeight.w900,
+                                                  height: 1,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
                           ),
                         ],
                       ),
@@ -175,7 +258,8 @@ class _ProfileHeaderState extends State<ProfileHeader> {
                                     user.name,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
-                                    style: AppTextStyles.userNameAppbar.copyWith(
+                                    style:
+                                    AppTextStyles.userNameAppbar.copyWith(
                                       fontSize: 18.sp,
                                       height: 1.1,
                                     ),
@@ -187,7 +271,8 @@ class _ProfileHeaderState extends State<ProfileHeader> {
                                     user.email,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
-                                    style: AppTextStyles.hint14Regular.copyWith(
+                                    style:
+                                    AppTextStyles.hint14Regular.copyWith(
                                       color: Colors.white.withOpacity(0.78),
                                       fontSize: 12.sp,
                                     ),
@@ -239,6 +324,37 @@ class _ProfileHeaderState extends State<ProfileHeader> {
           ),
         );
       },
+    );
+  }
+}
+
+class _HeaderBackButton extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _HeaderBackButton({
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18.r),
+        onTap: onTap,
+        child: SizedBox(
+          width: 30.r,
+          height: 36.r,
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: Colors.white,
+              size: 20.sp,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

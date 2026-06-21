@@ -1,8 +1,9 @@
 import 'package:aleef/core/routing/app_routes.dart';
+import 'package:aleef/features/notifications/presentation/provider/notification_provider.dart';
+import 'package:aleef/features/store/services/store_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
-import 'package:aleef/features/store/services/store_provider.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import 'icon_with_badge.dart';
@@ -15,6 +16,9 @@ class StoreHeader extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
+    final unreadCount = context.watch<NotificationProvider>().unreadCount;
+    final cartCount = context.watch<StoreProvider>().cartItems.length;
+
     return AppBar(
       automaticallyImplyLeading: false,
       backgroundColor: AppColors.white,
@@ -67,12 +71,6 @@ class StoreHeader extends StatelessWidget implements PreferredSizeWidget {
         ),
       ),
       actions: [
-        IconWithBadge(
-          icon: Icons.notifications_none_rounded,
-          count: '3',
-          badgeColor: const Color(0xFFE57373),
-        ),
-
         SizedBox(width: 8.w),
 
         IconWithBadge(
@@ -91,7 +89,7 @@ class StoreHeader extends StatelessWidget implements PreferredSizeWidget {
             Navigator.pushNamed(context, AppRoutes.cart);
           },
           icon: Icons.shopping_bag_outlined,
-          count: context.watch<StoreProvider>().cartItems.length.toString(),
+          count: cartCount == 0 ? '' : cartCount.toString(),
           badgeColor: AppColors.primary,
         ),
 

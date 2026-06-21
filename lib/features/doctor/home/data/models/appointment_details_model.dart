@@ -5,7 +5,7 @@ class AppointmentDetailsModel {
   final String reason;
   final String status;
   final String? notes;
-  final int appoinmentFee;
+  final int appointmentFee;
   final AppointmentOwner owner;
   final AppointmentPet pet;
 
@@ -16,7 +16,7 @@ class AppointmentDetailsModel {
     required this.reason,
     required this.status,
     required this.notes,
-    required this.appoinmentFee,
+    required this.appointmentFee,
     required this.owner,
     required this.pet,
   });
@@ -29,7 +29,7 @@ class AppointmentDetailsModel {
       reason: json['reason'] ?? '',
       status: json['status'] ?? '',
       notes: json['notes'],
-      appoinmentFee: json['appoinmentFee'] ?? 0,
+      appointmentFee: json['appointmentFee'] ?? 0,
       owner: AppointmentOwner.fromJson(json['owner'] ?? {}),
       pet: AppointmentPet.fromJson(json['pet'] ?? {}),
     );

@@ -1,9 +1,11 @@
+import 'package:aleef/core/routing/app_routes.dart';
 import 'package:aleef/core/theme/app_colors.dart';
 import 'package:aleef/core/theme/app_text_styles.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../models/profile_option_item.dart';
+import 'settings_bottom_sheet.dart';
 
 class ProfileOptionsCard extends StatelessWidget {
   const ProfileOptionsCard({super.key});
@@ -14,31 +16,74 @@ class ProfileOptionsCard extends StatelessWidget {
       title: "Quick Actions",
       child: Column(
         children: [
-          ProfileOptionItem(
-            title: "My Appointments",
-            icon: Icons.calendar_month_rounded,
-            iconColor: AppColors.info,
-            bgColor: AppColors.info.withOpacity(0.09),
+          _ProfileOptionTap(
+            onTap: () {
+              Navigator.pushNamed(
+                context,
+                AppRoutes.previousAppointmentScreen,
+              );
+            },
+            child: ProfileOptionItem(
+              title: "My Appointments",
+              icon: Icons.calendar_month_rounded,
+              iconColor: AppColors.info,
+              bgColor: AppColors.info.withValues(alpha: 0.09),
+            ),
           ),
 
           const _OptionDivider(),
 
-          ProfileOptionItem(
-            title: "My Orders",
-            icon: Icons.inventory_2_rounded,
-            iconColor: AppColors.warning,
-            bgColor: AppColors.warning.withOpacity(0.09),
+          _ProfileOptionTap(
+            onTap: () {
+              Navigator.pushNamed(
+                context,
+                AppRoutes.order,
+              );
+            },
+            child: ProfileOptionItem(
+              title: "My Orders",
+              icon: Icons.inventory_2_rounded,
+              iconColor: AppColors.warning,
+              bgColor: AppColors.warning.withValues(alpha: 0.09),
+            ),
           ),
 
           const _OptionDivider(),
 
-          ProfileOptionItem(
-            title: "Settings",
-            icon: Icons.settings_rounded,
-            iconColor: AppColors.shopCard,
-            bgColor: AppColors.shopCard.withOpacity(0.09),
+          _ProfileOptionTap(
+            onTap: () {
+              showSettingsBottomSheet(context);
+            },
+            child: ProfileOptionItem(
+              title: "Settings",
+              icon: Icons.settings_rounded,
+              iconColor: AppColors.shopCard,
+              bgColor: AppColors.shopCard.withValues(alpha: 0.09),
+            ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ProfileOptionTap extends StatelessWidget {
+  final Widget child;
+  final VoidCallback onTap;
+
+  const _ProfileOptionTap({
+    required this.child,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18.r),
+        onTap: onTap,
+        child: child,
       ),
     );
   }
@@ -62,11 +107,11 @@ class _ProfileSectionCard extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(28.r),
         border: Border.all(
-          color: AppColors.primary.withOpacity(0.06),
+          color: AppColors.primary.withValues(alpha: 0.06),
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 18.r,
             offset: Offset(0, 8.h),
           ),
@@ -102,7 +147,7 @@ class _OptionDivider extends StatelessWidget {
       child: Divider(
         height: 18.h,
         thickness: 1,
-        color: AppColors.border.withOpacity(0.8),
+        color: AppColors.border.withValues(alpha: 0.8),
       ),
     );
   }

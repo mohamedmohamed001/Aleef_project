@@ -1,16 +1,10 @@
-import 'dart:io';
-
 import 'package:aleef/providers/user_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 
-import '../../../../core/services/image_picker_service.dart';
-import '../../../../core/services/secure_storage_service.dart';
-import '../../../../core/services/service_locator.dart';
-import '../../../../core/services/session_service.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../services/profile_api.dart';
+import '../manager/edit_profile_provider.dart';
 import '../widgets/edit_profile/edit_profile_avatar_section.dart';
 import '../widgets/edit_profile/edit_profile_form_section.dart';
 import '../widgets/edit_profile/edit_profile_save_button.dart';
@@ -23,304 +17,288 @@ class EditProfile extends StatefulWidget {
 }
 
 class _EditProfileState extends State<EditProfile> {
-  final TextEditingController _editName = TextEditingController();
-  final TextEditingController _editPhone = TextEditingController();
-
-  final SessionService session = getIt<SessionService>();
-
-  bool _isLoading = false;
-  File? _selectedImage;
-
   @override
   void initState() {
     super.initState();
-    _init();
-    _fillFromSession();
-  }
 
-  void _fillFromSession() {
-    final user = session.currentUser;
-    if (user != null) {
-      _editName.text = user.name;
-      _editPhone.text = user.phone;
-    }
-  }
-
-  Future<void> _init() async {
-    final storage = getIt<SecureStorageService>();
-
-    final user = await storage.getUser();
-    final token = await storage.getToken();
-
-    if (user != null && token != null && token.isNotEmpty) {
-      session.setSession(user: user, tokenValue: token);
-
-      if (mounted) {
-        context.read<UserProvider>().setUser(user);
-      }
-
-    } else {
-      if (mounted) {
-        context.read<UserProvider>().clearUser();
-      }
-
-    }
-
-    if (!mounted) return;
-
-    setState(() {
-      final currentUser = session.currentUser;
-      if (currentUser != null) {
-        _editName.text = currentUser.name;
-        _editPhone.text = currentUser.phone;
-      }
-    });
-  }
-
-  Future<void> _pickImage({required bool fromCamera}) async {
-    try {
-      final imagePickerService = ImagePickerService();
-
-      final File? file = fromCamera
-          ? await imagePickerService.pickFromCamera()
-          : await imagePickerService.pickFromGallery();
-
-      if (file == null) return;
-
-      setState(() {
-        _selectedImage = file;
-      });
-    } catch (e) {
-
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
 
-      _showSnackBar(
-        message: "Error picking image: $e",
-        backgroundColor: Colors.red,
-      );
-    }
-  }
-
-  Future<void> _showImageSourceSheet() async {
-    await showModalBottomSheet<void>(
-      context: context,
-      builder: (bottomSheetContext) {
-        return SafeArea(
-          child: Wrap(
-            children: [
-              ListTile(
-                leading: const Icon(Icons.camera_alt_outlined),
-                title: const Text("Camera"),
-                onTap: () async {
-                  Navigator.of(bottomSheetContext).pop();
-                  await Future.delayed(const Duration(milliseconds: 200));
-                  await _pickImage(fromCamera: true);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.photo_library_outlined),
-                title: const Text("Gallery"),
-                onTap: () async {
-                  Navigator.of(bottomSheetContext).pop();
-                  await Future.delayed(const Duration(milliseconds: 200));
-                  await _pickImage(fromCamera: false);
-                },
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Future<void> _removeProfilePhoto() async {
-    final shouldDelete = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16.r),
-          ),
-          title: const Text("Remove Photo"),
-          content: const Text(
-            "Are you sure you want to remove your profile picture?",
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(dialogContext, false);
-              },
-              child: const Text("Cancel"),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.error,
-              ),
-              onPressed: () {
-                Navigator.pop(dialogContext, true);
-              },
-              child: const Text("Remove"),
-            ),
-          ],
-        );
-      },
-    );
-
-    if (shouldDelete != true) return;
-
-    if (_selectedImage != null) {
-      setState(() {
-        _selectedImage = null;
-      });
-
-      _showSnackBar(
-        message: "Selected image removed",
-      );
-      return;
-    }
-
-    final success = await ProfileApi().removeProfilePic();
-
-    if (!mounted) return;
-
-    if (success) {
-      await _init();
-
-      if (!mounted) return;
-
-      _showSnackBar(
-        message: "Profile picture removed",
-        backgroundColor: Colors.green,
-      );
-    } else {
-      _showSnackBar(
-        message: "Failed to remove profile picture",
-        backgroundColor: Colors.red,
-      );
-    }
-  }
-
-  Future<void> _saveChanges() async {
-    setState(() {
-      _isLoading = true;
+      await context.read<EditProfileProvider>().init(context);
     });
-
-    final success = await ProfileApi().editProfileWithImage(
-      name: _editName.text.trim(),
-      phone: _editPhone.text.trim(),
-      imageFile: _selectedImage,
-    );
-
-    if (!mounted) return;
-
-    setState(() {
-      _isLoading = false;
-    });
-
-    if (success) {
-      await _init();
-
-      if (!mounted) return;
-
-      final updatedUser = session.currentUser;
-      if (updatedUser != null) {
-        context.read<UserProvider>().setUser(updatedUser);
-      }
-
-      _showSnackBar(
-        message: 'Profile updated successfully',
-        backgroundColor: Colors.green,
-      );
-
-      Navigator.pop(context, true);
-    } else {
-      _showSnackBar(
-        message: 'Failed to update profile',
-        backgroundColor: Colors.red,
-      );
-    }
-  }
-
-  void _showSnackBar({
-    required String message,
-    Color? backgroundColor,
-  }) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: backgroundColor,
-        duration: const Duration(seconds: 2),
-        behavior: SnackBarBehavior.floating,
-        margin: EdgeInsets.all(10.r),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12.r),
-        ),
-      ),
-    );
-  }
-
-  @override
-  void dispose() {
-    _editName.dispose();
-    _editPhone.dispose();
-    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final user = context.watch<UserProvider>().user ?? session.currentUser;
+    final editProvider = context.watch<EditProfileProvider>();
+    final user = context.watch<UserProvider>().user ??
+        editProvider.session.currentUser;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F5F7),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFFF4F5F7),
-        elevation: 0,
-        centerTitle: true,
-        title: const Text(
-          'Edit Profile',
-          style: TextStyle(
-            color: Color(0xFF1F2937),
-            fontSize: 20,
-            fontWeight: FontWeight.w700,
+      backgroundColor: const Color(0xFFF4F7F7),
+      body: Stack(
+        children: [
+          const _EditProfileBackground(),
+
+          SafeArea(
+            child: Column(
+              children: [
+                Padding(
+                  padding: EdgeInsets.fromLTRB(18.w, 10.h, 18.w, 0),
+                  child: _EditProfileTopBar(
+                    onBack: () => Navigator.pop(context),
+                  ),
+                ),
+
+                SizedBox(height: 22.h),
+
+                Expanded(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 22.h),
+                    child: Column(
+                      children: [
+                        Container(
+                          width: double.infinity,
+                          padding: EdgeInsets.fromLTRB(
+                            16.w,
+                            22.h,
+                            16.w,
+                            20.h,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(30.r),
+                            border: Border.all(
+                              color: AppColors.primary.withOpacity(0.07),
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.055),
+                                blurRadius: 24.r,
+                                offset: Offset(0, 12.h),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            children: [
+                              Text(
+                                "Update your profile",
+                                style: TextStyle(
+                                  color: const Color(0xFF1F2937),
+                                  fontSize: 22.sp,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: -0.4,
+                                ),
+                              ),
+
+                              SizedBox(height: 6.h),
+
+                              Text(
+                                "Keep your personal information up to date.",
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: Colors.grey.shade600,
+                                  fontSize: 13.sp,
+                                  fontWeight: FontWeight.w500,
+                                  height: 1.35,
+                                ),
+                              ),
+
+                              SizedBox(height: 22.h),
+
+                              EditProfileAvatarSection(
+                                selectedImage: editProvider.selectedImage,
+                                profileImageUrl: user?.profilePic,
+                                onPickImage: () {
+                                  editProvider.showImageSourceSheet(context);
+                                },
+                                onRemoveImage: () {
+                                  editProvider.removeProfilePhoto(context);
+                                },
+                              ),
+
+                              SizedBox(height: 30.h),
+
+                              EditProfileFormSection(
+                                nameController: editProvider.nameController,
+                                phoneController: editProvider.phoneController,
+                              ),
+
+                              SizedBox(height: 30.h),
+
+                              EditProfileSaveButton(
+                                isLoading: editProvider.isLoading,
+                                onPressed: editProvider.isLoading
+                                    ? null
+                                    : () {
+                                  editProvider.saveChanges(context);
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        SizedBox(height: 18.h),
+
+                        Text(
+                          "Your changes will appear across ALEEF.",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Colors.black45,
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-        iconTheme: const IconThemeData(
-          color: Color(0xFF1F2937),
-        ),
+        ],
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(height: 8.h),
+    );
+  }
+}
 
-              EditProfileAvatarSection(
-                selectedImage: _selectedImage,
-                profileImageUrl: user?.profilePic,
-                onPickImage: _showImageSourceSheet,
-                onRemoveImage: _removeProfilePhoto,
-              ),
+class _EditProfileBackground extends StatelessWidget {
+  const _EditProfileBackground();
 
-              SizedBox(height: 28.h),
-
-              EditProfileFormSection(
-                nameController: _editName,
-                phoneController: _editPhone,
-              ),
-
-              SizedBox(height: 36.h),
-
-              EditProfileSaveButton(
-                isLoading: _isLoading,
-                onPressed: _isLoading ? null : _saveChanges,
-              ),
-
-              SizedBox(height: 20.h),
-            ],
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        Container(
+          height: 250.h,
+          width: double.infinity,
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Color(0xFF2D928B),
+                AppColors.primary,
+                Color(0xFF14504B),
+              ],
+            ),
+            borderRadius: BorderRadius.only(
+              bottomLeft: Radius.circular(38.r),
+              bottomRight: Radius.circular(38.r),
+            ),
           ),
         ),
+        Positioned(
+          top: -56.h,
+          right: -42.w,
+          child: _SoftCircle(
+            size: 165.r,
+            opacity: 0.14,
+          ),
+        ),
+        Positioned(
+          top: 112.h,
+          left: -60.w,
+          child: _SoftCircle(
+            size: 135.r,
+            opacity: 0.10,
+          ),
+        ),
+        Positioned(
+          top: 92.h,
+          right: 34.w,
+          child: Icon(
+            Icons.person_rounded,
+            color: Colors.white.withOpacity(0.08),
+            size: 88.r,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _EditProfileTopBar extends StatelessWidget {
+  final VoidCallback onBack;
+
+  const _EditProfileTopBar({
+    required this.onBack,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(18.r),
+            onTap: onBack,
+            child: SizedBox(
+              width: 42.r,
+              height: 42.r,
+              child: Icon(
+                Icons.arrow_back_ios_new_rounded,
+                color: Colors.white,
+                size: 21.sp,
+              ),
+            ),
+          ),
+        ),
+
+        SizedBox(width: 8.w),
+
+        Text(
+          "Edit Profile",
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 22.sp,
+            fontWeight: FontWeight.w900,
+            letterSpacing: -0.4,
+          ),
+        ),
+
+        const Spacer(),
+
+        Container(
+          width: 40.r,
+          height: 40.r,
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.14),
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: Colors.white.withOpacity(0.18),
+            ),
+          ),
+          child: Icon(
+            Icons.edit_rounded,
+            color: Colors.white,
+            size: 19.sp,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SoftCircle extends StatelessWidget {
+  final double size;
+  final double opacity;
+
+  const _SoftCircle({
+    required this.size,
+    required this.opacity,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(opacity),
+        shape: BoxShape.circle,
       ),
     );
   }

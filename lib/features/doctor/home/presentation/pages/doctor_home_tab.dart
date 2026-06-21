@@ -1,14 +1,21 @@
 import 'package:aleef/core/theme/app_colors.dart';
-import 'package:aleef/core/theme/app_text_styles.dart';
+import 'package:aleef/features/doctor/home/presentation/manager/doctor_profile_provider.dart';
 import 'package:aleef/features/doctor/home/presentation/widgets/appointment_request_card.dart';
+import 'package:aleef/features/doctor/home/presentation/widgets/doctor_home_empty_state.dart';
+import 'package:aleef/features/doctor/home/presentation/widgets/doctor_home_error_state.dart';
 import 'package:aleef/features/doctor/home/presentation/widgets/doctor_home_header.dart';
+import 'package:aleef/features/doctor/home/presentation/widgets/doctor_home_overview_card.dart';
+import 'package:aleef/features/doctor/home/presentation/widgets/doctor_home_requests_header.dart';
+import 'package:aleef/features/doctor/home/presentation/widgets/doctor_home_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
-import '../../../../../core/routing/app_routes.dart';
+
 import '../../../../../providers/doctor_provider.dart';
 import '../manager/doctor_appointment_provider.dart';
 import '../skeletons/appointment_request_card_skeleton.dart';
+import '../widgets/reject_appointment_reason_dialog.dart';
+import 'appointment_details_screen.dart';
 
 class DoctorHomeTab extends StatefulWidget {
   const DoctorHomeTab({super.key});
@@ -27,120 +34,188 @@ class _DoctorHomeTabState extends State<DoctorHomeTab> {
 
       if (!mounted) return;
 
+      final profileProvider = context.read<DoctorProfileProvider>();
+
+      if (profileProvider.doctorProfile == null) {
+        await profileProvider.fetchDoctorProfile();
+      }
+
+      if (!mounted) return;
+
       await context.read<DoctorAppointmentsProvider>().getAppointmentRequests();
     });
   }
 
+  Future<String?> _showRejectReasonDialog(BuildContext context) {
+    return showDialog<String>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) {
+        return const RejectAppointmentReasonDialog();
+      },
+    );
+  }
   @override
   Widget build(BuildContext context) {
     final doctorProvider = context.watch<DoctorProvider>();
+    final profileProvider = context.watch<DoctorProfileProvider>();
+
     final doctor = doctorProvider.doctor;
+    final doctorProfile = profileProvider.doctorProfile;
+
+    final doctorName = doctorProfile?.name ?? doctor?.name ?? '';
+    final profileImage = doctorProfile?.profilePic ?? doctor?.profilePic;
 
     return Scaffold(
+      backgroundColor: const Color(0xffF7FAFA),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           DoctorHomeHeader(
-            doctorName: doctor?.name?.split(" ")[0] ?? '',
-            profileImage: doctor?.profilePic,
+            doctorName: doctorName.split(" ")[0],
+            profileImage: profileImage,
             onNotificationTap: () {
               // TODO: Open notifications screen
             },
           ),
-
           Expanded(
             child: Consumer<DoctorAppointmentsProvider>(
               builder: (context, provider, child) {
                 return RefreshIndicator(
                   color: AppColors.primary,
-                  onRefresh: provider.getAppointmentRequests,
-                  child: SingleChildScrollView(
+                  backgroundColor: Colors.white,
+                  onRefresh: () async {
+                    await context.read<DoctorProvider>().loadDoctor();
+                    await context
+                        .read<DoctorProfileProvider>()
+                        .fetchDoctorProfile();
+                    await provider.getAppointmentRequests();
+                  },
+                  child: CustomScrollView(
                     physics: const AlwaysScrollableScrollPhysics(),
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 20.w,
-                      vertical: 16.h,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _RequestsHeader(requestsCount: provider.requestsCount),
+                    slivers: [
+                      SliverPadding(
+                        padding: EdgeInsets.fromLTRB(20.w, 18.h, 20.w, 18.h),
+                        sliver: SliverToBoxAdapter(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              DoctorHomeOverviewCard(
+                                requestsCount: provider.requestsCount,
+                              ),
+                              SizedBox(height: 20.h),
+                              DoctorHomeRequestsHeader(
+                                requestsCount: provider.requestsCount,
+                              ),
+                              SizedBox(height: 14.h),
+                            ],
+                          ),
+                        ),
+                      ),
 
-                        // SizedBox(height: 10.h),
-                        if (provider.isLoading)
-                          const _DoctorHomeSkeleton()
-                        else if (provider.errorMessage != null)
-                          _ErrorState(
+                      if (provider.isLoading)
+                        SliverPadding(
+                          padding: EdgeInsets.symmetric(horizontal: 20.w),
+                          sliver: const SliverToBoxAdapter(
+                            child: _DoctorHomeSkeleton(),
+                          ),
+                        )
+                      else if (provider.errorMessage != null)
+                        SliverFillRemaining(
+                          hasScrollBody: false,
+                          child: DoctorHomeErrorState(
                             message: provider.errorMessage!,
                             onRetry: provider.getAppointmentRequests,
-                          )
-                        else if (provider.appointmentRequests.isEmpty)
-                          const _EmptyState()
-                        else
-                          ListView.separated(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            itemCount: provider.appointmentRequests.length,
-                            separatorBuilder: (context, index) {
-                              return SizedBox(height: 12.h);
-                            },
-                            itemBuilder: (context, index) {
-                              final appointment =
-                                  provider.appointmentRequests[index];
-
-                              return AppointmentRequestCard(
-                                petName: _capitalize(appointment.pet.name),
-                                petImage: appointment.pet.profilePic ?? '',
-                                petType: _capitalize(appointment.pet.type),
-                                ownerName: _capitalizeWords(
-                                  appointment.owner.name,
-                                ),
-                                date: _formatDate(appointment.date),
-                                time: appointment.time,
-                                reason: appointment.reason,
-                                isLoading: provider.isAppointmentLoading(
-                                  appointment.id,
-                                ),
-                                onAccept: () async {
-                                  final message = await provider
-                                      .acceptAppointment(appointment.id);
-
-                                  if (!context.mounted) return;
-
-                                  _showResultSnackBar(
-                                    context,
-                                    message:
-                                        message ??
-                                        'Appointment accepted successfully',
-                                    isError: message != null,
-                                  );
-                                },
-                                onDecline: () async {
-                                  final message = await provider
-                                      .declineAppointment(appointment.id);
-
-                                  if (!context.mounted) return;
-
-                                  _showResultSnackBar(
-                                    context,
-                                    message:
-                                        message ??
-                                        'Appointment declined successfully',
-                                    isError: message != null,
-                                  );
-                                },
-                                appointmentId: appointment.id,
-                                onTap: () {
-                                  Navigator.pushNamed(
-                                    context,
-                                    AppRoutes.appointmentUserDetails,
-                                    arguments: appointment.id,
-                                  );
-                                },
-                              );
-                            },
                           ),
-                      ],
-                    ),
+                        )
+                      else if (provider.appointmentRequests.isEmpty)
+                          const SliverFillRemaining(
+                            hasScrollBody: false,
+                            child: DoctorHomeEmptyState(),
+                          )
+                        else
+                          SliverPadding(
+                            padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 24.h),
+                            sliver: SliverList.separated(
+                              itemCount: provider.appointmentRequests.length,
+                              separatorBuilder: (context, index) {
+                                return SizedBox(height: 12.h);
+                              },
+                              itemBuilder: (context, index) {
+                                final appointment =
+                                provider.appointmentRequests[index];
+
+                                return AppointmentRequestCard(
+                                  appointmentId: appointment.id,
+                                  petName: _capitalize(appointment.pet.name),
+                                  petImage: appointment.pet.profilePic ?? '',
+                                  petType: _capitalize(appointment.pet.type),
+                                  ownerName: _capitalizeWords(
+                                    appointment.owner.name,
+                                  ),
+                                  date: _formatDate(appointment.date),
+                                  time: appointment.time,
+                                  reason: appointment.reason,
+                                  isLoading: provider.isAppointmentLoading(
+                                    appointment.id,
+                                  ),
+                                  onAccept: () async {
+                                    final message = await provider
+                                        .acceptAppointment(appointment.id);
+
+                                    if (!context.mounted) return;
+
+                                    showDoctorHomeSnackBar(
+                                      context,
+                                      message: message ??
+                                          'Appointment accepted successfully',
+                                      isError: message != null,
+                                    );
+                                  },
+                                  onDecline: () async {
+                                    final rejectReason =
+                                    await _showRejectReasonDialog(context);
+
+                                    if (rejectReason == null ||
+                                        rejectReason.trim().isEmpty) {
+                                      return;
+                                    }
+
+                                    final message = await provider.rejectAppointment(
+                                      appointmentId: appointment.id,
+                                      rejectionReason: rejectReason,
+                                    );
+
+                                    if (!context.mounted) return;
+
+                                    showDoctorHomeSnackBar(
+                                      context,
+                                      message: message ??
+                                          'Appointment cancelled successfully',
+                                      isError: message != null,
+                                    );
+                                  },
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) =>
+                                            ChangeNotifierProvider.value(
+                                              value: context.read<
+                                                  DoctorAppointmentsProvider>(),
+                                              child: AppointmentDetailsScreen(
+                                                appointmentId: appointment.id,
+                                                showActions: true,
+                                              ),
+                                            ),
+                                      ),
+                                    );
+                                  },
+                                );
+                              },
+                            ),
+                          ),
+                    ],
                   ),
                 );
               },
@@ -152,115 +227,17 @@ class _DoctorHomeTabState extends State<DoctorHomeTab> {
   }
 }
 
-class _RequestsHeader extends StatelessWidget {
-  final int requestsCount;
-
-  const _RequestsHeader({required this.requestsCount});
+class _DoctorHomeSkeleton extends StatelessWidget {
+  const _DoctorHomeSkeleton();
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Text(
-          'Appointment Requests',
-          style: AppTextStyles.title16SemiBold.copyWith(fontSize: 20.sp),
-        ),
-
-        const Spacer(),
-
-        Container(
-          constraints: BoxConstraints(minWidth: 34.w, minHeight: 32.w),
-          padding: EdgeInsets.symmetric(horizontal: 10.w),
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: AppColors.primary,
-            borderRadius: BorderRadius.circular(99.r),
-          ),
-          child: Text(
-            requestsCount.toString(),
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _LoadingState extends StatelessWidget {
-  const _LoadingState();
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 48.h),
-      child: const Center(
-        child: CircularProgressIndicator(color: AppColors.primary),
-      ),
-    );
-  }
-}
-
-class _EmptyState extends StatelessWidget {
-  const _EmptyState();
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 48.h),
-      child: Center(
-        child: Column(
-          children: [
-            Icon(
-              Icons.event_available_outlined,
-              size: 48.sp,
-              color: AppColors.primary,
-            ),
-            SizedBox(height: 12.h),
-            Text(
-              'No pending appointment requests',
-              style: TextStyle(
-                color: Colors.black54,
-                fontSize: 14.sp,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ErrorState extends StatelessWidget {
-  final String message;
-  final Future<void> Function() onRetry;
-
-  const _ErrorState({required this.message, required this.onRetry});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 48.h),
-      child: Center(
-        child: Column(
-          children: [
-            Icon(Icons.error_outline_rounded, size: 48.sp, color: Colors.red),
-            SizedBox(height: 12.h),
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.black54, fontSize: 14.sp),
-            ),
-            SizedBox(height: 12.h),
-            TextButton(
-              onPressed: () => onRetry(),
-              child: const Text('Try again'),
-            ),
-          ],
+    return Column(
+      children: List.generate(
+        4,
+            (index) => Padding(
+          padding: EdgeInsets.only(bottom: 12.h),
+          child: const AppointmentRequestCardSkeleton(),
         ),
       ),
     );
@@ -288,34 +265,4 @@ String _capitalizeWords(String value) {
       .where((word) => word.isNotEmpty)
       .map(_capitalize)
       .join(' ');
-}
-
-void _showResultSnackBar(
-  BuildContext context, {
-  required String message,
-  required bool isError,
-}) {
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Text(message),
-      backgroundColor: isError ? Colors.red : AppColors.primary,
-    ),
-  );
-}
-
-class _DoctorHomeSkeleton extends StatelessWidget {
-  const _DoctorHomeSkeleton();
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: List.generate(
-        4,
-        (index) => Padding(
-          padding: EdgeInsets.only(bottom: 12.h),
-          child: const AppointmentRequestCardSkeleton(),
-        ),
-      ),
-    );
-  }
 }

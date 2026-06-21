@@ -1,6 +1,6 @@
 import 'package:aleef/core/theme/app_colors.dart';
 import 'package:aleef/features/appointments/data/models/appointment_model.dart';
-import 'package:aleef/features/appointments/presentation/widgets/appointment_card.dart';
+import 'package:aleef/features/appointments/presentation/widgets/appointments/appointment_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 

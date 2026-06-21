@@ -7,56 +7,82 @@ class PetsProvider with ChangeNotifier {
 
   List<PetModel> _allPets = [];
   PetModel? _selectedPet;
+
   bool _isLoading = false;
+  bool _isUpdatingPet = false;
+
+  String? _updatePetError;
 
   List<PetModel> get allPets => _allPets;
   PetModel? get selectedPet => _selectedPet;
+
   bool get isLoading => _isLoading;
   bool get isFetchingDetails => _isLoading;
 
-  Future<void> getAllPets(String token) async {
-    _isLoading = true;
+  bool get isUpdatingPet => _isUpdatingPet;
+  String? get updatePetError => _updatePetError;
+
+  void _setLoading(bool value) {
+    _isLoading = value;
     notifyListeners();
+  }
+
+  void _setUpdatingPet(bool value) {
+    _isUpdatingPet = value;
+    notifyListeners();
+  }
+
+  void _setUpdatePetError(String? message) {
+    _updatePetError = message;
+    notifyListeners();
+  }
+
+  Future<void> getAllPets(String token) async {
+    _setLoading(true);
 
     try {
       final List<dynamic> petsData = await _petsService.getPets(token);
+
+      debugPrint(petsData.toString());
+
       _allPets = petsData.map((json) => PetModel.fromJson(json)).toList();
-      _isLoading = false;
-      notifyListeners();
     } catch (error) {
-      _isLoading = false;
-      notifyListeners();
       rethrow;
+    } finally {
+      _setLoading(false);
     }
   }
 
   Future<void> fetchPetDetails(String petId, String token) async {
+    if (petId.trim().isEmpty) {
+      return;
+    }
+
     _isLoading = true;
     _selectedPet = null;
     notifyListeners();
 
     try {
-      debugPrint("--- START API CALL: Fetching Pet Details ---");
       final Map<String, dynamic> responseData = await _petsService.getPetById(
         petId,
         token,
       );
 
-      debugPrint("RAW SERVER RESPONSE DATA: $responseData");
+      final Map<String, dynamic> fixedResponse =
+      Map<String, dynamic>.from(responseData);
 
-      if (responseData['data'] != null) {
-        _selectedPet = PetModel.fromJson(
-          responseData['data'] as Map<String, dynamic>,
-        );
+      if (fixedResponse['pet'] is Map<String, dynamic>) {
+        fixedResponse['pet'] = {
+          ...Map<String, dynamic>.from(fixedResponse['pet']),
+          'id': petId,
+        };
       } else {
-        _selectedPet = PetModel.fromJson(responseData);
+        fixedResponse['id'] = petId;
       }
 
+      _selectedPet = PetModel.fromJson(fixedResponse);
     } catch (error) {
-      debugPrint("API ERROR CAUGHT IN PROVIDER: $error");
-      if (error.toString().contains("HandshakeException")) {
-
-      }
+      rethrow;
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -68,12 +94,12 @@ class PetsProvider with ChangeNotifier {
     required String type,
     required String gender,
     required double weight,
-    required String age,
+    required String birthDate,
+    String? breed,
     String? imagePath,
     required String token,
   }) async {
-    _isLoading = true;
-    notifyListeners();
+    _setLoading(true);
 
     try {
       await _petsService.addPet(
@@ -81,37 +107,57 @@ class PetsProvider with ChangeNotifier {
         type: type,
         gender: gender,
         weight: weight,
-        age: age,
+        birthDate: birthDate,
+        breed: breed,
         imagePath: imagePath,
         token: token,
       );
-      await getAllPets(token);
+
+      final List<dynamic> petsData = await _petsService.getPets(token);
+
+      debugPrint(petsData.toString());
+
+      _allPets = petsData.map((json) => PetModel.fromJson(json)).toList();
     } catch (error) {
-      _isLoading = false;
-      notifyListeners();
       rethrow;
+    } finally {
+      _setLoading(false);
     }
   }
 
   Future<void> deletePet(String petId, String token) async {
+    if (petId.trim().isEmpty) {
+      return;
+    }
+
+    final oldPets = List<PetModel>.from(_allPets);
+    final oldSelectedPet = _selectedPet;
+
     try {
       _allPets.removeWhere((pet) => pet.id == petId);
+
       if (_selectedPet?.id == petId) {
         _selectedPet = null;
       }
+
       notifyListeners();
+
       await _petsService.deletePetFromApi(petId, token);
     } catch (error) {
-      await getAllPets(token);
+      _allPets = oldPets;
+      _selectedPet = oldSelectedPet;
+      notifyListeners();
+
       rethrow;
     }
   }
 
-  Future<void> updatePetDetails({
+  Future<bool> updatePetDetails({
     required String petId,
     String? name,
     String? type,
     String? gender,
+    String? breed,
     double? weight,
     int? age,
     String? birthDate,
@@ -119,15 +165,22 @@ class PetsProvider with ChangeNotifier {
     String? imagePath,
     required String token,
   }) async {
-    _isLoading = true;
-    notifyListeners();
+    _setUpdatingPet(true);
+    _setUpdatePetError(null);
 
     try {
+      if (petId.trim().isEmpty) {
+        const message = "Pet id is empty. Refresh pets and try again.";
+        _setUpdatePetError(message);
+        return false;
+      }
+
       await _petsService.updatePet(
         petId: petId,
         name: name,
         type: type,
         gender: gender,
+        breed: breed,
         weight: weight,
         age: age,
         birthDate: birthDate,
@@ -135,12 +188,32 @@ class PetsProvider with ChangeNotifier {
         imagePath: imagePath,
         token: token,
       );
+
       await fetchPetDetails(petId, token);
-      await getAllPets(token);
-    } catch (error) {
-      _isLoading = false;
+
+      final List<dynamic> petsData = await _petsService.getPets(token);
+
+      debugPrint(petsData.toString());
+
+      _allPets = petsData.map((json) => PetModel.fromJson(json)).toList();
+
       notifyListeners();
-      rethrow;
+      return true;
+    } catch (error) {
+      _setUpdatePetError(error.toString());
+      return false;
+    } finally {
+      _setUpdatingPet(false);
     }
+  }
+
+  void clearSelectedPet() {
+    _selectedPet = null;
+    notifyListeners();
+  }
+
+  void clearUpdatePetError() {
+    _updatePetError = null;
+    notifyListeners();
   }
 }

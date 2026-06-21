@@ -1,17 +1,11 @@
-import 'dart:convert';
-
-import 'package:aleef/core/constants/api_constant.dart';
-import 'package:aleef/core/services/secure_storage_service.dart';
-import 'package:aleef/core/services/service_locator.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 
+import '../../../core/exceptions/session_expired_exception.dart';
 import '../presentation/models/product_model.dart';
 import '../services/api_store.dart';
 
 class StoreProvider extends ChangeNotifier {
   final ApiStore _apiStore = ApiStore();
-  final SecureStorageService _storage = getIt<SecureStorageService>();
 
   // =========================
   // Cart State
@@ -23,8 +17,10 @@ class StoreProvider extends ChangeNotifier {
   double cartSubtotal = 0.0;
   double cartDelivery = 0.0;
   double cartTotal = 0.0;
+
   bool isPlacingOrder = false;
   String? placeOrderError;
+
   bool isCalculatingCart = false;
   String? cartErrorMessage;
 
@@ -135,33 +131,20 @@ class StoreProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final token = await _storage.getToken();
-
-      final response = await http.post(
-        Uri.parse('${ApiConstant.baseUrl}/products/calculate-cart'),
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer $token",
-        },
-        body: jsonEncode({
-          "cart": cartRequestBody,
-        }),
+      final response = await _apiStore.calculateCart(
+        cart: cartRequestBody,
       );
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-
-        cartSubtotal = _toDouble(data['subTotal']);
-        cartDelivery = _toDouble(data['delivery']);
-        cartTotal = cartSubtotal + cartDelivery;
-      } else {
-        cartErrorMessage = 'Failed to calculate cart';
-        cartSubtotal = totalPrice;
-        cartDelivery = 0.0;
-        cartTotal = totalPrice;
-      }
+      cartSubtotal = response.subTotal;
+      cartDelivery = response.delivery;
+      cartTotal = response.total;
+    } on SessionExpiredException catch (e) {
+      cartErrorMessage = e.message;
+      cartSubtotal = totalPrice;
+      cartDelivery = 0.0;
+      cartTotal = totalPrice;
     } catch (e) {
-      cartErrorMessage = e.toString();
+      cartErrorMessage = e.toString().replaceFirst('Exception: ', '');
       cartSubtotal = totalPrice;
       cartDelivery = 0.0;
       cartTotal = totalPrice;
@@ -184,15 +167,6 @@ class StoreProvider extends ChangeNotifier {
     cartTotal = 0.0;
     cartErrorMessage = null;
     isCalculatingCart = false;
-  }
-
-  double _toDouble(dynamic value) {
-    if (value == null) return 0.0;
-    if (value is int) return value.toDouble();
-    if (value is double) return value;
-    if (value is num) return value.toDouble();
-
-    return double.tryParse(value.toString()) ?? 0.0;
   }
 
   // =========================
@@ -262,8 +236,10 @@ class StoreProvider extends ChangeNotifier {
       _page = response.page;
       _totalPages = response.totalPages;
       _totalProducts = response.totalProducts;
+    } on SessionExpiredException catch (e) {
+      _errorMessage = e.message;
     } catch (e) {
-      _errorMessage = e.toString();
+      _errorMessage = e.toString().replaceFirst('Exception: ', '');
     }
 
     _isLoading = false;
@@ -291,8 +267,10 @@ class StoreProvider extends ChangeNotifier {
       _page = response.page;
       _totalPages = response.totalPages;
       _totalProducts = response.totalProducts;
+    } on SessionExpiredException catch (e) {
+      _errorMessage = e.message;
     } catch (e) {
-      _errorMessage = e.toString();
+      _errorMessage = e.toString().replaceFirst('Exception: ', '');
     }
 
     _isLoading = false;
@@ -322,8 +300,10 @@ class StoreProvider extends ChangeNotifier {
       _page = response.page;
       _totalPages = response.totalPages;
       _totalProducts = response.totalProducts;
+    } on SessionExpiredException catch (e) {
+      _errorMessage = e.message;
     } catch (e) {
-      _errorMessage = e.toString();
+      _errorMessage = e.toString().replaceFirst('Exception: ', '');
     }
 
     _isLoadingMore = false;
@@ -370,27 +350,21 @@ class StoreProvider extends ChangeNotifier {
   bool isLoadingUpcoming = false;
   bool isLoadingPrevious = false;
 
+  String? upcomingOrdersError;
+  String? previousOrdersError;
+
   Future<void> getUpcomingOrders() async {
     isLoadingUpcoming = true;
+    upcomingOrdersError = null;
     notifyListeners();
 
     try {
-      final token = await _storage.getToken();
-
-      final response = await http.get(
-        Uri.parse('${ApiConstant.baseUrl}/orders/my-upcoming-orders'),
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer $token",
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        upcomingOrders = List<Map<String, dynamic>>.from(data['orders']);
-      }
+      upcomingOrders = await _apiStore.getUpcomingOrders();
+    } on SessionExpiredException catch (e) {
+      upcomingOrdersError = e.message;
     } catch (e) {
-      debugPrint(e.toString());
+      upcomingOrdersError = e.toString().replaceFirst('Exception: ', '');
+      debugPrint(upcomingOrdersError);
     }
 
     isLoadingUpcoming = false;
@@ -399,25 +373,16 @@ class StoreProvider extends ChangeNotifier {
 
   Future<void> getPreviousOrders() async {
     isLoadingPrevious = true;
+    previousOrdersError = null;
     notifyListeners();
 
     try {
-      final token = await _storage.getToken();
-
-      final response = await http.get(
-        Uri.parse('${ApiConstant.baseUrl}/orders/my-previous-orders'),
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer $token",
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        previousOrders = List<Map<String, dynamic>>.from(data['orders']);
-      }
+      previousOrders = await _apiStore.getPreviousOrders();
+    } on SessionExpiredException catch (e) {
+      previousOrdersError = e.message;
     } catch (e) {
-      debugPrint(e.toString());
+      previousOrdersError = e.toString().replaceFirst('Exception: ', '');
+      debugPrint(previousOrdersError);
     }
 
     isLoadingPrevious = false;
@@ -464,6 +429,11 @@ class StoreProvider extends ChangeNotifier {
       isPlacingOrder = false;
       notifyListeners();
       return true;
+    } on SessionExpiredException catch (e) {
+      placeOrderError = e.message;
+      isPlacingOrder = false;
+      notifyListeners();
+      return false;
     } catch (e) {
       placeOrderError = e.toString().replaceFirst('Exception: ', '');
       isPlacingOrder = false;

@@ -111,7 +111,10 @@ class DoctorAppointmentsProvider extends ChangeNotifier {
     }
   }
 
-  Future<String?> declineAppointment(String appointmentId) async {
+  Future<String?> rejectAppointment({
+    required String appointmentId,
+    required String rejectionReason,
+  }) async {
     if (_loadingAppointmentIds.contains(appointmentId)) {
       return null;
     }
@@ -120,9 +123,11 @@ class DoctorAppointmentsProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final result = await _apiService.declineAppointment(
+      final result = await _apiService.rejectAppointment(
         appointmentId: appointmentId,
+        rejectionReason: rejectionReason,
       );
+
 
       if (result['status'] == 'success') {
         appointmentRequests.removeWhere(
@@ -132,9 +137,9 @@ class DoctorAppointmentsProvider extends ChangeNotifier {
         return null;
       }
 
-      return result['message'] ?? 'Failed to decline appointment';
+      return result['message'] ?? 'Failed to reject appointment';
     } catch (e) {
-      return 'Failed to decline appointment';
+      return 'Failed to reject appointment';
     } finally {
       _loadingAppointmentIds.remove(appointmentId);
       notifyListeners();

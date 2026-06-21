@@ -5,7 +5,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
-import 'details_screen.dart';
 
 class MyOrdersScreen extends StatefulWidget {
   const MyOrdersScreen({super.key});
@@ -406,39 +405,6 @@ class _MyOrdersScreenState extends State<MyOrdersScreen>
             _buildTrackingBar(status),
           ],
           SizedBox(height: 16.h),
-          SizedBox(
-            width: double.infinity,
-            height: 48.h,
-            child: TextButton(
-              style: TextButton.styleFrom(
-                backgroundColor: AppColors.primary.withValues(alpha: 0.09),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16.r),
-                ),
-              ),
-              onPressed: () {
-                if (orderId.isEmpty) return;
-
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ProductDetails(
-                      productId: orderId,
-                      orderData: order,
-                    ),
-                  ),
-                );
-              },
-              child: Text(
-                'View Order Details',
-                style: TextStyle(
-                  color: AppColors.primary,
-                  fontWeight: FontWeight.w900,
-                  fontSize: 14.sp,
-                ),
-              ),
-            ),
-          ),
         ],
       ),
     );

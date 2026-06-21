@@ -18,14 +18,27 @@ class ChatListItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool hasUnread = chat.unreadCount > 0;
+
     final String imageUrl = chat.person.profilePic.trim();
+
     final String name = chat.person.name.trim().isEmpty
         ? 'Doctor'
         : chat.person.name.trim();
 
-    final String lastMessage = chat.lastMessage?.text.trim().isNotEmpty == true
+    final bool hasLastText =
+        chat.lastMessage?.text.trim().isNotEmpty == true;
+
+    final bool hasLastImage =
+        chat.lastMessage?.image != null &&
+            chat.lastMessage!.image!.trim().isNotEmpty;
+
+    final String lastMessage = hasLastText
         ? chat.lastMessage!.text.trim()
-        : 'No messages yet';
+        : hasLastImage
+        ? 'Photo'
+        : 'No message yet';
+
+    final bool isLastMessageImageOnly = !hasLastText && hasLastImage;
 
     final String time = chat.lastMessage != null
         ? _formatTime(chat.lastMessage!.createdAt)
@@ -71,6 +84,7 @@ class ChatListItem extends StatelessWidget {
                   lastMessage: lastMessage,
                   time: time,
                   hasUnread: hasUnread,
+                  isLastMessageImageOnly: isLastMessageImageOnly,
                 ),
               ),
 
@@ -140,7 +154,7 @@ class _ChatAvatar extends StatelessWidget {
                 ? Image.network(
               imageUrl,
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) {
+              errorBuilder: (_, _, _) {
                 return _AvatarPlaceholder(name: name);
               },
             )
@@ -175,12 +189,14 @@ class _ChatInfo extends StatelessWidget {
   final String lastMessage;
   final String time;
   final bool hasUnread;
+  final bool isLastMessageImageOnly;
 
   const _ChatInfo({
     required this.name,
     required this.lastMessage,
     required this.time,
     required this.hasUnread,
+    required this.isLastMessageImageOnly,
   });
 
   @override
@@ -221,19 +237,48 @@ class _ChatInfo extends StatelessWidget {
 
         SizedBox(height: 7.h),
 
-        Text(
-          lastMessage,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            fontSize: 13.sp,
-            color: hasUnread
-                ? const Color(0xff374151)
-                : const Color(0xff6B7280),
-            height: 1.25,
-            fontWeight: hasUnread ? FontWeight.w700 : FontWeight.w500,
+        if (isLastMessageImageOnly)
+          Row(
+            children: [
+              Icon(
+                Icons.photo_rounded,
+                size: 15.sp,
+                color: hasUnread
+                    ? AppColors.primary
+                    : const Color(0xff6B7280),
+              ),
+              SizedBox(width: 4.w),
+              Expanded(
+                child: Text(
+                  lastMessage,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 13.sp,
+                    color: hasUnread
+                        ? const Color(0xff374151)
+                        : const Color(0xff6B7280),
+                    height: 1.25,
+                    fontWeight: hasUnread ? FontWeight.w700 : FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          )
+        else
+          Text(
+            lastMessage,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 13.sp,
+              color: hasUnread
+                  ? const Color(0xff374151)
+                  : const Color(0xff6B7280),
+              height: 1.25,
+              fontWeight: hasUnread ? FontWeight.w700 : FontWeight.w500,
+            ),
           ),
-        ),
       ],
     );
   }

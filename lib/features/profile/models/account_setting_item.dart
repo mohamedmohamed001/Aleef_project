@@ -1,3 +1,4 @@
+import 'package:aleef/core/widgets/app_snack_bar.dart';
 import 'package:aleef/features/auth/data/services/auth_api_service.dart';
 import 'package:aleef/features/profile/models/profile_option_item.dart';
 import 'package:flutter/material.dart';
@@ -20,55 +21,132 @@ class _AccountSettingItemState extends State<AccountSettingItem> {
   Future<void> _handleLogout() async {
     final shouldLogout = await showDialog<bool>(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(22.r),
-          ),
-          title: Text(
-            "Logout",
-            style: AppTextStyles.black16Bold.copyWith(
-              fontSize: 18.sp,
-            ),
-          ),
-          content: Text(
-            "Are you sure you want to logout?",
-            style: AppTextStyles.body14Regular.copyWith(
-              height: 1.4,
-            ),
-          ),
-          actionsPadding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 14.h),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context, false);
-              },
-              child: Text(
-                "Cancel",
-                style: TextStyle(
-                  color: Colors.grey.shade600,
-                  fontWeight: FontWeight.w600,
+      barrierDismissible: !isLoading,
+      builder: (dialogContext) {
+        return Dialog(
+          elevation: 0,
+          backgroundColor: Colors.transparent,
+          insetPadding: EdgeInsets.symmetric(horizontal: 22.w),
+          child: Container(
+            width: double.infinity,
+            padding: EdgeInsets.fromLTRB(20.w, 22.h, 20.w, 18.h),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(30.r),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.12),
+                  blurRadius: 28.r,
+                  offset: Offset(0, 14.h),
                 ),
-              ),
+              ],
             ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.error,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12.r),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 74.r,
+                  height: 74.r,
+                  decoration: BoxDecoration(
+                    color: AppColors.error.withOpacity(0.10),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.logout_rounded,
+                    color: AppColors.error,
+                    size: 35.sp,
+                  ),
                 ),
-              ),
-              onPressed: () {
-                Navigator.pop(context, true);
-              },
-              child: const Text(
-                "Logout",
-                style: TextStyle(color: Colors.white),
-              ),
+
+                SizedBox(height: 18.h),
+
+                Text(
+                  "Logout?",
+                  textAlign: TextAlign.center,
+                  style: AppTextStyles.black16Bold.copyWith(
+                    color: const Color(0xFF1F2A2E),
+                    fontSize: 22.sp,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+
+                SizedBox(height: 8.h),
+
+                Text(
+                  "Are you sure you want to logout from your ALEEF account?",
+                  textAlign: TextAlign.center,
+                  style: AppTextStyles.body14Regular.copyWith(
+                    color: const Color(0xFF6B7A80),
+                    fontSize: 13.5.sp,
+                    height: 1.45,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+
+                SizedBox(height: 24.h),
+
+                Row(
+                  children: [
+                    Expanded(
+                      child: SizedBox(
+                        height: 50.h,
+                        child: OutlinedButton(
+                          onPressed: () {
+                            Navigator.pop(dialogContext, false);
+                          },
+                          style: OutlinedButton.styleFrom(
+                            side: BorderSide(
+                              color: const Color(0xFFE1E8E8),
+                              width: 1.2.w,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(17.r),
+                            ),
+                          ),
+                          child: Text(
+                            "Cancel",
+                            style: TextStyle(
+                              color: const Color(0xFF3B4444),
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    SizedBox(width: 12.w),
+
+                    Expanded(
+                      child: SizedBox(
+                        height: 50.h,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.pop(dialogContext, true);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.error,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(17.r),
+                            ),
+                          ),
+                          child: Text(
+                            "Logout",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-          ],
+          ),
         );
       },
     );
@@ -93,19 +171,13 @@ class _AccountSettingItemState extends State<AccountSettingItem> {
         AppRoutes.login,
             (route) => false,
       );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text("Logout failed, please try again"),
-          backgroundColor: AppColors.error,
-          behavior: SnackBarBehavior.floating,
-          margin: EdgeInsets.all(12.r),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14.r),
-          ),
-        ),
-      );
+      return;
     }
+
+    AppSnackBar.error(
+      context,
+      message: "Logout failed, please try again",
+    );
   }
 
   @override
@@ -142,7 +214,9 @@ class _AccountSettingItemState extends State<AccountSettingItem> {
           const _OptionDivider(),
 
           ProfileOptionItem(
-            onTap: () {},
+            onTap: () {
+              Navigator.pushNamed(context, AppRoutes.userChangePassword);
+            },
             title: "Change Password",
             icon: Icons.lock_rounded,
             iconColor: AppColors.info,

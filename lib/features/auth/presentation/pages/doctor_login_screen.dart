@@ -15,6 +15,7 @@ import '../widgets/auth_primary_button.dart';
 import '../widgets/auth_scaffold.dart';
 import '../widgets/auth_snackbar.dart';
 import '../widgets/custom_text_form.dart';
+import 'doctor_forget_password_screen.dart';
 
 class DoctorLoginScreen extends StatefulWidget {
   const DoctorLoginScreen({super.key});
@@ -24,14 +25,10 @@ class DoctorLoginScreen extends StatefulWidget {
 }
 
 class _DoctorLoginScreenState extends State<DoctorLoginScreen> {
-  final TextEditingController emailController =
-  TextEditingController();
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
 
-  final TextEditingController passwordController =
-  TextEditingController();
-
-  final DoctorAuthApiService _authApiService =
-  DoctorAuthApiService();
+  final DoctorAuthApiService _authApiService = DoctorAuthApiService();
 
   final _formKey = GlobalKey<FormState>();
 
@@ -61,7 +58,7 @@ class _DoctorLoginScreenState extends State<DoctorLoginScreen> {
     );
 
     debugPrint("================================");
-    debugPrint("DOCTOR LOGIN RESPONSE:");
+    debugPrint("DOCTOR LOGIN RESULT:");
     debugPrint(result.toString());
     debugPrint("================================");
 
@@ -71,13 +68,20 @@ class _DoctorLoginScreenState extends State<DoctorLoginScreen> {
       isLoading = false;
     });
 
-    if (result != null) {
-      final fcmToken =
-      await FcmService.initAndGetToken();
+    if (result == true) {
+      try {
+        final fcmToken = await FcmService.initAndGetToken();
 
-      debugPrint(
-        "✅ Doctor Token after login: $fcmToken",
-      );
+        debugPrint("✅ Doctor FCM Token after login: $fcmToken");
+
+        if (fcmToken != null && fcmToken.trim().isNotEmpty) {
+          final sent = await _authApiService.addDoctorFcmToken(fcmToken);
+
+          debugPrint("✅ Doctor FCM Token sent to backend: $sent");
+        }
+      } catch (error) {
+        debugPrint("❌ Doctor FCM Token error: $error");
+      }
 
       if (!mounted) return;
 
@@ -88,25 +92,24 @@ class _DoctorLoginScreenState extends State<DoctorLoginScreen> {
         AppRoutes.doctorMainLayout,
             (route) => false,
       );
-    } else {
-      showAuthSnackBar(
-        context,
-        message: "Login failed",
-      );
+
+      return;
     }
+
+    showAuthSnackBar(
+      context,
+      message: "Login failed. Please check your email and password.",
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return AuthScaffold(
       title: "Welcome Back Doctor",
-      subtitle:
-      "Sign in to manage appointments and patients.",
+      subtitle: "Sign in to manage appointments and patients.",
       backgroundHeight: 315,
-      backgroundIcon:
-      Icons.medical_services_rounded,
-      accentIcon:
-      Icons.verified_rounded,
+      backgroundIcon: Icons.medical_services_rounded,
+      accentIcon: Icons.verified_rounded,
       spacingAfterHero: 24,
       footer: AuthFooterText(
         normalText: "Don’t have an account? ",
@@ -122,8 +125,7 @@ class _DoctorLoginScreenState extends State<DoctorLoginScreen> {
         key: _formKey,
         child: AuthCard(
           title: "Doctor Login",
-          subtitle:
-          "Access your professional dashboard.",
+          subtitle: "Access your professional dashboard.",
           children: [
             SizedBox(height: 24.h),
 
@@ -139,10 +141,8 @@ class _DoctorLoginScreenState extends State<DoctorLoginScreen> {
               controller: emailController,
               hintText: "Enter your email",
               iconPrefix: Icons.email_outlined,
-              keyboardType:
-              TextInputType.emailAddress,
-              textInputAction:
-              TextInputAction.next,
+              keyboardType: TextInputType.emailAddress,
+              textInputAction: TextInputAction.next,
             ),
 
             SizedBox(height: 16.h),
@@ -155,45 +155,43 @@ class _DoctorLoginScreenState extends State<DoctorLoginScreen> {
             SizedBox(height: 8.h),
 
             CustomTextFormField(
-              validator:
-              Validators.validatePassword,
+              validator: Validators.validatePassword,
               isPassword: true,
               controller: passwordController,
               hintText: "Enter your password",
-              iconPrefix:
-              Icons.lock_outline,
-              keyboardType:
-              TextInputType.visiblePassword,
-              textInputAction:
-              TextInputAction.done,
+              iconPrefix: Icons.lock_outline,
+              keyboardType: TextInputType.visiblePassword,
+              textInputAction: TextInputAction.done,
             ),
 
             SizedBox(height: 4.h),
 
             Align(
-              alignment:
-              AlignmentDirectional.centerEnd,
+              alignment: AlignmentDirectional.centerEnd,
               child: TextButton(
-                onPressed: () {},
+                onPressed: isLoading
+                    ? null
+                    : () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const DoctorForgetPasswordScreen(),
+                    ),
+                  );
+                },
                 style: TextButton.styleFrom(
-                  foregroundColor:
-                  AppColors.primary,
-                  padding:
-                  EdgeInsets.symmetric(
+                  foregroundColor: AppColors.primary,
+                  padding: EdgeInsets.symmetric(
                     horizontal: 4.w,
                   ),
-                  minimumSize:
-                  Size(0, 38.h),
-                  tapTargetSize:
-                  MaterialTapTargetSize
-                      .shrinkWrap,
+                  minimumSize: Size(0, 38.h),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
                 child: Text(
                   "Forget Password?",
                   style: TextStyle(
                     fontSize: 13.sp,
-                    fontWeight:
-                    FontWeight.w800,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
               ),
@@ -208,6 +206,42 @@ class _DoctorLoginScreenState extends State<DoctorLoginScreen> {
             ),
 
             SizedBox(height: 16.h),
+
+            Center(
+              child: TextButton(
+                onPressed: isLoading
+                    ? null
+                    : () {
+                  Navigator.pushNamedAndRemoveUntil(
+                    context,
+                    AppRoutes.login,
+                        (route) => false,
+                  );
+                },
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.primary,
+                  disabledForegroundColor: Colors.grey,
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 10.w,
+                    vertical: 8.h,
+                  ),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
+                ),
+                child: Text(
+                  "Are you a pet owner? Login here",
+                  style: TextStyle(
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w800,
+                    decoration: TextDecoration.underline,
+                    decorationThickness: 1.2,
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
       ),

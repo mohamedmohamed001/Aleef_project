@@ -13,6 +13,73 @@ String capitalizeEachWord(String text) {
       .join(' ');
 }
 
+String _readString(
+    Map<String, dynamic> petData,
+    Map<String, dynamic> json,
+    List<String> keys, {
+      String defaultValue = '',
+    }) {
+  for (final key in keys) {
+    final value = petData[key] ?? json[key];
+
+    if (value != null && value.toString().trim().isNotEmpty) {
+      return value.toString();
+    }
+  }
+
+  return defaultValue;
+}
+
+int _readInt(
+    Map<String, dynamic> petData,
+    Map<String, dynamic> json,
+    List<String> keys, {
+      int defaultValue = 0,
+    }) {
+  for (final key in keys) {
+    final value = petData[key] ?? json[key];
+
+    if (value == null) continue;
+
+    if (value is int) return value;
+    if (value is double) return value.toInt();
+    if (value is num) return value.toInt();
+
+    final parsedValue = int.tryParse(value.toString());
+    if (parsedValue != null) return parsedValue;
+  }
+
+  return defaultValue;
+}
+
+List<T> _readList<T>({
+  required Map<String, dynamic> petData,
+  required Map<String, dynamic> json,
+  required List<String> keys,
+  required T Function(Map<String, dynamic>) fromJson,
+}) {
+  dynamic value;
+
+  for (final key in keys) {
+    value = petData[key] ?? json[key];
+
+    if (value is List || value is Map) break;
+  }
+
+  if (value is Map) {
+    return [
+      fromJson(Map<String, dynamic>.from(value)),
+    ];
+  }
+
+  if (value is! List) return [];
+
+  return value
+      .whereType<Map>()
+      .map((item) => fromJson(Map<String, dynamic>.from(item)))
+      .toList();
+}
+
 class PetModel {
   final String id;
   final String name;
@@ -20,9 +87,13 @@ class PetModel {
   final String breed;
   final String gender;
   final String birthDate;
+
   String weight;
   String age;
   String profilePic;
+
+  final int visits;
+
   final List<MedicalRecord> medicalRecords;
   final List<Vaccination> upcomingVaccinations;
   final List<Vaccination> overdueVaccinations;
@@ -38,6 +109,7 @@ class PetModel {
     required this.weight,
     required this.age,
     required this.profilePic,
+    required this.visits,
     required this.medicalRecords,
     required this.upcomingVaccinations,
     required this.overdueVaccinations,
@@ -45,45 +117,152 @@ class PetModel {
   });
 
   factory PetModel.fromJson(Map<String, dynamic> json) {
-    final Map<String, dynamic> petData = json['pet'] != null
-        ? json['pet'] as Map<String, dynamic>
+    final Map<String, dynamic> petData = json['pet'] is Map
+        ? Map<String, dynamic>.from(json['pet'] as Map)
         : json;
 
+    final String id = _readString(
+      petData,
+      json,
+      [
+        'id',
+        '_id',
+        'petId',
+        'pet_id',
+      ],
+    );
+
+    final List<MedicalRecord> medicalRecords = _readList<MedicalRecord>(
+      petData: petData,
+      json: json,
+      keys: [
+        'medicalRecords',
+        'medical_records',
+        'medicalRecord',
+        'medical_record',
+        'records',
+      ],
+      fromJson: MedicalRecord.fromJson,
+    );
+
+    final List<Vaccination> upcomingVaccinations = _readList<Vaccination>(
+      petData: petData,
+      json: json,
+      keys: [
+        'upcomingVaccinations',
+        'upComingVaccinations',
+        'upcommingVaccinations',
+        'upcoming_vaccinations',
+        'upcomming_vaccinations',
+        'upComingVaccination',
+        'upcomingVaccination',
+        'upcommingVaccination',
+      ],
+      fromJson: Vaccination.fromJson,
+    );
+
+    final List<Vaccination> overdueVaccinations = _readList<Vaccination>(
+      petData: petData,
+      json: json,
+      keys: [
+        'overdueVaccinations',
+        'overdue_vaccinations',
+        'overDueVaccinations',
+        'overdueVaccination',
+        'overDueVaccination',
+      ],
+      fromJson: Vaccination.fromJson,
+    );
+
+    final List<Vaccination> completedVaccinations = _readList<Vaccination>(
+      petData: petData,
+      json: json,
+      keys: [
+        'completedVaccinations',
+        'completed_vaccinations',
+        'completedVaccination',
+      ],
+      fromJson: Vaccination.fromJson,
+    );
+
+    final int visits = _readInt(
+      petData,
+      json,
+      [
+        'visits',
+        'visitCount',
+        'visitsCount',
+        'appointmentsCount',
+        'appointmentCount',
+        'appointments_count',
+        'completedAppointments',
+        'completedAppointmentsCount',
+        'completed_appointments_count',
+        'medicalRecordsCount',
+        'medical_records_count',
+      ],
+      defaultValue: medicalRecords.length,
+    );
+
     return PetModel(
-      id: petData['id'] ?? petData['id'] ?? json['id'] ?? json['id'] ?? '',
+      id: id,
       name: capitalizeEachWord(
-        (petData['name'] ?? json['name'] ?? '').toString(),
+        _readString(
+          petData,
+          json,
+          ['name'],
+        ),
       ),
-      type: petData['type'] ?? json['type'] ?? '',
-      breed: petData['breed'] ?? json['breed'] ?? '',
-      gender: petData['gender'] ?? json['gender'] ?? '',
-      birthDate: petData['birthDate'] ?? json['birthDate'] ?? '',
-      weight: (petData['weight'] ?? json['weight'] ?? '0').toString(),
-      age: (petData['age'] ?? json['age'] ?? '0').toString(),
-      profilePic: petData['profilePic'] ?? json['profilePic'] ?? '',
-      medicalRecords:
-      (petData['medicalRecords'] as List? ?? json['medicalRecords'] as List?)
-          ?.map((item) => MedicalRecord.fromJson(item))
-          .toList() ??
-          [],
-      upcomingVaccinations:
-      (petData['upcommingVaccinations'] as List? ??
-          json['upcommingVaccinations'] as List?)
-          ?.map((item) => Vaccination.fromJson(item))
-          .toList() ??
-          [],
-      overdueVaccinations:
-      (petData['overdueVaccinations'] as List? ??
-          json['overdueVaccinations'] as List?)
-          ?.map((item) => Vaccination.fromJson(item))
-          .toList() ??
-          [],
-      completedVaccinations:
-      (petData['completedVaccinations'] as List? ??
-          json['completedVaccinations'] as List?)
-          ?.map((item) => Vaccination.fromJson(item))
-          .toList() ??
-          [],
+      type: _readString(
+        petData,
+        json,
+        ['type'],
+      ),
+      breed: _readString(
+        petData,
+        json,
+        ['breed'],
+      ),
+      gender: _readString(
+        petData,
+        json,
+        ['gender'],
+      ),
+      birthDate: _readString(
+        petData,
+        json,
+        ['birthDate', 'birth_date'],
+      ),
+      weight: _readString(
+        petData,
+        json,
+        ['weight'],
+        defaultValue: '0',
+      ),
+      age: _readString(
+        petData,
+        json,
+        ['age'],
+        defaultValue: '0',
+      ),
+      profilePic: _readString(
+        petData,
+        json,
+        [
+          'profilePic',
+          'profile_pic',
+          'image',
+          'imageUrl',
+          'profileImage',
+          'profile_image',
+          'photo',
+        ],
+      ),
+      visits: visits,
+      medicalRecords: medicalRecords,
+      upcomingVaccinations: upcomingVaccinations,
+      overdueVaccinations: overdueVaccinations,
+      completedVaccinations: completedVaccinations,
     );
   }
 }
@@ -105,11 +284,12 @@ class MedicalRecord {
 
   factory MedicalRecord.fromJson(Map<String, dynamic> json) {
     return MedicalRecord(
-      id: json['id'] ?? '',
-      condition: json['condition'] ?? '',
-      title: json['title'] ?? '',
-      description: json['description'] ?? '',
-      date: json['date'] ?? json['createdAt'] ?? '',
+      id: (json['id'] ?? json['_id'] ?? json['recordId'] ?? '').toString(),
+      condition: (json['condition'] ?? '').toString(),
+      title: (json['title'] ?? '').toString(),
+      description: (json['description'] ?? '').toString(),
+      date: (json['date'] ?? json['createdAt'] ?? json['created_at'] ?? '')
+          .toString(),
     );
   }
 }
@@ -137,14 +317,18 @@ class Vaccination {
 
   factory Vaccination.fromJson(Map<String, dynamic> json) {
     return Vaccination(
-      id: json['id'] ?? '',
-      parentVaccineId: json['parentVaccineId'] ?? '',
-      vaccineName: json['vaccineName'] ?? '',
-      type: json['type'],
-      dose: json['dose'],
-      notes: json['notes'],
-      nextDueDate: json['nextDueDate'],
-      vaccinatedAt: json['vaccinatedAt'],
+      id: (json['id'] ?? json['_id'] ?? json['vaccinationId'] ?? '').toString(),
+      parentVaccineId: json['parentVaccineId']?.toString(),
+      vaccineName: (json['vaccineName'] ?? json['name'] ?? '').toString(),
+      type: json['type']?.toString(),
+      dose: json['dose']?.toString(),
+      notes: json['notes']?.toString(),
+      nextDueDate:
+      (json['nextDueDate'] ?? json['next_due_date'] ?? json['dueDate'])
+          ?.toString(),
+      vaccinatedAt:
+      (json['vaccinatedAt'] ?? json['vaccinated_at'] ?? json['dateTaken'])
+          ?.toString(),
     );
   }
 }

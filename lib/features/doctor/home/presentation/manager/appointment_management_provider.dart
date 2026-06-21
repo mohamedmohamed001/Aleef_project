@@ -1,5 +1,3 @@
-import 'dart:convert';
-import 'dart:io';
 import 'package:aleef/features/doctor/home/data/models/End_Appointment_Request_Model.dart';
 import 'package:aleef/features/doctor/home/data/services/appointment_management_service.dart';
 import 'package:dio/dio.dart';
@@ -7,57 +5,51 @@ import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 
 class AppointmentManagementProvider extends ChangeNotifier {
-  // نقوم بحقن السيرفيس الخاصة بالإدارة
   final AppointmentManagementService _managementService =
-      GetIt.I<AppointmentManagementService>();
+  GetIt.I<AppointmentManagementService>();
 
   bool _isLoading = false;
+  String? _errorMessage;
+
   bool get isLoading => _isLoading;
+  String? get errorMessage => _errorMessage;
+
+  String _cleanError(Object error) {
+    if (error is DioException) {
+      final responseData = error.response?.data;
+
+      if (responseData is Map<String, dynamic>) {
+        return responseData['message']?.toString() ??
+            responseData['error']?.toString() ??
+            error.message ??
+            'Something went wrong.';
+      }
+
+      return error.message ?? 'Something went wrong.';
+    }
+
+    return error.toString().replaceAll('Exception:', '').trim();
+  }
 
   Future<bool> endAppointment({
     required String appointmentId,
     required EndAppointmentRequestModel requestModel,
   }) async {
     _isLoading = true;
+    _errorMessage = null;
     notifyListeners();
 
     try {
-      // 1. تحويل الموديل إلى Map
-      Map<String, dynamic> data = requestModel.toJson();
+      final Map<String, dynamic> data = requestModel.toFormDataMap();
 
-      // 2. تجهيز الـ FormData (مع مراعاة تحويل الـ Objects لـ JSON Strings)
-      // في البروفايدر
-      FormData formData = FormData.fromMap({
-        "medicalRecord": jsonEncode(data['medicalRecord']),
-      });
+      final formData = FormData.fromMap(data);
 
-      // إضافة التطعيم فقط إذا كان موجوداً (لن يرسل null)
-      if (requestModel.vaccination != null) {
-        formData.fields.add(
-          MapEntry(
-            "vaccination",
-            jsonEncode(requestModel.vaccination!.toJson()),
-          ),
-        );
-      }
-
-      // إضافة التطعيم القادم فقط إذا كان موجوداً
-      if (requestModel.upComingVaccination != null) {
-        formData.fields.add(
-          MapEntry(
-            "upComingVaccination",
-            jsonEncode(requestModel.upComingVaccination!.toJson()),
-          ),
-        );
-      }
-
-      // 3. إضافة المرفقات (Attachments) إذا وجدت
       if (requestModel.attachments != null &&
           requestModel.attachments!.isNotEmpty) {
-        for (var file in requestModel.attachments!) {
+        for (final file in requestModel.attachments!) {
           formData.files.add(
             MapEntry(
-              "attachments",
+              'attachments',
               await MultipartFile.fromFile(
                 file.path,
                 filename: file.path.split('/').last,
@@ -67,22 +59,44 @@ class AppointmentManagementProvider extends ChangeNotifier {
         }
       }
 
-      // 4. استدعاء السيرفيس لإرسال الطلب
+      debugPrint('========== END APPOINTMENT FORM DATA ==========');
+      debugPrint('Appointment ID: $appointmentId');
+
+      for (final field in formData.fields) {
+        debugPrint('${field.key}: ${field.value}');
+      }
+
+      for (final file in formData.files) {
+        debugPrint('${file.key}: ${file.value.filename}');
+      }
+
+      debugPrint('==============================================');
+
       final result = await _managementService.endAppointment(
         appointmentId: appointmentId,
         formData: formData,
       );
 
-      _isLoading = false;
-      notifyListeners();
+      final bool success = result['status'] == 'success';
 
-      // إرجاع النتيجة
-      return result['status'] == 'success';
+      if (!success) {
+        _errorMessage =
+            result['message']?.toString() ?? 'Failed to complete appointment.';
+      }
+
+      return success;
     } catch (e) {
-      debugPrint("Error in endAppointment: $e");
+      _errorMessage = _cleanError(e);
+      debugPrint('Error in endAppointment: $_errorMessage');
+      return false;
+    } finally {
       _isLoading = false;
       notifyListeners();
-      return false;
     }
+  }
+
+  void clearError() {
+    _errorMessage = null;
+    notifyListeners();
   }
 }

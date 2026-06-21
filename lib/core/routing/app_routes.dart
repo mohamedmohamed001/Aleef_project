@@ -4,35 +4,47 @@ class AppRoutes {
   static const String register = '/register';
   static const String verificationOtp = '/verificationOtp';
   static const String home = '/home';
-  static const String mainLayout = '/main layout';
+  static const String mainLayout = '/mainLayout';
   static const String editProfile = '/editProfile';
   static const String appointments = '/appointments';
   static const String chatBotScreen = '/chatBot';
-  static const String previousAppointmentScreen = "/previous";
-  static const String chooseRole = "/roleScreen";
+  static const String previousAppointmentScreen = '/previous';
+  static const String chooseRole = '/roleScreen';
 
-  // pets
+  // Pets
   static const String addPet = '/addPet';
 
-  // store
+  // Store
   static const String detailsProduct = '/detailsProduct';
   static const String cart = '/cart';
   static const String order = '/order';
 
-  // appointments
-  static const String appointmentDetails = '/appointmentDetails';
+  // User Appointments
+  static const String appointmentUserDetails = '/appointmentUserDetails';
   static const String bookAppointment = '/bookAppointment';
   static const String doctorDetails = '/doctorDetails';
-  static const String chatDetails = '/chatDetails';
-  //doctor
-static const String doctorRegister='/doctorRegister';
-  static const doctorPendingReview =
-      '/doctorPendingReview';
-  static const doctorLogin = '/doctorLogin';
-  static const doctorMainLayout = '/doctorMainLayout';
-  static const String appointmentUserDetails = '/appointmentUserDetails';
 
-//on boarding
+  // Doctor Appointments
+  static const String doctorAppointmentDetails = '/doctorAppointmentDetails';
+
+  // Chat
+  static const String chatDetails = '/chatDetails';
+
+  // Doctor Auth / Layout
+  static const String doctorRegister = '/doctorRegister';
+  static const String doctorPendingReview = '/doctorPendingReview';
+  static const String doctorLogin = '/doctorLogin';
+  static const String doctorMainLayout = '/doctorMainLayout';
+
+  // Onboarding
   static const String onboarding = '/onboarding';
+
+  // Notifications
+  static const String notifications = '/notifications';
+
+  // User Password
+  static const String userChangePassword = '/userChangePassword';
+  static const String userForgetPassword = '/userForgetPassword';
+  static const String userResetPassword = '/userResetPassword';
 
 }

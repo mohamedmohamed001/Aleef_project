@@ -19,16 +19,13 @@ import '../provider/chat_provider.dart';
 class ChatDetails extends StatefulWidget {
   final String chatId;
 
-  const ChatDetails({
-    super.key,
-    required this.chatId,
-  });
+  const ChatDetails({super.key, required this.chatId});
 
   @override
   State<ChatDetails> createState() => _ChatDetailsState();
 }
 
-class _ChatDetailsState extends State<ChatDetails> {
+class _ChatDetailsState extends State<ChatDetails> with WidgetsBindingObserver {
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _messageController = TextEditingController();
 
@@ -44,6 +41,7 @@ class _ChatDetailsState extends State<ChatDetails> {
   void initState() {
     super.initState();
 
+    WidgetsBinding.instance.addObserver(this);
     _messageController.addListener(_onMessageChanged);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -53,6 +51,24 @@ class _ChatDetailsState extends State<ChatDetails> {
 
   void _onMessageChanged() {
     if (mounted) setState(() {});
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) async {
+    if (state == AppLifecycleState.resumed) {
+      debugPrint('📱 App resumed - restore chat socket');
+
+      final socketService = getIt<SocketService>();
+
+      if (!socketService.isConnected) {
+        await socketService.connectCurrentSession();
+      }
+
+      if (!mounted) return;
+
+      final provider = _chatProvider ?? context.read<ChatProvider>();
+      provider.restoreOpenedChat(widget.chatId);
+    }
   }
 
   Future<void> _loadChatDetails() async {
@@ -119,20 +135,43 @@ class _ChatDetailsState extends State<ChatDetails> {
 
     if (!mounted) return;
 
-    Navigator.pushNamedAndRemoveUntil(
-      context,
-      AppRoutes.login,
-          (_) => false,
-    );
+    Navigator.pushNamedAndRemoveUntil(context, AppRoutes.login, (_) => false);
+  }
+
+  Future<void> _handlePickImage() async {
+    final provider = _chatProvider ?? context.read<ChatProvider>();
+
+    if (widget.chatId.trim().isEmpty) return;
+    if (currentUserId == null || currentUserId!.isEmpty) return;
+
+    await provider.pickAndUploadImage();
+
+    if (!mounted) return;
+
+    if (provider.imageUploadError != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(provider.imageUploadError!),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+
+      provider.clearImageUploadError();
+    }
   }
 
   void _handleSend() {
     final provider = _chatProvider ?? context.read<ChatProvider>();
     final content = _messageController.text.trim();
 
-    if (content.isEmpty) return;
     if (widget.chatId.trim().isEmpty) return;
     if (currentUserId == null || currentUserId!.isEmpty) return;
+
+    final bool hasText = content.isNotEmpty;
+    final bool hasImage = provider.uploadedImageUrl != null &&
+        provider.uploadedImageUrl!.trim().isNotEmpty;
+
+    if (!hasText && !hasImage) return;
 
     provider.sendMessage(
       content: content,
@@ -140,6 +179,18 @@ class _ChatDetailsState extends State<ChatDetails> {
       chatId: widget.chatId,
       receiverId: provider.selectedChatUser?.id ?? '',
     );
+
+    if (provider.imageUploadError != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(provider.imageUploadError!),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+
+      provider.clearImageUploadError();
+      return;
+    }
 
     _messageController.clear();
 
@@ -186,12 +237,17 @@ class _ChatDetailsState extends State<ChatDetails> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+
     _chatProvider?.clearChatDetails(notify: false);
     SocketService().leaveChat(widget.chatId);
+
     _messageController.removeListener(_onMessageChanged);
     _messageController.dispose();
+
     SocketService().off('receive_message');
     SocketService().off('error_message');
+
     _scrollController.dispose();
 
     super.dispose();
@@ -201,11 +257,16 @@ class _ChatDetailsState extends State<ChatDetails> {
   Widget build(BuildContext context) {
     final provider = context.watch<ChatProvider>();
 
-    final bool canSend = _messageController.text.trim().isNotEmpty &&
-        currentUserId != null &&
+    final bool hasText = _messageController.text.trim().isNotEmpty;
+    final bool hasImage = provider.uploadedImageUrl != null &&
+        provider.uploadedImageUrl!.trim().isNotEmpty;
+
+    final bool canSend = currentUserId != null &&
         currentUserId!.isNotEmpty &&
         widget.chatId.trim().isNotEmpty &&
-        !provider.isMessagesLoading;
+        !provider.isMessagesLoading &&
+        !provider.isUploadingImage &&
+        (hasText || hasImage);
 
     _handleAutoScroll(provider);
 
@@ -214,7 +275,12 @@ class _ChatDetailsState extends State<ChatDetails> {
       bottomNavigationBar: ChatInputBar(
         controller: _messageController,
         canSend: canSend,
+        isUploadingImage: provider.isUploadingImage,
+        selectedImage: provider.selectedImage,
+        uploadedImageUrl: provider.uploadedImageUrl,
         onSend: _handleSend,
+        onPickImage: _handlePickImage,
+        onRemoveImage: provider.removeSelectedImage,
       ),
       body: Column(
         children: [
@@ -262,10 +328,8 @@ class _ChatDetailsBody extends StatelessWidget {
       return const MessagesLoadingView();
     }
 
-    if (provider.errorMessage != null) {
-      return MessagesErrorView(
-        message: provider.errorMessage!,
-      );
+    if (provider.errorMessage != null && provider.messages.isEmpty) {
+      return MessagesErrorView(message: provider.errorMessage!);
     }
 
     if (provider.messages.isEmpty) {
@@ -276,12 +340,7 @@ class _ChatDetailsBody extends StatelessWidget {
       controller: scrollController,
       physics: const BouncingScrollPhysics(),
       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-      padding: EdgeInsets.fromLTRB(
-        16.w,
-        14.h,
-        16.w,
-        18.h,
-      ),
+      padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 18.h),
       itemCount: provider.messages.length,
       itemBuilder: (context, index) {
         final message = provider.messages[index];
@@ -289,8 +348,9 @@ class _ChatDetailsBody extends StatelessWidget {
         final bool isMe =
             currentUserId != null && message.senderId == currentUserId;
 
-        final bool showTopSpace = index == 0 ||
-            provider.messages[index - 1].senderId != message.senderId;
+        final bool showTopSpace =
+            index == 0 ||
+                provider.messages[index - 1].senderId != message.senderId;
 
         return Padding(
           padding: EdgeInsets.only(
@@ -299,6 +359,7 @@ class _ChatDetailsBody extends StatelessWidget {
           ),
           child: ChatMessageBubble(
             text: message.text,
+            imageUrl: message.image,
             time: formatMessageTime(message.createdAt),
             isMe: isMe,
           ),

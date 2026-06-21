@@ -61,7 +61,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       isLoading = true;
     });
 
-    final success = await AuthApiService().register(
+    final result = await AuthApiService().register(
       email,
       password,
       name,
@@ -70,12 +70,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     if (!mounted) return;
 
-    context.read<VerifyProvider>().setVerificationData(
-      email: email,
-      doctor: false,
-    );
+    setState(() {
+      isLoading = false;
+    });
 
-    if (success == true) {
+    if (result.success) {
+      context.read<VerifyProvider>().setVerificationData(
+        email: email,
+        doctor: false,
+      );
+
+      showAuthSnackBar(
+        context,
+        message: result.message,
+      );
+
       Navigator.pushNamedAndRemoveUntil(
         context,
         AppRoutes.verificationOtp,
@@ -84,11 +93,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
     } else {
       showAuthSnackBar(
         context,
-        message: "Registration failed",
+        message: result.message,
       );
     }
   }
-
   @override
   Widget build(BuildContext context) {
     return AuthScaffold(
@@ -166,7 +174,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               iconPrefix: Icons.lock_outline,
               keyboardType: TextInputType.visiblePassword,
               textInputAction: TextInputAction.next,
-              validator: Validators.validatePassword,
+              // validator: Validators.validatePassword,
             ),
             SizedBox(height: 14.h),
             const AuthFieldLabel(
@@ -181,8 +189,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
               iconPrefix: Icons.lock_outline,
               keyboardType: TextInputType.visiblePassword,
               textInputAction: TextInputAction.done,
-              validator: (value) => Validators.validateConfirmPassword(
-                  value, passwordController.text),
+              // validator: (value) => Validators.validateConfirmPassword(
+              //     value, passwordController.text),
             ),
             SizedBox(height: 22.h),
             AuthPrimaryButton(

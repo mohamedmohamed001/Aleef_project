@@ -24,6 +24,12 @@ class MyPetsCard extends StatelessWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(26.r),
         onTap: () {
+          debugPrint("========== MY PETS CARD TAP ==========");
+          debugPrint("PET ID: ${pet.id}");
+          debugPrint("PET NAME: ${pet.name}");
+          debugPrint("PET TYPE: ${pet.type}");
+          debugPrint("======================================");
+
           Navigator.push(
             context,
             MaterialPageRoute(
@@ -158,7 +164,7 @@ class MyPetsCard extends StatelessWidget {
       return Image.network(
         path,
         fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => placeholder,
+        errorBuilder: (_, _, _) => placeholder,
         loadingBuilder: (context, child, loadingProgress) {
           if (loadingProgress == null) return child;
 
@@ -179,14 +185,14 @@ class MyPetsCard extends StatelessWidget {
       return Image.asset(
         path,
         fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => placeholder,
+        errorBuilder: (_, _, _) => placeholder,
       );
     }
 
     return Image.file(
       File(path),
       fit: BoxFit.cover,
-      errorBuilder: (_, __, ___) => placeholder,
+      errorBuilder: (_, _, _) => placeholder,
     );
   }
 }

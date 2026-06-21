@@ -40,6 +40,30 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  void _sendFcmTokenInBackground({
+    required String logPrefix,
+  }) {
+    FcmService.initAndGetToken().then((fcmToken) async {
+      debugPrint("✅ $logPrefix FCM Token: $fcmToken");
+
+      if (fcmToken != null) {
+        await _authApiService.addFcmToken(fcmToken);
+      }
+    }).catchError((error) {
+      debugPrint("❌ $logPrefix FCM Token error: $error");
+    });
+  }
+
+  void _goToMainLayout() {
+    context.read<BottomNavProvider>().changeTab(0);
+
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      AppRoutes.mainLayout,
+          (route) => false,
+    );
+  }
+
   Future<void> _handleLogin() async {
     if (isLoading) return;
 
@@ -63,27 +87,22 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     if (success == true) {
-      final fcmToken = await FcmService.initAndGetToken();
-      debugPrint("✅ Token after login: $fcmToken");
-      if (fcmToken != null) {
-        await _authApiService.addFcmToken(fcmToken);
-      }
+      _sendFcmTokenInBackground(
+        logPrefix: 'User login',
+      );
+
       if (!mounted) return;
 
-      context.read<BottomNavProvider>().changeTab(0);
-
-      Navigator.pushNamedAndRemoveUntil(
-        context,
-        AppRoutes.mainLayout,
-            (route) => false,
-      );
-    } else {
-      showAuthSnackBar(
-        context,
-        message: "Login failed",
-      );
+      _goToMainLayout();
+      return;
     }
+
+    showAuthSnackBar(
+      context,
+      message: "Login failed",
+    );
   }
+
   Future<void> _handleGoogleLogin() async {
     if (isLoading) return;
 
@@ -102,26 +121,20 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     if (success == true) {
-      final fcmToken = await FcmService.initAndGetToken();
-      debugPrint("✅ Token after google login: $fcmToken");
-      if (fcmToken != null) {
-        await _authApiService.addFcmToken(fcmToken);
-      }
+      _sendFcmTokenInBackground(
+        logPrefix: 'Google login',
+      );
+
       if (!mounted) return;
 
-      context.read<BottomNavProvider>().changeTab(0);
-
-      Navigator.pushNamedAndRemoveUntil(
-        context,
-        AppRoutes.mainLayout,
-            (route) => false,
-      );
-    } else {
-      showAuthSnackBar(
-        context,
-        message: "Google login failed",
-      );
+      _goToMainLayout();
+      return;
     }
+
+    showAuthSnackBar(
+      context,
+      message: "Google login failed",
+    );
   }
 
   @override
@@ -137,10 +150,7 @@ class _LoginScreenState extends State<LoginScreen> {
         normalText: "Don’t have an account? ",
         actionText: "Signup",
         onTap: () {
-          Navigator.pushNamed(
-            context,
-            AppRoutes.register,
-          );
+          Navigator.pushNamed(context, AppRoutes.register);
         },
       ),
       child: Form(
@@ -191,18 +201,19 @@ class _LoginScreenState extends State<LoginScreen> {
             Align(
               alignment: AlignmentDirectional.centerEnd,
               child: TextButton(
-                onPressed: () {},
+                onPressed: isLoading
+                    ? null
+                    : () {
+                  Navigator.pushNamed(
+                    context,
+                    AppRoutes.userForgetPassword,
+                  );
+                },
                 style: TextButton.styleFrom(
                   foregroundColor: AppColors.primary,
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 4.w,
-                  ),
-                  minimumSize: Size(
-                    0,
-                    38.h,
-                  ),
-                  tapTargetSize:
-                  MaterialTapTargetSize.shrinkWrap,
+                  padding: EdgeInsets.symmetric(horizontal: 4.w),
+                  minimumSize: Size(0, 38.h),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
                 child: Text(
                   "Forget Password?",
@@ -225,7 +236,45 @@ class _LoginScreenState extends State<LoginScreen> {
             SizedBox(height: 16.h),
 
             GoogleSignInButton(
-              onPressed: _handleGoogleLogin,
+              onPressed: isLoading ? null : _handleGoogleLogin,
+            ),
+
+            SizedBox(height: 8.h),
+
+            Center(
+              child: TextButton(
+                onPressed: isLoading
+                    ? null
+                    : () {
+                  Navigator.pushNamedAndRemoveUntil(
+                    context,
+                    AppRoutes.doctorLogin,
+                        (route) => false,
+                  );
+                },
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.primary,
+                  disabledForegroundColor: Colors.grey,
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 10.w,
+                    vertical: 8.h,
+                  ),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
+                ),
+                child: Text(
+                  "Are you a doctor? Login here",
+                  style: TextStyle(
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w800,
+                    decoration: TextDecoration.underline,
+                    decorationThickness: 1.2,
+                  ),
+                ),
+              ),
             ),
           ],
         ),
@@ -233,4 +282,3 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
-

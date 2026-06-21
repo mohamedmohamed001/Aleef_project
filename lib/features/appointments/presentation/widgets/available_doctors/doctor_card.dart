@@ -3,6 +3,12 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../../../../core/theme/app_colors.dart';
 import '../../../data/models/doctor_model.dart';
+import 'doctor_action_buttons.dart';
+import 'doctor_arrow_button.dart';
+import 'doctor_image_with_rate.dart';
+import 'doctor_info_line.dart';
+import 'doctor_location_strip.dart';
+import 'doctor_specialization_pill.dart';
 
 class DoctorCard extends StatelessWidget {
   final DoctorModel doctor;
@@ -18,350 +24,146 @@ class DoctorCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final imageUrl = doctor.profilePic.toString();
-    final name = doctor.name.toString();
-    final specialization = doctor.specialization.toString();
-    final city = doctor.city.toString();
-    final rating = doctor.rating.toString();
-    final ratingsCount = doctor.ratingsCount.toString();
+    final imageUrl = doctor.profilePic ?? '';
+    final name = doctor.name ?? 'Doctor';
+    final specialization = doctor.specialization ?? 'Veterinary';
+    final city = doctor.city ?? doctor.address ?? 'Clinic location';
+    final rating = _cleanText(doctor.rating, fallback: '0.0');
 
-    return GestureDetector(
-      onTap: onTapDetails,
-      child: Container(
-        margin: EdgeInsets.only(bottom: 14.h),
-        padding: EdgeInsets.all(12.r),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(22.r),
-          border: Border.all(
-            color: const Color(0xFFEAF0F0),
-            width: 1,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.045),
-              blurRadius: 18.r,
-              offset: Offset(0, 8.h),
-            ),
-          ],
+    final ratingsCount = doctor.ratingsCount?.toStringAsFixed(0) ??
+        doctor.reviewsCount?.toString() ??
+        '0';
+
+    final distanceKm = _formatDistance(doctor.distanceKm);
+    final minutes = doctor.minutes;
+
+    final hasDistance = distanceKm != null;
+    final hasMinutes = minutes != null;
+
+    return Container(
+      margin: EdgeInsets.only(bottom: 14.h),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(26.r),
+        border: Border.all(
+          color: const Color(0xFFEAF0F0),
+          width: 1.w,
         ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _DoctorImageWithRate(
-              imageUrl: imageUrl,
-              rating: rating,
-            ),
-
-            SizedBox(width: 13.w),
-
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(height: 2.h),
-
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          name,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 15.sp,
-                            fontWeight: FontWeight.w900,
-                            color: const Color(0xFF1F2933),
-                          ),
-                        ),
-                      ),
-
-                      SizedBox(width: 6.w),
-
-                      Container(
-                        width: 28.w,
-                        height: 28.w,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF5F8F8),
-                          borderRadius: BorderRadius.circular(10.r),
-                        ),
-                        child: Icon(
-                          Icons.arrow_forward_ios_rounded,
-                          size: 11.r,
-                          color: Colors.grey.shade500,
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  SizedBox(height: 7.h),
-
-                  Container(
-                    constraints: BoxConstraints(maxWidth: 170.w),
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 9.w,
-                      vertical: 5.h,
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withOpacity(0.07),
+            blurRadius: 22.r,
+            offset: Offset(0, 10.h),
+          ),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.025),
+            blurRadius: 10.r,
+            offset: Offset(0, 3.h),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTapDetails,
+          borderRadius: BorderRadius.circular(26.r),
+          child: Padding(
+            padding: EdgeInsets.all(13.r),
+            child: Column(
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    DoctorImageWithRate(
+                      imageUrl: imageUrl,
+                      rating: rating,
                     ),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.08),
-                      borderRadius: BorderRadius.circular(30.r),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.medical_services_rounded,
-                          size: 12.r,
-                          color: AppColors.primary,
-                        ),
-                        SizedBox(width: 4.w),
-                        Flexible(
-                          child: Text(
-                            specialization,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 11.sp,
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.primary,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  SizedBox(height: 9.h),
-
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.location_on_rounded,
-                        size: 14.r,
-                        color: Colors.grey.shade500,
-                      ),
-                      SizedBox(width: 4.w),
-                      Expanded(
-                        child: Text(
-                          city,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 11.5.sp,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.grey.shade600,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  SizedBox(height: 5.h),
-
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.chat_bubble_outline_rounded,
-                        size: 13.r,
-                        color: Colors.grey.shade500,
-                      ),
-                      SizedBox(width: 4.w),
-                      Expanded(
-                        child: Text(
-                          '$ratingsCount reviews',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 10.8.sp,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.grey.shade500,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  SizedBox(height: 12.h),
-
-                  Row(
-                    children: [
-                      InkWell(
-                        onTap: onTapDetails,
-                        borderRadius: BorderRadius.circular(14.r),
-                        child: Container(
-                          height: 38.h,
-                          padding: EdgeInsets.symmetric(horizontal: 12.w),
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF6F8F8),
-                            borderRadius: BorderRadius.circular(14.r),
-                            border: Border.all(
-                              color: const Color(0xFFE8EEEE),
-                            ),
-                          ),
-                          child: Text(
-                            'Details',
-                            style: TextStyle(
-                              fontSize: 12.sp,
-                              fontWeight: FontWeight.w700,
-                              color: const Color(0xFF59656F),
-                            ),
-                          ),
-                        ),
-                      ),
-
-                      SizedBox(width: 10.w),
-
-                      Expanded(
-                        child: InkWell(
-                          onTap: onTap,
-                          borderRadius: BorderRadius.circular(14.r),
-                          child: Container(
-                            height: 38.h,
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(
-                              color: AppColors.primary,
-                              borderRadius: BorderRadius.circular(14.r),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppColors.primary.withOpacity(0.18),
-                                  blurRadius: 10.r,
-                                  offset: Offset(0, 4.h),
-                                ),
-                              ],
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.calendar_month_rounded,
-                                  size: 15.r,
-                                  color: Colors.white,
-                                ),
-                                SizedBox(width: 5.w),
-                                Text(
-                                  'Book',
+                    SizedBox(width: 14.w),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SizedBox(height: 2.h),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  name,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
-                                    fontSize: 12.sp,
+                                    fontSize: 16.sp,
                                     fontWeight: FontWeight.w900,
-                                    color: Colors.white,
+                                    color: const Color(0xFF17212B),
+                                    height: 1.15,
                                   ),
                                 ),
-                              ],
-                            ),
+                              ),
+                              SizedBox(width: 8.w),
+                              DoctorArrowButton(onTap: onTapDetails),
+                            ],
                           ),
-                        ),
+                          SizedBox(height: 7.h),
+                          DoctorSpecializationPill(
+                            text: specialization,
+                          ),
+                          SizedBox(height: 10.h),
+                          DoctorInfoLine(
+                            icon: Icons.location_on_rounded,
+                            value: city,
+                          ),
+                          SizedBox(height: 7.h),
+                          DoctorInfoLine(
+                            icon: Icons.chat_bubble_outline_rounded,
+                            value: '$ratingsCount reviews',
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
+                  ],
+                ),
+
+                if (hasDistance || hasMinutes) ...[
+                  SizedBox(height: 13.h),
+                  DoctorLocationStrip(
+                    distanceKm: distanceKm,
+                    minutes: minutes,
                   ),
                 ],
-              ),
+
+                SizedBox(height: 13.h),
+
+                DoctorActionButtons(
+                  onDetailsTap: onTapDetails,
+                  onBookTap: onTap,
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
   }
-}
 
-class _DoctorImageWithRate extends StatelessWidget {
-  final String imageUrl;
-  final String rating;
+  static String _cleanText(String? value, {required String fallback}) {
+    final text = value?.trim() ?? '';
+    if (text.isEmpty || text == 'null') return fallback;
+    return text;
+  }
 
-  const _DoctorImageWithRate({
-    required this.imageUrl,
-    required this.rating,
-  });
+  static String? _formatDistance(String? value) {
+    final text = value?.trim() ?? '';
 
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 76.w,
-      child: Column(
-        children: [
-          Container(
-            width: 70.w,
-            height: 82.h,
-            padding: EdgeInsets.all(3.r),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF3F7F7),
-              borderRadius: BorderRadius.circular(20.r),
-              border: Border.all(
-                color: const Color(0xFFE6EEEE),
-                width: 1,
-              ),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(17.r),
-              child: imageUrl.isEmpty || imageUrl == 'null'
-                  ? Container(
-                color: AppColors.primary.withOpacity(0.08),
-                child: Icon(
-                  Icons.person_rounded,
-                  size: 36.r,
-                  color: AppColors.primary,
-                ),
-              )
-                  : Image.network(
-                imageUrl,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(
-                  color: AppColors.primary.withOpacity(0.08),
-                  child: Icon(
-                    Icons.person_rounded,
-                    size: 36.r,
-                    color: AppColors.primary,
-                  ),
-                ),
-              ),
-            ),
-          ),
+    if (text.isEmpty || text == 'null') return null;
 
-          Transform.translate(
-            offset: Offset(0, -8.h),
-            child: Container(
-              padding: EdgeInsets.symmetric(
-                horizontal: 8.w,
-                vertical: 4.h,
-              ),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(30.r),
-                border: Border.all(
-                  color: const Color(0xFFFFDFA3),
-                  width: 1,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 8.r,
-                    offset: Offset(0, 3.h),
-                  ),
-                ],
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.star_rounded,
-                    size: 13.r,
-                    color: const Color(0xFFFFB020),
-                  ),
-                  SizedBox(width: 2.w),
-                  Text(
-                    rating,
-                    style: TextStyle(
-                      fontSize: 10.5.sp,
-                      fontWeight: FontWeight.w900,
-                      color: const Color(0xFF7A5200),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
+    final number = double.tryParse(text);
+
+    if (number == null) return text;
+
+    if (number >= 10) {
+      return number.toStringAsFixed(0);
+    }
+
+    return number.toStringAsFixed(1);
   }
 }
